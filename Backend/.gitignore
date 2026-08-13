@@ -1,0 +1,85 @@
+# --- Python / envs / caches ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache/
+*.log
+
+# --- Secrets / local env ---
+.env
+.env.*
+!.env.example
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# --- Videos ---
+*.mp4
+*.avi
+*.mkv
+*.webm
+*.mov
+*.m4v
+*.mpeg
+*.mpg
+
+# --- Images (live frames, screenshots, train dumps) ---
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.tiff
+*.tif
+
+# Keep intentional UI/static assets if any are added later
+!layer8_ui/static/**/*.png
+!layer8_ui/static/**/*.jpg
+!layer8_ui/static/**/*.svg
+!layer8_ui/static/**/*.webp
+
+# --- Runtime artifacts (live frames, recordings, logs, metrics dumps) ---
+layer8_ui/logs/
+layer8_ui/configs/recordings/
+layer8_ui/configs/live_*.jpg
+layer8_ui/configs/live_*.jpeg
+layer8_ui/configs/live_*_threat_metrics.json
+artifacts/
+!artifacts/.gitkeep
+!artifacts/logs/
+artifacts/*
+artifacts/logs/*
+!artifacts/logs/.gitkeep
+
+# --- Training / YOLO run outputs ---
+trained_models/outputs/
+runs/
+ultralytics/
+wandb/
+
+# --- Local backups ---
+*.bak
+*.bak_*
+*.bak.*
+*.tmp
+*.temp

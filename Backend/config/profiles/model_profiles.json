@@ -1,0 +1,10 @@
+{
+  "profiles": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Default model profile",
+      "weights": {}
+    }
+  ]
+}

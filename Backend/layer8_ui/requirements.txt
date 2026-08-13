@@ -1,0 +1,5 @@
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+# Python 3.8 + Pydantic v2: modern dict[str, ...] annotations need a backport eval hook.
+eval_type_backport>=0.2.0; python_version < "3.9"
+# Webcam weapon preview uses the local New Backend weapon_ai package (torch, ultralytics, opencv).

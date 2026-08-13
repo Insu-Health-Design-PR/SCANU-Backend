@@ -1,0 +1,6 @@
+{
+  "preview_source": "webcam",
+  "infer_enabled": true,
+  "overlay_enabled": true,
+  "threat_threshold": 0.5
+}
