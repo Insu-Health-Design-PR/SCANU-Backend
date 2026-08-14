@@ -458,7 +458,7 @@
   },
   "profile_fps_boost_4k60": {
     "label": "FPS boost \u00b7 4K60 (batched crops)",
-    "description": "fps-boost branch: person YOLO @ 1280-wide / 640 imgsz, ByteTrack stride 2, batched gun YOLO @ 640 on person crops (not full frame). Pose/hands off. Select this to test 45\u201360 FPS; swap back to main if quality drops.",
+    "description": "fps-boost branch: person YOLO @ 1280-wide / 640 imgsz, ByteTrack stride 2, batched gun TensorRT FP16 @ 640 on person crops (not full frame). Pose/hands off. Select this to test 45\u201360 FPS; swap back to main if quality drops.",
     "values": {
       "webcam_device": 0,
       "webcam_auto_detect": 1,
@@ -502,7 +502,7 @@
       "weapon_live_publish_workers": 1,
       "weapon_live_metrics_every_n": 60,
       "weapon_no_gun_yolo": 0,
-      "weapon_gun_yolo_model": "gun_sohas_7class_phone_black_mix_v1.pt",
+      "weapon_gun_yolo_model": "gun_sohas_7class_phone_black_mix_v1.engine",
       "weapon_overlay_classes": "gun_and_knife",
       "weapon_phone_overlay_label": "object",
       "weapon_gun_phone_conflict_suppress": 1,

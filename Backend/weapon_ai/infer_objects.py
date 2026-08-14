@@ -143,7 +143,13 @@ from media.capture.gstreamer_webcam import (
     gstreamer_available,
     nvidia_gst_jpeg_available,
 )
+from media.capture.ffmpeg_cuda_webcam import (
+    FFmpegCudaWebcamCapture,
+    ffmpeg_cuda_available,
+    open_ffmpeg_cuda_webcam,
+)
 from media.capture.live_webcam_capture import LiveWebcamCapture
+from media.ipc.paths import derived_full_bgr_ipc_path
 
 _REPO_ROOT = Path(os.environ.get("SCANU_MODEL_ROOT", Path(__file__).resolve().parent.parent)).resolve()
 _DEFAULT_FIREARM_YOLO = _REPO_ROOT / "trained_models" / "gun_detection" / "firearm_yolov8n_best.pt"
@@ -624,6 +630,24 @@ def main() -> None:
         help="Optional mmap frame channel path (single-producer latest raw BGR) for low-CPU WebRTC preview.",
     )
     p.add_argument(
+        "--live_ipc_bgr_full_frame",
+        type=Path,
+        default=None,
+        help=(
+            "Optional mmap for the full-res (4K) BGR frame used by global Re-ID crops. "
+            "Default: derive from --live_ipc_bgr_frame when dual-res capture is active."
+        ),
+    )
+    add_bool_optional_arg(
+        p,
+        "--live_ipc_bgr_full",
+        default=True,
+        help_text=(
+            "Write the 4K sidecar mmap for global Re-ID when FFmpeg dual-res capture is on. "
+            "Disable with --no-live_ipc_bgr_full."
+        ),
+    )
+    p.add_argument(
         "--live_metrics_json",
         type=Path,
         default=None,
@@ -657,6 +681,24 @@ def main() -> None:
             "OpenCV CAP_V4L2. Falls back to OpenCV if the pipeline fails. "
             "Disable with --no-gstreamer_capture."
         ),
+    )
+    add_bool_optional_arg(
+        p,
+        "--ffmpeg_cuda_capture",
+        default=True,
+        help_text=(
+            "Live UVC webcam: FFmpeg mjpeg_cuvid/h264_cuvid GPU decode (preferred for 4K60). "
+            "Falls back to GStreamer/OpenCV if FFmpeg CUVID fails. "
+            "Disable with --no-ffmpeg_cuda_capture."
+        ),
+    )
+    p.add_argument(
+        "--ffmpeg_cuda_out_width",
+        type=int,
+        default=0,
+        metavar="PX",
+        help="GPU-scale CUVID output to this width before the Python loop (0 = auto: "
+        "live_ipc_max_width or 1920 when capture is ≥2560 and fps ≥45; else full size).",
     )
     add_bool_optional_arg(
         p,
@@ -1339,6 +1381,7 @@ def main() -> None:
     live_frame_poll_path: Path | None = None
     v4l2_cap: Any = None
     gst_live_capture: GStreamerWebcamCapture | None = None
+    ff_live_capture: FFmpegCudaWebcamCapture | None = None
     if args.live_frame_poll is not None:
         live_frame_poll_path = args.live_frame_poll.expanduser().resolve()
         live_frame_poll_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1411,8 +1454,62 @@ def main() -> None:
             except Exception as exc:
                 v4l2_cap = None
                 print(f"Warning: V4L2 mmap capture failed ({exc}); trying OpenCV", flush=True)
+        want_ff = (
+            v4l2_cap is None
+            and not bool(getattr(args, "thermal_v4l2", False))
+            and bool(getattr(args, "ffmpeg_cuda_capture", True))
+        )
+        if want_ff:
+            if not ffmpeg_cuda_available():
+                print(
+                    "Note: FFmpeg CUVID not available; skipping GPU decode capture.",
+                    flush=True,
+                )
+            else:
+                try:
+                    ipc_w = int(getattr(args, "live_ipc_max_width", 0) or 0)
+                    explicit_w = int(getattr(args, "ffmpeg_cuda_out_width", 0) or 0)
+                    auto_w = 0
+                    if (
+                        explicit_w <= 0
+                        and int(args.capture_width) >= 2560
+                        and float(args.capture_fps) >= 45.0
+                    ):
+                        auto_w = ipc_w if ipc_w > 0 else 1920
+                    out_w = explicit_w if explicit_w > 0 else auto_w
+                    stride_n = max(1, int(getattr(args, "live_infer_stride", 1) or 1))
+                    full_fps = max(15.0, float(args.capture_fps) / float(stride_n))
+                    keep_full = int(out_w) > 0 and int(args.capture_width) >= 2560
+                    ff_try = open_ffmpeg_cuda_webcam(
+                        v4l2_path,
+                        width=int(args.capture_width),
+                        height=int(args.capture_height),
+                        fps=float(args.capture_fps),
+                        out_width=int(out_w),
+                        keep_full_res=keep_full,
+                        full_fps=full_fps,
+                    )
+                    ff_live_capture = ff_try
+                    extra = ""
+                    if ff_try.has_full_res:
+                        extra = (
+                            f" + {ff_try.full_width}x{ff_try.full_height}@{ff_try.full_fps:.0f} "
+                            "for gun crops"
+                        )
+                    print(
+                        f"FFmpeg CUDA capture {v4l2_path}: camera "
+                        f"{int(args.capture_width)}x{int(args.capture_height)}@{float(args.capture_fps):.0f} "
+                        f"→ {ff_try.width}x{ff_try.height} preview via {ff_try.decoder_name}{extra}",
+                        flush=True,
+                    )
+                except Exception as exc:
+                    print(
+                        f"Warning: FFmpeg CUDA capture failed ({exc}); falling back.",
+                        flush=True,
+                    )
         want_gst = (
             v4l2_cap is None
+            and ff_live_capture is None
             and not bool(getattr(args, "thermal_v4l2", False))
             and bool(getattr(args, "gstreamer_capture", False))
         )
@@ -1459,7 +1556,7 @@ def main() -> None:
                         f"Warning: GStreamer capture failed ({exc}); falling back to OpenCV.",
                         flush=True,
                     )
-        if v4l2_cap is None and gst_live_capture is None:
+        if v4l2_cap is None and gst_live_capture is None and ff_live_capture is None:
             # Some UVC devices fail briefly after reconnect; retry before hard fail.
             for _attempt in range(20):
                 c = cv2.VideoCapture(v4l2_path, cv2.CAP_V4L2)
@@ -1521,13 +1618,6 @@ def main() -> None:
             cobj.set(cv2.CAP_PROP_FRAME_WIDTH, int(args.capture_width))
             cobj.set(cv2.CAP_PROP_FRAME_HEIGHT, int(args.capture_height))
             req_fps = float(args.capture_fps)
-            # UVC MJPEG is typically 30 fps max at 1080p/2K; asking 60 can pick a slower fallback mode.
-            if (
-                int(args.capture_width) >= 1920
-                and int(args.capture_height) >= 1080
-                and req_fps > 30.0
-            ):
-                req_fps = 30.0
             cobj.set(cv2.CAP_PROP_FPS, req_fps)
             # Webcam path should be normal RGB/BGR for YOLO; avoid raw 2-channel V4L2 formats.
             cobj.set(cv2.CAP_PROP_CONVERT_RGB, 1)
@@ -1707,12 +1797,15 @@ def main() -> None:
             2,
         )
         live_ipc_bgr_writer.write_bgr_ndarray(boot)
+    live_ipc_bgr_full_writer: LiveBgrFrameWriter | None = None
+    full_publish_pool: concurrent.futures.ThreadPoolExecutor | None = None
     if args.live_metrics_json is not None:
         args.live_metrics_json = args.live_metrics_json.expanduser().resolve()
         args.live_metrics_json.parent.mkdir(parents=True, exist_ok=True)
 
     def _infer_annotations(
         thermal_frame: np.ndarray,
+        gun_source: np.ndarray | None = None,
     ) -> tuple[
         list[tuple[int, int, int, int, float, int | None, str, float]],
         list[tuple[int, int, int, int, str, str, float]],
@@ -2162,14 +2255,35 @@ def main() -> None:
             elif rows:
                 person_rows: list[tuple[int, tuple[int, int, int, int]]] = list(all_person_rows)
                 person_by_ridx = {int(ridx): xyxy for ridx, xyxy in person_rows}
+                gun_img = gun_source if gun_source is not None and getattr(gun_source, "size", 0) else thermal_frame
+                if gun_img is None or getattr(gun_img, "size", 0) == 0:
+                    gun_img = thermal_frame
+                gsx = float(gun_img.shape[1]) / float(max(1, w))
+                gsy = float(gun_img.shape[0]) / float(max(1, h))
+                crop_rows = person_rows
+                crop_pad_px = int(args.gun_roi_pad_px)
+                if abs(gsx - 1.0) > 1e-3 or abs(gsy - 1.0) > 1e-3:
+                    crop_rows = [
+                        (
+                            ridx,
+                            (
+                                int(round(px1 * gsx)),
+                                int(round(py1 * gsy)),
+                                int(round(px2 * gsx)),
+                                int(round(py2 * gsy)),
+                            ),
+                        )
+                        for ridx, (px1, py1, px2, py2) in person_rows
+                    ]
+                    crop_pad_px = int(round(float(args.gun_roi_pad_px) * gsx))
 
                 raw_gun: list[tuple[float, int, int, int, int, str, int, int]] = []
                 crops = collect_person_gun_crops(
-                    thermal_frame,
-                    person_rows,
+                    gun_img,
+                    crop_rows,
                     pad_frac=float(args.gun_roi_pad_frac),
-                    pad_px=int(args.gun_roi_pad_px),
-                    min_box_px=int(args.min_box_px),
+                    pad_px=crop_pad_px,
+                    min_box_px=max(1, int(round(float(args.min_box_px) * gsx))),
                 )
                 gres_list = predict_gun_on_crops(
                     gun_detector,
@@ -2185,6 +2299,13 @@ def main() -> None:
                 for gc, gx1, gy1, gx2, gy2, gnm, owner, cid, pr, pb in mapped_gun_boxes_from_results(
                     crops, gres_list, names=gnames or gun_model_names
                 ):
+                    if abs(gsx - 1.0) > 1e-3 or abs(gsy - 1.0) > 1e-3:
+                        gx1 = int(round(gx1 / gsx))
+                        gy1 = int(round(gy1 / gsy))
+                        gx2 = int(round(gx2 / gsx))
+                        gy2 = int(round(gy2 / gsy))
+                        pr = int(round(pr / gsx))
+                        pb = int(round(pb / gsy))
                     if not _gun_detection_valid(
                         gx1, gy1, gx2, gy2, w, h,
                         args.gun_max_area_frac, args.gun_max_side_frac, args.gun_min_box_px,
@@ -2249,6 +2370,7 @@ def main() -> None:
 
     def _infer_annotations_for_frame(
         frame: np.ndarray,
+        gun_source: np.ndarray | None = None,
     ) -> tuple[
         list[tuple[int, int, int, int, float, int | None, str, float]],
         list[tuple[int, int, int, int, str, str, float, int, str]],
@@ -2263,14 +2385,14 @@ def main() -> None:
         infer_mw = int(getattr(args, "live_infer_max_width", 0) or 0)
         if is_live_capture and infer_mw > 0:
             small, sx, sy = downscale_to_max_width(frame, infer_mw, use_gpu=use_gpu_preprocess)
-            rows, guns, gc, probs, poses, hands, grips = _infer_annotations(small)
+            rows, guns, gc, probs, poses, hands, grips = _infer_annotations(small, gun_source=gun_source)
             if sx != 1.0 or sy != 1.0:
                 rows = scale_person_rows(rows, sx, sy)
                 guns = scale_gun_boxes(guns, sx, sy)
                 poses = scale_person_poses(poses, sx, sy)
                 hands = scale_person_hands(hands, sx, sy)
             return rows, guns, gc, probs, poses, hands, grips
-        return _infer_annotations(frame)
+        return _infer_annotations(frame, gun_source=gun_source)
 
     if is_batch_file and int(args.batch_warmup_passes) > 0:
         wp = max(0, int(args.batch_warmup_passes))
@@ -2307,12 +2429,25 @@ def main() -> None:
         except Exception:
             pass
 
-    live_capture: LiveWebcamCapture | GStreamerWebcamCapture | None = None
+    live_capture: LiveWebcamCapture | GStreamerWebcamCapture | FFmpegCudaWebcamCapture | None = None
     live_frame_buf: np.ndarray | None = None
     vis_buf: np.ndarray | None = None
     panel_out_buf: np.ndarray | None = None
     last_capture_seq = -1
-    if gst_live_capture is not None:
+    if ff_live_capture is not None:
+        live_capture = ff_live_capture
+        extra = ""
+        if ff_live_capture.has_full_res:
+            extra = (
+                f" Gun YOLO + global Re-ID crops from {ff_live_capture.full_width}x"
+                f"{ff_live_capture.full_height} @ {ff_live_capture.full_fps:.0f} FPS."
+            )
+        print(
+            "Live webcam: FFmpeg CUDA CUVID decode on background process; "
+            f"1080p overlay without JPEG re-encode.{extra}",
+            flush=True,
+        )
+    elif gst_live_capture is not None:
         live_capture = gst_live_capture
         print(
             "Live webcam: GStreamer MJPEG decode on background process; BGR mmap overlay without JPEG re-encode.",
@@ -2343,6 +2478,26 @@ def main() -> None:
             parts.append(f"IPC≤{int(args.live_ipc_max_width)}px")
         print("; ".join(parts) + ".", flush=True)
 
+    if (
+        live_ipc_bgr_full_writer is None
+        and bool(getattr(args, "live_ipc_bgr_full", True))
+        and args.live_ipc_bgr_frame is not None
+        and isinstance(live_capture, FFmpegCudaWebcamCapture)
+        and live_capture.has_full_res
+    ):
+        full_ipc = getattr(args, "live_ipc_bgr_full_frame", None)
+        if full_ipc is None:
+            full_ipc = derived_full_bgr_ipc_path(Path(args.live_ipc_bgr_frame))
+        else:
+            full_ipc = Path(full_ipc).expanduser().resolve()
+        full_ipc.parent.mkdir(parents=True, exist_ok=True)
+        live_ipc_bgr_full_writer = LiveBgrFrameWriter(full_ipc)
+        print(
+            f"4K Re-ID IPC: {full_ipc} "
+            f"({live_capture.full_width}x{live_capture.full_height}).",
+            flush=True,
+        )
+
     use_infer_pool = not (is_batch_file and not args.batch_async_infer)
     infer_pool: concurrent.futures.ThreadPoolExecutor | None = None
     if use_infer_pool:
@@ -2364,6 +2519,40 @@ def main() -> None:
             f"Live IPC publish: background thread pool ({publish_workers} workers).",
             flush=True,
         )
+
+    _full_publish_pending = False
+    _last_full_publish_ts = 0.0
+    _full_publish_min_s = 0.25
+    if live_ipc_bgr_full_writer is not None and full_publish_pool is None:
+        full_publish_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+    def _publish_full_bgr_job() -> None:
+        nonlocal _full_publish_pending
+        try:
+            if live_ipc_bgr_full_writer is None or not isinstance(
+                live_capture, FFmpegCudaWebcamCapture
+            ):
+                return
+            full = live_capture.snapshot_full()
+            if full is not None:
+                live_ipc_bgr_full_writer.write_bgr_ndarray(full)
+        except Exception as exc:
+            print(f"Warning: 4K Re-ID IPC write failed: {exc}", flush=True)
+        finally:
+            _full_publish_pending = False
+
+    def _schedule_full_bgr_publish() -> None:
+        nonlocal _full_publish_pending, _last_full_publish_ts
+        if live_ipc_bgr_full_writer is None or full_publish_pool is None:
+            return
+        if _full_publish_pending:
+            return
+        now_pub = time()
+        if now_pub - _last_full_publish_ts < _full_publish_min_s:
+            return
+        _last_full_publish_ts = now_pub
+        _full_publish_pending = True
+        full_publish_pool.submit(_publish_full_bgr_job)
 
     def _publish_live_outputs(vis_bgr: np.ndarray) -> None:
         stream = vis_bgr
@@ -2750,13 +2939,21 @@ def main() -> None:
 
                     if infer_future is None and (frame_count - last_infer_frame) >= infer_every_n:
                         infer_frame = live_capture.snapshot() if live_capture is not None else thermal.copy()
+                        gun_src = None
+                        if isinstance(live_capture, FFmpegCudaWebcamCapture):
+                            gun_src = live_capture.snapshot_full()
                         if _frame_valid_for_infer(infer_frame):
-                            infer_future = infer_pool.submit(_infer_annotations_for_frame, infer_frame)
+                            infer_future = infer_pool.submit(
+                                _infer_annotations_for_frame, infer_frame, gun_src
+                            )
                 else:
                     if (frame_count - last_infer_frame) >= infer_every_n:
                         try:
+                            gun_src = None
+                            if isinstance(live_capture, FFmpegCudaWebcamCapture):
+                                gun_src = live_capture.snapshot_full()
                             rows_new, gun_boxes_new, gun_count_new, probs, poses_new, hands_new, grips_new = _infer_annotations_for_frame(
-                                thermal.copy()
+                                thermal.copy(), gun_src
                             )
                             cached_rows = list(rows_new)
                             cached_gun_boxes = list(gun_boxes_new)
@@ -3364,6 +3561,8 @@ def main() -> None:
                     payload = {
                         "ts": time(),
                         "frame": int(frame_count),
+                        "frame_w": int(vis.shape[1]),
+                        "frame_h": int(vis.shape[0]),
                         "infer_fps": round(float(fps_ema), 2) if fps_ema is not None else None,
                         "unsafe_score": round(float(risk_score), 4),
                         "unsafe_pct": unsafe_pct,
@@ -3451,6 +3650,7 @@ def main() -> None:
                         ],
                     }
                     write_live_metrics_json(args.live_metrics_json, payload)
+                    _schedule_full_bgr_publish()
 
                 pg_jpg = getattr(args, "playground_jpg", None)
                 pg_json = getattr(args, "playground_json", None)
@@ -3551,10 +3751,14 @@ def main() -> None:
             infer_pool.shutdown(wait=False)
         if publish_pool is not None:
             publish_pool.shutdown(wait=True)
+        if full_publish_pool is not None:
+            full_publish_pool.shutdown(wait=True)
         if live_ipc_writer is not None:
             live_ipc_writer.close()
         if live_ipc_bgr_writer is not None:
             live_ipc_bgr_writer.close()
+        if live_ipc_bgr_full_writer is not None:
+            live_ipc_bgr_full_writer.close()
         if live_capture is not None:
             live_capture.stop()
         if writer is not None:

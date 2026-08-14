@@ -57,10 +57,7 @@ def build_mjpeg_pipeline(
         use_nvjpeg = nvidia_gst_jpeg_available()
     w = max(16, int(width))
     h = max(16, int(height))
-    # UVC MJPEG is typically ≤30 fps at 1080p+; requesting 60 often fails negotiation.
     req_fps = float(fps)
-    if w >= 1920 and h >= 1080 and req_fps > 30.0:
-        req_fps = 30.0
     fps_i = max(1, int(round(req_fps)))
     jpeg_dec = "nvjpegdec" if use_nvjpeg else "jpegdec"
     # Force output size so the reader knows nbytes even if the driver scales.

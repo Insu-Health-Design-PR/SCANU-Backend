@@ -26,7 +26,7 @@ from api.streaming.webrtc_frames import (
     prepare_bgr_for_webrtc,
 )
 from media.encode.jpeg import is_valid_jpeg
-from media.ipc import LiveBgrFrameReader, LiveFrameReader
+from media.ipc import LiveBgrFrameReader, LiveFrameReader, derived_full_bgr_ipc_path
 
 
 class WebcamIpcFanout:
@@ -37,9 +37,15 @@ class WebcamIpcFanout:
         *,
         bgr_path: Path,
         jpg_path: Path,
+        full_bgr_path: Path | None = None,
     ) -> None:
         self._bgr_reader = LiveBgrFrameReader(bgr_path)
         self._jpg_reader = LiveFrameReader(jpg_path)
+        full_path = Path(full_bgr_path) if full_bgr_path is not None else derived_full_bgr_ipc_path(bgr_path)
+        self._full_bgr_reader = LiveBgrFrameReader(full_path)
+        self._full_lock = threading.Lock()
+        self._latest_full_bgr: np.ndarray | None = None
+        self._last_full_seq: int | None = None
         self._lock = threading.Lock()
         self._latest_bgr: np.ndarray | None = None
         self._display_bgr: np.ndarray | None = None
@@ -204,6 +210,22 @@ class WebcamIpcFanout:
                 return None
             return self._latest_bgr.copy()
 
+    def latest_full_bgr(self) -> np.ndarray | None:
+        """Latest 4K sidecar frame for Re-ID crops (not used for WebRTC)."""
+        payload = self._full_bgr_reader.read_latest_with_seq()
+        if payload is None:
+            return None
+        (raw, height, width, channels), seq = payload
+        with self._full_lock:
+            if seq == self._last_full_seq and self._latest_full_bgr is not None:
+                return self._latest_full_bgr
+            bgr = self._bgr_from_payload(raw, height, width, channels)
+            if bgr is None:
+                return None
+            self._latest_full_bgr = bgr
+            self._last_full_seq = seq
+            return bgr
+
     def refresh_from_ipc_sync(self) -> np.ndarray | None:
         bgr = self._read_ipc_bgr()
         if bgr is not None:
@@ -225,9 +247,14 @@ def get_webcam_ipc_fanout(
     *,
     bgr_path: Path = Path("/dev/shm/scanu_webcam_live_bgr_frame.bin"),
     jpg_path: Path = Path("/dev/shm/scanu_webcam_live_frame.bin"),
+    full_bgr_path: Path | None = None,
 ) -> WebcamIpcFanout:
     global _FanoutSingleton
     with _FanoutLock:
         if _FanoutSingleton is None:
-            _FanoutSingleton = WebcamIpcFanout(bgr_path=bgr_path, jpg_path=jpg_path)
+            _FanoutSingleton = WebcamIpcFanout(
+                bgr_path=bgr_path,
+                jpg_path=jpg_path,
+                full_bgr_path=full_bgr_path,
+            )
         return _FanoutSingleton

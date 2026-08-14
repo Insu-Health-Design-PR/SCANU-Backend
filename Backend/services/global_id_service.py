@@ -22,6 +22,29 @@ from weapon_ai.reid.global_manager import GlobalIDManager, LocalObservation
 logger = logging.getLogger(__name__)
 
 
+def scale_xyxy(
+    bbox: tuple[int, int, int, int],
+    src_w: int,
+    src_h: int,
+    dst_w: int,
+    dst_h: int,
+) -> tuple[int, int, int, int]:
+    """Map a box from overlay/metrics space onto a (possibly 4K) crop frame."""
+    if src_w <= 0 or src_h <= 0 or dst_w <= 0 or dst_h <= 0:
+        return bbox
+    if src_w == dst_w and src_h == dst_h:
+        return bbox
+    sx = float(dst_w) / float(src_w)
+    sy = float(dst_h) / float(src_h)
+    x1, y1, x2, y2 = bbox
+    return (
+        int(round(x1 * sx)),
+        int(round(y1 * sy)),
+        int(round(x2 * sx)),
+        int(round(y2 * sy)),
+    )
+
+
 def _read_json(path: Path) -> dict[str, Any] | None:
     try:
         if not path.is_file():
@@ -104,6 +127,7 @@ class GlobalIDService:
             min_box_px=int(self.config.embed_min_box_px),
         )
         self._frame_providers: dict[str, Any] = {}
+        self._logged_full_res: set[str] = set()
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
         self._lock = threading.Lock()
@@ -183,7 +207,9 @@ class GlobalIDService:
         tracks = data.get("byte_tracks") or []
         if not isinstance(tracks, list):
             return []
-        frame = self._latest_frame(camera_id)
+        frame, used_full = self._latest_frame(camera_id)
+        src_w = _positive_int(data.get("frame_w"))
+        src_h = _positive_int(data.get("frame_h"))
         out: list[LocalObservation] = []
         active: set[int] = set()
         for row in tracks:
@@ -197,6 +223,13 @@ class GlobalIDService:
                 continue
             active.add(local_id)
             bbox = self._parse_bbox(row)
+            if bbox is not None and frame is not None and used_full:
+                fh, fw = int(frame.shape[0]), int(frame.shape[1])
+                if src_w and src_h:
+                    bbox = scale_xyxy(bbox, src_w, src_h, fw, fh)
+                elif fw >= 2560 and fh >= 1440:
+                    # Older metrics without frame_w/h: overlay was 1080p, crop is 4K.
+                    bbox = scale_xyxy(bbox, 1920, 1080, fw, fh)
             depth = row.get("depth_m")
             try:
                 depth_m = float(depth) if depth is not None else None
@@ -232,20 +265,34 @@ class GlobalIDService:
         self.cache.prune_missing(camera_id, active)
         return out
 
-    def _latest_frame(self, camera_id: str) -> np.ndarray | None:
+    def _latest_frame(self, camera_id: str) -> tuple[np.ndarray | None, bool]:
+        """Return ``(frame, used_full_res)``. Prefers the 4K sidecar when present."""
         provider = self._frame_providers.get(camera_id)
         if provider is None:
-            return None
+            return None, False
         try:
+            if hasattr(provider, "latest_full_bgr"):
+                full = provider.latest_full_bgr()
+                if full is not None and getattr(full, "size", 0):
+                    if camera_id not in self._logged_full_res:
+                        logger.info(
+                            "GlobalIDService: 4K Re-ID crops for %s (%sx%s)",
+                            camera_id,
+                            int(full.shape[1]),
+                            int(full.shape[0]),
+                        )
+                        self._logged_full_res.add(camera_id)
+                    return full, True
             if callable(provider):
-                return provider()
+                preview = provider()
+                return preview, False
             if hasattr(provider, "latest_bgr"):
-                return provider.latest_bgr()
+                return provider.latest_bgr(), False
             if hasattr(provider, "get_latest_bgr"):
-                return provider.get_latest_bgr()
+                return provider.get_latest_bgr(), False
         except Exception:
-            return None
-        return None
+            return None, False
+        return None, False
 
     @staticmethod
     def _parse_bbox(row: dict[str, Any]) -> tuple[int, int, int, int] | None:
@@ -262,6 +309,14 @@ class GlobalIDService:
             except (TypeError, ValueError):
                 return None
         return None
+
+
+def _positive_int(value: Any) -> int:
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return n if n > 0 else 0
 
 
 # Process-wide singleton for API routes
