@@ -1130,6 +1130,21 @@ def main() -> None:
         metavar="DEG",
         help="Camera vertical FOV in degrees for --person_distance (default 60).",
     )
+    p.add_argument(
+        "--camera_id",
+        type=str,
+        default="",
+        help="Logical camera id for cross-camera Global ID (e.g. camera_1 / camera_2).",
+    )
+    p.add_argument(
+        "--global_id_state_json",
+        type=Path,
+        default=None,
+        help=(
+            "Optional path to global_person_ids.json written by the API Global ID service. "
+            "When present, person labels use Global ID and inherit global weapon state."
+        ),
+    )
     add_bool_optional_arg(
         p,
         "--quiet_third_party_warnings",
@@ -2479,6 +2494,38 @@ def main() -> None:
             f"(H={person_height_m:.2f}m, VFOV={person_vfov_deg:.1f}°); labels like Person1 (5.2m).",
             flush=True,
         )
+    camera_id = str(getattr(args, "camera_id", "") or "").strip()
+    global_id_state_path = getattr(args, "global_id_state_json", None)
+    if global_id_state_path is not None:
+        global_id_state_path = Path(global_id_state_path).expanduser().resolve()
+    _global_id_cache: dict[str, Any] = {"ts": 0.0, "cameras": {}}
+    _global_id_poll_s = 0.35
+
+    def _load_global_id_map() -> dict[str, Any]:
+        """Poll Global ID service state for overlay (non-blocking, cached)."""
+        if global_id_state_path is None or not camera_id:
+            return {}
+        now_g = time()
+        if now_g - float(_global_id_cache.get("ts") or 0.0) < _global_id_poll_s:
+            cams = _global_id_cache.get("cameras") or {}
+            return cams.get(camera_id) or {} if isinstance(cams, dict) else {}
+        try:
+            if global_id_state_path.is_file():
+                raw = json.loads(global_id_state_path.read_text(encoding="utf-8"))
+                cams = raw.get("cameras") if isinstance(raw, dict) else {}
+                _global_id_cache["cameras"] = cams if isinstance(cams, dict) else {}
+            else:
+                _global_id_cache["cameras"] = {}
+        except Exception:
+            pass
+        _global_id_cache["ts"] = now_g
+        cams = _global_id_cache.get("cameras") or {}
+        return cams.get(camera_id) or {} if isinstance(cams, dict) else {}
+
+    if camera_id:
+        print(f"Camera id for Global ID association: {camera_id}", flush=True)
+    if global_id_state_path is not None:
+        print(f"Global ID state JSON: {global_id_state_path}", flush=True)
     _ghost_cfg_fm = max(0, int(getattr(args, "byte_track_firearm_ghost_frames", 0) or 0))
     _stable_miss = max(75, _ghost_cfg_fm * 6) if _ghost_cfg_fm > 0 else 75
     gun_stable = GunStableIdTracker(iou_threshold=0.15, max_missed_frames=int(_stable_miss))
@@ -3064,12 +3111,27 @@ def main() -> None:
                         dist_m = smooth_depth_m(person_distance_ema.get(_pk), raw_d)
                         if dist_m is not None:
                             person_distance_ema[_pk] = dist_m
+                    gmap = _load_global_id_map()
+                    ginfo = gmap.get(str(_pnum)) if isinstance(gmap, dict) else None
+                    gid = None
+                    global_weapon_active = False
+                    if isinstance(ginfo, dict):
+                        try:
+                            gid = int(ginfo.get("global_id"))
+                        except (TypeError, ValueError):
+                            gid = None
+                        # A weapon belongs to the synchronized global person. If either
+                        # camera sees it, every linked camera renders that person red.
+                        global_weapon_active = bool(ginfo.get("weapon_detected"))
+                        if global_weapon_active:
+                            armed = True
                     label_txt = prefix + _person_overlay_label(
                         _pnum,
                         distance_m=dist_m,
+                        global_id=gid,
                     )
                     item = (x1, y1, x2, y2, eff_prob, label_txt)
-                    if armed and vis_w:
+                    if armed and (vis_w or global_weapon_active):
                         armed_visible_list.append(item)
                     elif armed:
                         armed_concealed_list.append(item)
@@ -3293,11 +3355,35 @@ def main() -> None:
                         "persons_total": persons_total,
                         "prediction": prediction,
                         "mmwave_torso_score": None,
+                        "camera_id": camera_id or None,
                         "byte_tracks": [
                             {
                                 "track_id": int(row_track[ridx]),
                                 "display_id": int(person_tid_display.display_num(row_track[ridx])),
                                 "row": int(ridx),
+                                "bbox": [
+                                    int(rows[ridx][0]),
+                                    int(rows[ridx][1]),
+                                    int(rows[ridx][2]),
+                                    int(rows[ridx][3]),
+                                ],
+                                "depth_m": (
+                                    round(
+                                        float(
+                                            person_distance_ema.get(
+                                                _person_key_for_row(
+                                                    ridx, row_track, person_tid_display
+                                                ),
+                                                0.0,
+                                            )
+                                        ),
+                                        3,
+                                    )
+                                    if person_distance_on
+                                    and _person_key_for_row(ridx, row_track, person_tid_display)
+                                    in person_distance_ema
+                                    else None
+                                ),
                                 "threat": round(float(rows[ridx][4]), 4),
                                 "object_gun_conf": round(
                                     float(person_object_peak.get(

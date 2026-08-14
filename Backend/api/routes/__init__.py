@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from api.routes.config import build_config_router
 from api.routes.context import create_router_context
 from api.routes.devices import build_devices_router
+from api.routes.global_id import build_global_id_router
 from api.routes.info import build_info_router
 from api.routes.metrics import build_metrics_router
 from api.routes.playground import build_playground_router
@@ -35,6 +36,7 @@ def build_router(layer8_dir: Path) -> APIRouter:
         build_preview_router(ctx),
         build_recording_router(ctx),
         build_screenshot_router(ctx),
+        build_global_id_router(ctx),
     )
     for child in child_routers:
         router.routes.extend(child.routes)

@@ -243,6 +243,25 @@ def build_structured_weapon_args(
                 parts.extend(["--person_vertical_fov_deg", str(float(vf))])
             except (TypeError, ValueError):
                 pass
+
+    # Cross-camera Global ID / Re-ID (per-sensor camera_id + optional state JSON overlay).
+    cam_id = str(w.get("camera_id") or w.get("weapon_camera_id") or "").strip()
+    if cam_id:
+        parts.extend(["--camera_id", cam_id])
+    state_json = str(w.get("global_id_state_json") or "").strip()
+    overlay_flag = w.get("weapon_global_id_overlay", sent.get("global_id_overlay", 0))
+    try:
+        overlay_on = bool(int(overlay_flag)) if str(overlay_flag).strip() != "" else False
+    except (TypeError, ValueError):
+        overlay_on = str(overlay_flag).strip().lower() in {"1", "true", "yes", "on"}
+    if state_json:
+        sp = Path(state_json).expanduser()
+        abs_state = str(sp.resolve()) if sp.is_absolute() else str((sw / state_json).resolve())
+        parts.extend(["--global_id_state_json", abs_state])
+    elif overlay_on:
+        default_state = sw / "layer8_ui" / "configs" / "global_person_ids.json"
+        parts.extend(["--global_id_state_json", str(default_state.resolve())])
+
     if not no_gun:
         gpath = str(w.get("weapon_gun_yolo_model") or "").strip()
         if gpath:

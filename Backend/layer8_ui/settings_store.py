@@ -252,6 +252,37 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "vertical_fov_deg": 60.0,
         "note": "Beta: monocular PersonN (Xm) on overlay when enable=1.",
     },
+    "global_id": {
+        "enable": 0,
+        "embed_interval_s": 0.5,
+        "embed_min_box_px": 40,
+        "embed_device": "auto",
+        "embed_backend": "auto",
+        "embed_model": "osnet_x0_25",
+        "embed_weights": "trained_models/reid/osnet_x0_25_msmt17.pth",
+        "embed_onnx": "trained_models/reid/osnet_x0_25_msmt17.onnx",
+        "embed_engine": "trained_models/reid/osnet_x0_25_msmt17.engine",
+        "embed_input_h": 256,
+        "embed_input_w": 128,
+        "similarity_threshold": 0.72,
+        "soft_similarity_threshold": 0.58,
+        "max_embedding_history": 12,
+        "track_timeout_s": 8.0,
+        "weight_reid": 0.70,
+        "weight_depth": 0.20,
+        "weight_temporal": 0.10,
+        "baseline_m": 5.0,
+        "depth_tolerance_frac": 0.30,
+        "weapon_hold_s": 2.5,
+        "weapon_conf_decay": 0.15,
+        "camera_front": "camera_1",
+        "camera_back": "camera_2",
+        "state_json": "layer8_ui/configs/global_person_ids.json",
+        "note": (
+            "Cross-camera Person Re-ID + Global ID. Keep Front/Back infer independent; "
+            "association runs in the API Global ID service. Set enable=1 to activate."
+        ),
+    },
     "mmwave": {
         "frames": 0,
         "mmwave_only": 1,
@@ -374,7 +405,7 @@ def load(layer8_dir: Path) -> dict[str, Any]:
                 and isinstance(user.get("infineon"), dict)
             ):
                 merged["webcam"] = {**merged["webcam"], **user["infineon"]}
-            for key in ("thermal", "webcam", "multi_camera", "mmwave", "sentinel"):
+            for key in ("thermal", "webcam", "multi_camera", "mmwave", "sentinel", "global_id"):
                 if key in user and isinstance(user[key], dict):
                     merged[key] = {**merged[key], **user[key]}
             merged["thermal"] = _sanitize_thermal_block(

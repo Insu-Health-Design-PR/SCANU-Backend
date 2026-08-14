@@ -74,10 +74,21 @@ def _frame_to_bgr_for_jpeg(frame: Any) -> np.ndarray | None:
 
 
 def _webcam_structured_weapon_args(
-    w: dict[str, Any], sw: Path, *, sentinel: dict[str, Any] | None = None
+    w: dict[str, Any], sw: Path, *, sentinel: dict[str, Any] | None = None,
+    global_id: dict[str, Any] | None = None,
 ) -> str:
+    ww = dict(w)
+    if not str(ww.get("camera_id") or "").strip():
+        ww["camera_id"] = "camera_1"
+    g = global_id if isinstance(global_id, dict) else {}
+    if int(g.get("enable", 0) or 0):
+        ww["weapon_global_id_overlay"] = 1
+        if g.get("state_json"):
+            ww["global_id_state_json"] = str(g["state_json"])
+        if g.get("camera_front"):
+            ww["camera_id"] = str(g["camera_front"])
     return build_structured_weapon_args(
-        w, sw, include_overlay_classes=True, sentinel=sentinel
+        ww, sw, include_overlay_classes=True, sentinel=sentinel
     )
 
 
@@ -159,7 +170,10 @@ def build_webcam_command(settings: dict[str, Any], layer8_dir: Path) -> list[str
     if frames > 0:
         cmd.extend(["--frames", str(frames)])
     extra = _webcam_structured_weapon_args(
-        w, sw, sentinel=settings.get("sentinel") if isinstance(settings, dict) else None
+        w,
+        sw,
+        sentinel=settings.get("sentinel") if isinstance(settings, dict) else None,
+        global_id=settings.get("global_id") if isinstance(settings, dict) else None,
     ).strip()
     if extra:
         cmd.extend(["--weapon-extra-args", extra])

@@ -64,6 +64,7 @@ layer8_ui/configs/recordings/
 layer8_ui/configs/live_*.jpg
 layer8_ui/configs/live_*.jpeg
 layer8_ui/configs/live_*_threat_metrics.json
+layer8_ui/configs/global_person_ids.json
 artifacts/
 !artifacts/.gitkeep
 !artifacts/logs/
@@ -76,6 +77,17 @@ trained_models/outputs/
 runs/
 ultralytics/
 wandb/
+
+# --- Re-ID clustering eval dumps ---
+results/
+results_osnet/
+results_osnet_run.log
+*.log
+
+# --- Re-ID TensorRT engines (GPU-specific; rebuild with scripts/export_reid_osnet.py) ---
+trained_models/reid/*.engine
+trained_models/reid/*.onnx
+# Keep the .pth weights tracked if small enough; engines/onnx are local build artifacts.
 
 # --- Local backups ---
 *.bak

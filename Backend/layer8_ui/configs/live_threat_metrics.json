@@ -1,0 +1,18 @@
+{
+  "ts": 1786731439.0266695,
+  "frame": 82680,
+  "infer_fps": 25.33,
+  "unsafe_score": 0.0,
+  "unsafe_pct": 0.0,
+  "unsafe_threshold": 0.92,
+  "gun_detected": false,
+  "object_gun_peak": 0.0,
+  "weapon_gun_peak": 0.0,
+  "persons_with_gun": 0,
+  "persons_total": 0,
+  "prediction": "no_person",
+  "mmwave_torso_score": null,
+  "camera_id": "camera_1",
+  "byte_tracks": [],
+  "firearm_tracks": []
+}
