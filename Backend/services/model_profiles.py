@@ -37,6 +37,8 @@ MODEL_PROFILE_WEBCAM_KEYS: tuple[str, ...] = (
     "weapon_image_size",
     "weapon_gun_conf",
     "weapon_gun_imgsz",
+    "weapon_gun_batch",
+    "weapon_yolo_imgsz",
     "weapon_gun_min_box_px",
     "weapon_gun_max_vs_person_height",
     "weapon_gun_max_vs_person_area",

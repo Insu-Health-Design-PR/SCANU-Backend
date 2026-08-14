@@ -100,6 +100,12 @@ def build_structured_weapon_args(
     if not no_gun:
         _f("--gun_conf", "weapon_gun_conf", float)
         _f("--gun_imgsz", "weapon_gun_imgsz", int)
+        _f("--yolo_imgsz", "weapon_yolo_imgsz", int)
+        if w.get("weapon_gun_batch") is not None and str(w.get("weapon_gun_batch")).strip() != "":
+            if int(w.get("weapon_gun_batch", 1)):
+                parts.append("--gun_batch")
+            else:
+                parts.append("--no-gun_batch")
         _f("--gun_label_object_min", "weapon_gun_label_object_min", float)
         _f("--gun_label_weapon_min", "weapon_gun_label_weapon_min", float)
         _f("--gun_emit_min_conf", "weapon_gun_emit_min_conf", float)

@@ -58,6 +58,8 @@ INFER_CONFIG_KEYS = frozenset(
         "hand_boost_trigger",
         "hand_boost_shoot",
         "gun_imgsz",
+        "gun_batch",
+        "yolo_imgsz",
         "gun_thermal_debug",
         "gun_thermal",
         "gun_min_box_px",

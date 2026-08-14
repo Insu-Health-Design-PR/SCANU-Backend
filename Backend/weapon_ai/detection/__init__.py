@@ -1,5 +1,11 @@
 """Detection helper modules."""
 
+from weapon_ai.detection.gun_crops import (
+    PersonGunCrop,
+    collect_person_gun_crops,
+    mapped_gun_boxes_from_results,
+    predict_gun_on_crops,
+)
 from weapon_ai.detection.firearms import (
     clamp_box,
     dedupe_gun_candidates,
@@ -17,6 +23,10 @@ from weapon_ai.detection.firearms import (
 )
 
 __all__ = [
+    "PersonGunCrop",
+    "collect_person_gun_crops",
+    "mapped_gun_boxes_from_results",
+    "predict_gun_on_crops",
     "clamp_box",
     "dedupe_gun_candidates",
     "expand_person_roi_for_gun",

@@ -52,7 +52,6 @@ from weapon_ai.detection.firearms import (
     box_center as _box_center,
     dedupe_gun_candidates as _dedupe_gun_candidates,
     dedupe_person_rows as _dedupe_person_rows,
-    expand_person_roi_for_gun as _expand_person_roi_for_gun,
     firearm_class_display_from_detection as _firearm_class_display_from_detection,
     firearm_kind_for_detection as _firearm_kind_for_detection,
     gun_box_vs_person_scale_ok as _gun_box_vs_person_scale_ok,
@@ -71,6 +70,11 @@ from weapon_ai.detection.firearms import (
     suppress_gun_phone_conflicts as _suppress_gun_phone_conflicts,
     xyxy_center_inside_any_person as _xyxy_center_inside_any_person,
     yolo_keep_nonperson_detection as _yolo_keep_nonperson_detection,
+)
+from weapon_ai.detection.gun_crops import (
+    collect_person_gun_crops,
+    mapped_gun_boxes_from_results,
+    predict_gun_on_crops,
 )
 from weapon_ai.cli.config import (
     add_bool_optional_arg,
@@ -1018,6 +1022,22 @@ def main() -> None:
         default=640,
         help="Inference image size for firearm YOLO (larger can help tiny regions; slower).",
     )
+    add_bool_optional_arg(
+        p,
+        "--gun_batch",
+        default=True,
+        help_text=(
+            "Run firearm YOLO on all person crops in one batched predict() (default on). "
+            "Use --no-gun_batch to restore the old per-person loop."
+        ),
+    )
+    p.add_argument(
+        "--yolo_imgsz",
+        type=int,
+        default=0,
+        metavar="PX",
+        help="Person YOLO imgsz (0 = Ultralytics default, usually 640). Ignored by fixed-size .engine files.",
+    )
     p.add_argument(
         "--gun_thermal_debug",
         action="store_true",
@@ -1611,7 +1631,10 @@ def main() -> None:
             "(1.0 = off).",
             flush=True,
         )
-        print(f"Firearm YOLO imgsz={args.gun_imgsz}.")
+        print(
+            f"Firearm YOLO imgsz={args.gun_imgsz} "
+            f"batch={'on' if bool(getattr(args, 'gun_batch', True)) else 'off'}."
+        )
         if args.gun_thermal_debug:
             print(
                 "WARNING: --gun_thermal_debug — low conf, size filters off; boxes are often wrong on thermal."
@@ -1709,6 +1732,9 @@ def main() -> None:
                 verbose=False,
                 device=det_device,
             )
+            _person_imgsz = int(getattr(args, "yolo_imgsz", 0) or 0)
+            if _person_imgsz > 0:
+                pred_kw["imgsz"] = _person_imgsz
             if yolo_classes is not None:
                 pred_kw["classes"] = yolo_classes
             results = detector.predict(**pred_kw)
@@ -2135,53 +2161,47 @@ def main() -> None:
                     )
             elif rows:
                 person_rows: list[tuple[int, tuple[int, int, int, int]]] = list(all_person_rows)
+                person_by_ridx = {int(ridx): xyxy for ridx, xyxy in person_rows}
 
                 raw_gun: list[tuple[float, int, int, int, int, str, int, int]] = []
-                for ridx, (px1, py1, px2, py2) in person_rows:
-                    qx1, qy1, qx2, qy2 = _expand_person_roi_for_gun(
-                        px1, py1, px2, py2, w, h, args.gun_roi_pad_frac, int(args.gun_roi_pad_px)
-                    )
-                    pr, pb = qx2 - qx1, qy2 - qy1
-                    if pr < args.min_box_px or pb < args.min_box_px:
+                crops = collect_person_gun_crops(
+                    thermal_frame,
+                    person_rows,
+                    pad_frac=float(args.gun_roi_pad_frac),
+                    pad_px=int(args.gun_roi_pad_px),
+                    min_box_px=int(args.min_box_px),
+                )
+                gres_list = predict_gun_on_crops(
+                    gun_detector,
+                    crops,
+                    conf=infer_gun_conf,
+                    imgsz=int(args.gun_imgsz),
+                    device=det_device,
+                    batched=bool(getattr(args, "gun_batch", True)),
+                )
+                for crop, gres in zip(crops, gres_list):
+                    if gres is not None and hasattr(gres, "names") and gres.names:
+                        gnames = dict(gres.names)
+                for gc, gx1, gy1, gx2, gy2, gnm, owner, cid, pr, pb in mapped_gun_boxes_from_results(
+                    crops, gres_list, names=gnames or gun_model_names
+                ):
+                    if not _gun_detection_valid(
+                        gx1, gy1, gx2, gy2, w, h,
+                        args.gun_max_area_frac, args.gun_max_side_frac, args.gun_min_box_px,
+                        ref_w=pr, ref_h=pb,
+                    ):
                         continue
-                    pcrop = thermal_frame[qy1:qy2, qx1:qx2]
-                    if pcrop.size == 0:
+                    # Crop-mode: gun was found inside person ridx's padded ROI — keep that
+                    # owner. Reject neighbor bleed when pad overlaps another person.
+                    px1, py1, px2, py2 = person_by_ridx.get(int(owner), (0, 0, 0, 0))
+                    gcx, gcy = _box_center(gx1, gy1, gx2, gy2)
+                    if not (px1 <= gcx <= px2 and py1 <= gcy <= py2):
                         continue
-                    gres = gun_detector.predict(
-                        source=pcrop, conf=infer_gun_conf, imgsz=args.gun_imgsz, verbose=False, device=det_device
-                    )
-                    if gres and hasattr(gres[0], "names"):
-                        gnames = dict(gres[0].names)
-                    gboxes = gres[0].boxes if gres else None
-                    if gboxes is not None and len(gboxes) > 0:
-                        g_xyxy = gboxes.xyxy.cpu().numpy()
-                        g_cls = gboxes.cls.cpu().numpy().astype(int) if gboxes.cls is not None else None
-                        g_conf = gboxes.conf.cpu().numpy() if gboxes.conf is not None else None
-                        cw, ch = pcrop.shape[1], pcrop.shape[0]
-                        for j, grow in enumerate(g_xyxy):
-                            lx1, ly1, lx2, ly2 = _clamp_box(grow, cw, ch)
-                            gx1, gy1 = qx1 + lx1, qy1 + ly1
-                            gx2, gy2 = qx1 + lx2, qy1 + ly2
-                            cid = int(g_cls[j]) if g_cls is not None and j < len(g_cls) else 0
-                            gnm = gnames.get(cid, "gun")
-                            gc = float(g_conf[j]) if g_conf is not None and j < len(g_conf) else 0.0
-                            if not _gun_detection_valid(
-                                gx1, gy1, gx2, gy2, w, h,
-                                args.gun_max_area_frac, args.gun_max_side_frac, args.gun_min_box_px,
-                                ref_w=pr, ref_h=pb,
-                            ):
-                                continue
-                            # Crop-mode: gun was found inside person ridx's padded ROI — keep that
-                            # owner. Reject neighbor bleed when pad overlaps another person.
-                            owner = int(ridx)
-                            gcx, gcy = _box_center(gx1, gy1, gx2, gy2)
-                            if not (px1 <= gcx <= px2 and py1 <= gcy <= py2):
-                                continue
-                            if not _person_torso_ok(gx1, gy1, gx2, gy2, owner):
-                                continue
-                            if not _scale_ok_for_person(gx1, gy1, gx2, gy2, owner):
-                                continue
-                            raw_gun.append((gc, gx1, gy1, gx2, gy2, gnm, owner, cid))
+                    if not _person_torso_ok(gx1, gy1, gx2, gy2, owner):
+                        continue
+                    if not _scale_ok_for_person(gx1, gy1, gx2, gy2, owner):
+                        continue
+                    raw_gun.append((gc, gx1, gy1, gx2, gy2, gnm, owner, cid))
 
                 if args.gun_take_best:
                     raw_gun = _take_top_guns_per_person(

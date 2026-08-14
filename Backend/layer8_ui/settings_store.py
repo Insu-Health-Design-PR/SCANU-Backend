@@ -108,6 +108,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "weapon_image_size": 224,
         "weapon_gun_conf": 0.25,
         "weapon_gun_imgsz": 640,
+        "weapon_gun_batch": 1,
+        "weapon_yolo_imgsz": 640,
         "weapon_min_box_px": 24,
         "weapon_gun_min_box_px": 8,
         "weapon_gun_max_vs_person_height": 0.45,
@@ -186,6 +188,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "weapon_image_size": 224,
         "weapon_gun_conf": 0.25,
         "weapon_gun_imgsz": 640,
+        "weapon_gun_batch": 1,
+        "weapon_yolo_imgsz": 640,
         "weapon_min_box_px": 24,
         "weapon_gun_min_box_px": 8,
         "weapon_gun_max_vs_person_height": 0.45,
@@ -331,6 +335,7 @@ def _migrate_weapon_extra_args(block: dict[str, Any]) -> dict[str, Any]:
         "--gun_take_best": "weapon_gun_take_best",
         "--gun_full_frame": "weapon_gun_full_frame",
         "--gun_only": "weapon_gun_only",
+        "--gun_batch": "weapon_gun_batch",
     }
     try:
         tokens = shlex.split(extra)
