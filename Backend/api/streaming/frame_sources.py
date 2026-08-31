@@ -10,7 +10,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import cv2
 import numpy as np
 
 from legacy_layer8.adapters import ensure_legacy_imports
@@ -22,10 +21,11 @@ from layer8_ui.preview_media import mjpeg_placeholder_jpeg  # noqa: E402
 from layer8_ui.thermal_ipc_fanout import get_thermal_ipc_fanout  # noqa: E402
 from layer8_ui.webcam_ipc_fanout import get_webcam_ipc_fanout  # noqa: E402
 from layer8_ui.multi_camera_ipc_fanout import get_multi_camera_ipc_fanout  # noqa: E402
-from media.encode.jpeg import is_valid_jpeg
+from media.encode.jpeg import encode_preview_jpeg, is_valid_jpeg
 from media.ipc import LiveBgrFrameReader, LiveFrameReader
 
-_WEBCAM_LIVE_JPEG_Q = 85
+_WEBCAM_LIVE_JPEG_Q = 62
+_MJPEG_MAX_WIDTH = 960
 
 
 class IpcFrameSources:
@@ -36,6 +36,8 @@ class IpcFrameSources:
         self.multi_camera_bgr = LiveBgrFrameReader(Path("/dev/shm/scanu_multi_camera_live_bgr_frame.bin"))
         self.thermal_jpeg = LiveFrameReader(Path("/dev/shm/scanu_thermal_live_frame.bin"))
         self.thermal_bgr = LiveBgrFrameReader(Path("/dev/shm/scanu_thermal_live_bgr_frame.bin"))
+        # Avoid re-encoding the same IPC seq for every MJPEG client / poll.
+        self._jpeg_by_seq: dict[str, tuple[int, bytes]] = {}
 
     def latest_valid_jpeg(self, sensor: str) -> bytes | None:
         reader = self.thermal_jpeg if sensor == "thermal" else self.webcam_jpeg
@@ -43,23 +45,43 @@ class IpcFrameSources:
         return jpg if is_valid_jpeg(jpg) else None
 
     def _encode_bgr_jpeg(self, bgr: np.ndarray) -> bytes | None:
-        ok, buf = cv2.imencode(
-            ".jpg",
+        return encode_preview_jpeg(
             bgr,
-            [int(cv2.IMWRITE_JPEG_QUALITY), int(_WEBCAM_LIVE_JPEG_Q)],
+            quality=int(_WEBCAM_LIVE_JPEG_Q),
+            max_width=int(_MJPEG_MAX_WIDTH),
         )
-        return buf.tobytes() if ok else None
 
-    def _bgr_payload_to_jpeg(self, bgr_payload: tuple[bytes, int, int, int] | None) -> bytes | None:
+    def _cached_encode(self, key: str, seq: int | None, bgr: np.ndarray | None) -> bytes | None:
+        if bgr is None:
+            return None
+        if seq is not None and seq >= 0:
+            hit = self._jpeg_by_seq.get(key)
+            if hit is not None and hit[0] == int(seq):
+                return hit[1]
+        encoded = self._encode_bgr_jpeg(bgr)
+        if encoded and seq is not None and seq >= 0:
+            self._jpeg_by_seq[key] = (int(seq), encoded)
+        return encoded
+
+    def _bgr_payload_to_jpeg(
+        self,
+        key: str,
+        bgr_payload: tuple[tuple[bytes, int, int, int], int] | tuple[bytes, int, int, int] | None,
+    ) -> bytes | None:
         if bgr_payload is None:
             return None
-        raw, height, width, channels = bgr_payload
+        seq: int | None = None
+        if isinstance(bgr_payload, tuple) and len(bgr_payload) == 2:
+            inner, seq = bgr_payload
+            raw, height, width, channels = inner
+        else:
+            raw, height, width, channels = bgr_payload  # type: ignore[misc]
         expected = int(height) * int(width) * int(channels)
         if channels != 3 or len(raw) != expected:
             return None
         arr = np.frombuffer(raw, dtype=np.uint8)
         bgr = arr.reshape((int(height), int(width), 3))
-        return self._encode_bgr_jpeg(bgr)
+        return self._cached_encode(key, seq, bgr)
 
     def _bgr_payload_to_ndarray(
         self, bgr_payload: tuple[bytes, int, int, int] | None
@@ -125,23 +147,20 @@ class IpcFrameSources:
         allow_disk_fallback: bool,
     ) -> bytes | None:
         """
-        Same sources as ``WebcamJpegTrack.recv`` when the runner is on: JPEG IPC → BGR IPC → fanout.
-
-        Prefer the JPEG IPC slot (written atomically with each infer frame) to avoid re-encoding
-        large BGR buffers for MJPEG preview.
+        JPEG IPC (if present) → BGR IPC (downscaled preview JPEG, cached by seq) → fanout.
         """
         jpg = self.webcam_jpeg.read_latest()
         if jpg and is_valid_jpeg(jpg):
             return jpg
+        encoded = self._bgr_payload_to_jpeg("webcam", self.webcam_bgr.read_latest_with_seq())
+        if encoded:
+            return encoded
         fanout = get_webcam_ipc_fanout()
         bgr = fanout.refresh_from_ipc_sync()
         if bgr is not None:
-            encoded = self._encode_bgr_jpeg(bgr)
+            encoded = self._cached_encode("webcam_fanout", -1, bgr)
             if encoded:
                 return encoded
-        encoded = self._bgr_payload_to_jpeg(self.webcam_bgr.read_latest())
-        if encoded:
-            return encoded
         if allow_disk_fallback and rpath is not None and rpath.is_file():
             try:
                 disk = rpath.read_bytes()
@@ -160,15 +179,17 @@ class IpcFrameSources:
         jpg = self.multi_camera_jpeg.read_latest()
         if jpg and is_valid_jpeg(jpg):
             return jpg
+        encoded = self._bgr_payload_to_jpeg(
+            "multi_camera", self.multi_camera_bgr.read_latest_with_seq()
+        )
+        if encoded:
+            return encoded
         fanout = get_multi_camera_ipc_fanout()
         bgr = fanout.refresh_from_ipc_sync()
         if bgr is not None:
-            encoded = self._encode_bgr_jpeg(bgr)
+            encoded = self._cached_encode("multi_camera_fanout", -1, bgr)
             if encoded:
                 return encoded
-        encoded = self._bgr_payload_to_jpeg(self.multi_camera_bgr.read_latest())
-        if encoded:
-            return encoded
         if allow_disk_fallback and rpath is not None and rpath.is_file():
             try:
                 disk = rpath.read_bytes()
@@ -184,15 +205,15 @@ class IpcFrameSources:
         *,
         allow_disk_fallback: bool,
     ) -> bytes | None:
+        encoded = self._bgr_payload_to_jpeg("thermal", self.thermal_bgr.read_latest_with_seq())
+        if encoded:
+            return encoded
         fanout = get_thermal_ipc_fanout()
         bgr = fanout.refresh_from_ipc_sync()
         if bgr is not None:
-            encoded = self._encode_bgr_jpeg(bgr)
+            encoded = self._cached_encode("thermal_fanout", -1, bgr)
             if encoded:
                 return encoded
-        encoded = self._bgr_payload_to_jpeg(self.thermal_bgr.read_latest())
-        if encoded:
-            return encoded
         jpg = self.thermal_jpeg.read_latest()
         if jpg and is_valid_jpeg(jpg):
             return jpg

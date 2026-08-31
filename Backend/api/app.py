@@ -41,6 +41,13 @@ def _configure_uvicorn_logging() -> None:
     flt = _SuppressCancelledErrorFilter()
     for name in ("uvicorn.error", "uvicorn"):
         logging.getLogger(name).addFilter(flt)
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+            datefmt="%H:%M:%S",
+        )
+    logging.getLogger("scanu.sensors").setLevel(logging.INFO)
 
 
 @asynccontextmanager

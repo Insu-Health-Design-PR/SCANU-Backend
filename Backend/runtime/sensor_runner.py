@@ -8,6 +8,7 @@ and multi_camera — delegating command lines to ``runtime.*_runner`` modules.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shlex
 import signal
@@ -20,8 +21,11 @@ from typing import Any, Literal
 
 from layer8_ui.artifact_paths import software_root_from_settings
 from runtime import multi_camera_runner, thermal_runner, webcam_runner
+from runtime.camera_start_log import log_start_requested, log_start_result, start_message
 
 SensorId = Literal["thermal", "webcam", "mmwave", "multi_camera"]
+
+logger = logging.getLogger("scanu.sensors")
 
 _lock = threading.Lock()
 _STATE_PATH: Path | None = None
@@ -79,6 +83,14 @@ def _pid_alive(pid: int) -> bool:
         return False
     try:
         os.kill(pid, 0)
+    except OSError:
+        return False
+    try:
+        with open(f"/proc/{pid}/stat", encoding="utf-8") as fh:
+            # comm may contain spaces in parentheses; state is the field after ')'.
+            rest = fh.read().rsplit(")", 1)[-1].split()
+        if rest and rest[0] == "Z":
+            return False
     except OSError:
         return False
     return True
@@ -223,7 +235,21 @@ def start(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[
     path = _state_path(layer8_dir)
     cur = status(sensor, layer8_dir)
     if cur["running"]:
-        return {"ok": False, "error": f"{sensor} already running (pid {cur['pid']})"}
+        # Idempotent Run: already-live Front/Back is success, not a conflict.
+        if sensor in ("webcam", "multi_camera"):
+            out = {
+                "ok": True,
+                "pid": cur["pid"],
+                "already_running": True,
+                "message": f"{sensor} already running (pid {cur['pid']})",
+            }
+            log_start_result(sensor, settings, out, action="run")
+            return out
+        err = f"{sensor} already running (pid {cur['pid']})"
+        return {"ok": False, "error": err}
+
+    if sensor in ("webcam", "multi_camera"):
+        log_start_requested(sensor, settings, action="run")
 
     if sensor == "thermal" and thermal_runner.thermal_preview_only(settings):
         stop("thermal", layer8_dir)
@@ -247,7 +273,7 @@ def start(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[
             st = _read_state(path)
             st[sensor] = {"pid": 0, "preview_only": True, "log_file": ""}
             _write_state(path, st)
-        return {
+        out = {
             "ok": True,
             "pid": 0,
             "preview_only": True,
@@ -257,20 +283,40 @@ def start(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[
             "log_file": "",
             "message": "Front Camera blank preview (no models). Live view via shared V4L2 reader.",
         }
+        log_start_result(sensor, settings, out, action="run")
+        return out
 
     sw = software_root_from_settings(settings)
     try:
         cmd = build_command(sensor, settings, layer8_dir)
     except ValueError as e:
-        return {"ok": False, "error": str(e)}
+        out = {"ok": False, "error": str(e)}
+        if sensor in ("webcam", "multi_camera"):
+            log_start_result(sensor, settings, out, action="run")
+        return out
     cwd = command_cwd(sensor, settings)
     use_file_log = _sensor_file_logging()
     log_path: Path | None = (_logs_dir(layer8_dir) / f"{sensor}.log") if use_file_log else None
     if log_path is not None:
         _truncate_log_file(log_path)
+    if sensor in ("webcam", "multi_camera"):
+        from runtime.camera_start_log import capture_source_summary
+
+        info = capture_source_summary(sensor, settings)
+        logger.info(
+            "Starting %s subprocess — source=%s cwd=%s",
+            info["label"],
+            info["source"],
+            cwd,
+        )
+        logger.info("%s command: %s", info["label"], " ".join(cmd))
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONPATH"] = f"{sw.parent}:{sw}{os.pathsep}{env.get('PYTHONPATH', '')}"
+    env = _sensor_child_env(sensor, settings, env)
+    py = str((settings.get(sensor) or {}).get("python") or "").strip()
+    if py and cmd:
+        cmd = [py, *cmd[1:]]
 
     log_f = open(log_path, "ab", buffering=0) if log_path is not None else open(os.devnull, "ab", buffering=0)
     try:
@@ -284,7 +330,10 @@ def start(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[
         )
     except OSError as e:
         log_f.close()
-        return {"ok": False, "error": str(e)}
+        fail = {"ok": False, "error": str(e)}
+        if sensor in ("webcam", "multi_camera"):
+            log_start_result(sensor, settings, fail, action="run")
+        return fail
     log_f.close()
 
     with _lock:
@@ -310,10 +359,13 @@ def start(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[
                     "Check paths, camera index, GPU memory, and checkpoint. "
                     "Sensor logs: layer8_ui/logs/ (set LAYER8_SENSOR_LOG=0 to disable file logging)."
                 )
-            return {"ok": False, "error": err}
+            fail = {"ok": False, "error": err}
+            if sensor in ("webcam", "multi_camera"):
+                log_start_result(sensor, settings, fail, action="run")
+            return fail
         time.sleep(0.12)
 
-    return {
+    out = {
         "ok": True,
         "pid": proc.pid,
         "command": cmd,
@@ -321,8 +373,47 @@ def start(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[
         "software_root": str(sw),
         "log_file": str(log_path) if log_path is not None else "",
     }
+    if sensor in ("webcam", "multi_camera"):
+        log_start_result(sensor, settings, out, action="run")
+        out["message"] = start_message(sensor, settings, out)
+    return out
+
+
+def _sensor_child_env(
+    sensor: SensorId,
+    settings: dict[str, Any],
+    env: dict[str, str],
+) -> dict[str, str]:
+    """Per-camera process isolation: GPU index, MPS share, extra env.
+
+    Two conda envs are selected via ``python`` on the sensor block (argv[0]).
+    True dedicated GPUs need two physical devices and ``cuda_visible_devices``.
+    """
+    block = settings.get(sensor)
+    if not isinstance(block, dict):
+        return env
+    vis = block.get("cuda_visible_devices")
+    if vis is None:
+        vis = block.get("gpu_index")
+    if vis is not None and str(vis).strip() != "":
+        env["CUDA_VISIBLE_DEVICES"] = str(vis).strip()
+    pct = block.get("cuda_mps_active_thread_percentage")
+    if pct is not None and str(pct).strip() != "":
+        try:
+            env["CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"] = str(int(float(pct)))
+        except (TypeError, ValueError):
+            pass
+    extra = block.get("process_env")
+    if isinstance(extra, dict):
+        for k, v in extra.items():
+            if k and v is not None:
+                env[str(k)] = str(v)
+    return env
 
 
 def restart(sensor: SensorId, settings: dict[str, Any], layer8_dir: Path) -> dict[str, Any]:
     stop(sensor, layer8_dir)
-    return start(sensor, settings, layer8_dir)
+    out = start(sensor, settings, layer8_dir)
+    if sensor in ("webcam", "multi_camera") and out.get("ok") and "message" not in out:
+        out["message"] = start_message(sensor, settings, out)
+    return out

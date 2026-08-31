@@ -22,16 +22,18 @@ def build_info_router(ctx: RouterContext) -> APIRouter:
                 "→ weapon_ai.infer_thermal_objects (--thermal_v4l2, inferno colormap + overlay IPC)."
             ),
             "webcam_tab": (
-                "Front Camera · Multi Camera: runtime.webcam_runner → runtime.webcam_layer8_runner "
-                "→ weapon_ai.infer_objects (multi-class)."
+                "Front Cam: runtime.webcam_runner → runtime.webcam_layer8_runner "
+                "→ weapon_ai.infer_objects (local USB or Jetson IP RTSP/HTTP). "
+                "API: /api/front_camera/* (alias /api/ai_camera/*)."
             ),
             "model_tab": (
-                "Front Camera model settings share the webcam sensor block "
+                "Front Cam model settings share the webcam sensor block "
                 "(infer_objects / multi-class overlays)."
             ),
             "multi_camera_tab": (
-                "Back Camera: runtime.multi_camera_runner → runtime.multi_camera_layer8_runner "
-                "→ weapon_ai.infer_objects (local USB or Jetson IP RTSP/HTTP source)."
+                "Back Cam: runtime.multi_camera_runner → runtime.multi_camera_layer8_runner "
+                "→ weapon_ai.infer_objects (local USB or Jetson IP RTSP/HTTP source). "
+                "API: /api/back_camera/* (alias /api/multi_camera/*)."
             ),
             "mmwave_tab": "runtime.sensor_runner (mmWave CLI)",
         }

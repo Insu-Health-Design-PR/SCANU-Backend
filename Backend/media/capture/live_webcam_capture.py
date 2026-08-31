@@ -28,10 +28,22 @@ class LiveWebcamCapture:
         self._thread.start()
 
     def _run(self) -> None:
+        misses = 0
         while not self._stop.is_set():
-            ok, frame = self._cap.read()
-            if not ok or frame is None:
+            try:
+                ok, frame = self._cap.read()
+            except cv2.error:
+                # HDMI UVC MJPEG often yields empty JPEG buffers; OpenCV 5 asserts in imdecode.
+                misses += 1
+                if misses >= 30:
+                    self._stop.wait(0.02)
                 continue
+            if not ok or frame is None or getattr(frame, "size", 0) == 0:
+                misses += 1
+                if misses >= 30:
+                    self._stop.wait(0.02)
+                continue
+            misses = 0
             if not frame.flags["C_CONTIGUOUS"]:
                 frame = np.ascontiguousarray(frame)
             with self._lock:

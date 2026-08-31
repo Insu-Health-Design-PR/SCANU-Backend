@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sync Out Review — Camera A / B</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #171a22;
+      --border: #2a3040;
+      --text: #e8eaef;
+      --muted: #9aa3b5;
+      --accent: #4c8dff;
+      --danger: #e85d5d;
+      --ok: #3ecf8e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+    aside {
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      overflow: auto;
+      padding: 12px;
+    }
+    main { display: flex; flex-direction: column; min-width: 0; }
+    h1 { font-size: 16px; margin: 0 0 8px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .run {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      background: #12151c;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .run.active { border-color: var(--accent); background: #141c2e; }
+    .run.ready .badge { color: var(--ok); }
+    .run.pending .badge { color: var(--danger); }
+    .badge { font-size: 11px; font-weight: 600; }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    button, input[type=range] { accent-color: var(--accent); }
+    button {
+      background: #1e2636;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .videos {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 8px;
+      min-height: 0;
+    }
+    .pane {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .pane h2 {
+      margin: 0;
+      padding: 8px 10px;
+      font-size: 13px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    video { width: 100%; flex: 1; min-height: 0; background: #000; object-fit: contain; }
+    .video-wrap { position: relative; flex: 1; min-height: 0; display: flex; }
+    .video-wrap video { width: 100%; height: 100%; }
+    .video-wrap canvas.overlay {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 2;
+    }
+    .video-wrap.editing canvas.overlay { pointer-events: auto; cursor: crosshair; }
+    .manual-panel {
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .manual-panel label { display: block; font-size: 11px; color: var(--muted); margin: 6px 0 2px; }
+    .manual-panel input, .manual-panel select {
+      width: 100%; padding: 4px 6px; border-radius: 4px;
+      border: 1px solid var(--border); background: #12151c; color: var(--text);
+    }
+    .manual-panel .row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .manual-panel button { width: 100%; margin-top: 6px; }
+    .manual-panel .active-cam { border-color: var(--accent); color: var(--accent); }
+    .meta {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      max-height: 120px;
+      overflow: auto;
+    }
+    #timeLabel { min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+    #scrub { flex: 1; min-width: 120px; }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>Sync runs</h1>
+    <p class="muted" id="outPath"></p>
+    <div id="runList"></div>
+    <div class="manual-panel" id="manualPanel">
+      <h1>Manual boxes</h1>
+      <p class="muted">Draw keyframes; boxes interpolate across all frames.</p>
+      <button id="boxModeBtn">Box mode: OFF</button>
+      <div class="row">
+        <button id="editCamA" class="active-cam">Edit Cam A</button>
+        <button id="editCamB">Edit Cam B</button>
+      </div>
+      <label>Box type</label>
+      <select id="boxType">
+        <option value="person">Person</option>
+        <option value="gun">Gun</option>
+      </select>
+      <div class="row">
+        <div>
+          <label>Person ID</label>
+          <input id="personId" type="number" value="1" min="1" />
+        </div>
+        <div>
+          <label>Global ID</label>
+          <input id="globalId" type="number" placeholder="optional" />
+        </div>
+      </div>
+      <label><input id="armedChk" type="checkbox" /> Armed (red person)</label>
+      <label>Gun label</label>
+      <input id="gunLabel" value="gun" />
+      <button id="saveKeyframeBtn" class="primary">Save keyframe (both cams)</button>
+      <button id="saveJsonBtn">Save JSON</button>
+      <button id="renderManualBtn">Render demo (manual-only)</button>
+      <p class="muted" id="manualStatus">Frame — · keyframes —</p>
+    </div>
+  </aside>
+  <main>
+    <div class="toolbar">
+      <button class="primary" id="playBtn">Play</button>
+      <button id="resetBtn">Reset</button>
+      <span id="timeLabel">0:00</span>
+      <input id="scrub" type="range" min="0" max="1000" value="0" step="1" />
+      <span class="muted" id="runTitle">Select a run</span>
+    </div>
+    <div class="videos">
+      <div class="pane" id="paneA">
+        <h2>Camera A — Front</h2>
+        <div class="video-wrap" id="wrapA">
+          <video id="vidA" muted playsinline preload="auto" controls></video>
+          <canvas class="overlay" id="canvasA"></canvas>
+        </div>
+      </div>
+      <div class="pane" id="paneB">
+        <h2>Camera B — Back</h2>
+        <div class="video-wrap" id="wrapB">
+          <video id="vidB" muted playsinline preload="auto" controls></video>
+          <canvas class="overlay" id="canvasB"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </main>
+  <script>
+    const vidA = document.getElementById("vidA");
+    const vidB = document.getElementById("vidB");
+    const playBtn = document.getElementById("playBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const scrub = document.getElementById("scrub");
+    const timeLabel = document.getElementById("timeLabel");
+    const runList = document.getElementById("runList");
+    const meta = document.getElementById("meta");
+    const runTitle = document.getElementById("runTitle");
+    const outPath = document.getElementById("outPath");
+
+    let currentRun = null;
+    let duration = 1;
+    let syncing = false;
+
+    function fmt(t) {
+      const m = Math.floor(t / 60);
+      const s = t - m * 60;
+      return `${m}:${s.toFixed(1).padStart(m > 0 ? 4 : 3, "0")}`;
+    }
+
+    function master() {
+      return Math.abs(vidA.currentTime - vidB.currentTime) > Math.abs(vidB.currentTime - vidA.currentTime) ? vidA : vidB;
+    }
+
+    function syncFrom(src) {
+      if (syncing) return;
+      syncing = true;
+      const other = src === vidA ? vidB : vidA;
+      if (Math.abs(other.currentTime - src.currentTime) > 0.08) {
+        other.currentTime = src.currentTime;
+      }
+      scrub.value = String(Math.round((src.currentTime / duration) * 1000));
+      timeLabel.textContent = fmt(src.currentTime);
+      syncing = false;
+    }
+
+    function seekFrac(frac) {
+      const t = Math.max(0, Math.min(duration, frac * duration));
+      vidA.currentTime = t;
+      vidB.currentTime = t;
+      scrub.value = String(Math.round(frac * 1000));
+      timeLabel.textContent = fmt(t);
+    }
+
+    let summaryCache = null;
+
+    function setMetaReady() {
+      if (!summaryCache) {
+        meta.textContent = "Preview ready — press Play or use the video controls.";
+        return;
+      }
+      const s = summaryCache;
+      const armed = (s.persons || []).filter(p => p.weapon_detected).length;
+          meta.textContent = `Preview ready · Frames ${s.frames_written} · ${s.elapsed_s}s · global ${(s.persons||[]).length} · armed ${armed} · scrub to ~12–18s for action`;
+    }
+
+    async function loadRun(run) {
+      if (!run.ready) {
+        meta.textContent = "Outputs not ready yet — run batch_sync_out.py for this clip.";
+        vidA.removeAttribute("src");
+        vidB.removeAttribute("src");
+        return;
+      }
+      currentRun = run.id;
+      runTitle.textContent = run.id;
+      summaryCache = null;
+      meta.textContent = "Preparing browser preview (H.264 transcode on first load — may take ~10s per camera)…";
+      const bust = run.mtime || Date.now();
+      const urlA = `/media/${encodeURIComponent(run.id)}/a?v=${bust}`;
+      const urlB = `/media/${encodeURIComponent(run.id)}/b?v=${bust}`;
+      vidA.onerror = () => {
+        meta.textContent = "Camera A failed to load. Check ffmpeg is installed and retry.";
+      };
+      vidB.onerror = () => {
+        meta.textContent = "Camera B failed to load. Check ffmpeg is installed and retry.";
+      };
+      vidA.src = urlA;
+      vidB.src = urlB;
+      vidA.load();
+      vidB.load();
+      playBtn.textContent = "Play";
+      try {
+        const res = await fetch(`/api/runs/${encodeURIComponent(run.id)}/summary`);
+        if (res.ok) summaryCache = await res.json();
+      } catch {
+        /* ignore */
+      }
+      if (run.ready) {
+        await loadManualDoc(run.id);
+        setTimeout(resizeAllCanvas, 300);
+      }
+    }
+
+    function bindRunButtons(runs) {
+      runList.innerHTML = "";
+      runs.forEach(run => {
+        const btn = document.createElement("button");
+        btn.className = "run " + (run.ready ? "ready" : "pending");
+        btn.innerHTML = `<strong>${run.id}</strong><br><span class="badge">${run.ready ? "ready" : "pending"}</span>` +
+          (run.ready ? ` · ${run.frames || "?"} fr · armed ${run.armed_count ?? "?"}` : "");
+        btn.onclick = () => {
+          document.querySelectorAll(".run").forEach(el => el.classList.remove("active"));
+          btn.classList.add("active");
+          loadRun(run);
+        };
+        runList.appendChild(btn);
+      });
+      const firstReady = runs.find(r => r.ready);
+      if (firstReady) {
+        runList.firstChild?.classList.add("active");
+        loadRun(firstReady);
+      }
+    }
+
+    async function refresh() {
+      const res = await fetch("/api/runs");
+      const data = await res.json();
+      outPath.textContent = data.sync_out;
+      bindRunButtons(data.runs || []);
+    }
+
+    vidA.addEventListener("loadedmetadata", () => {
+      duration = Math.max(vidA.duration || 0, vidB.duration || 0, 1);
+      if (vidA.readyState >= 1 && vidB.readyState >= 1) setMetaReady();
+    });
+    vidB.addEventListener("loadedmetadata", () => {
+      duration = Math.max(vidA.duration || 0, vidB.duration || 0, 1);
+      if (vidA.readyState >= 1 && vidB.readyState >= 1) setMetaReady();
+    });
+    vidA.addEventListener("timeupdate", () => syncFrom(vidA));
+    vidB.addEventListener("timeupdate", () => syncFrom(vidB));
+
+    playBtn.onclick = () => {
+      if (vidA.paused) {
+        Promise.all([vidA.play(), vidB.play()]).catch(() => {});
+        playBtn.textContent = "Pause";
+      } else {
+        vidA.pause();
+        vidB.pause();
+        playBtn.textContent = "Play";
+      }
+    };
+    resetBtn.onclick = () => { seekFrac(0); vidA.pause(); vidB.pause(); playBtn.textContent = "Play"; };
+    scrub.oninput = () => seekFrac(Number(scrub.value) / 1000);
+
+    refresh();
+    setInterval(refresh, 15000);
+
+    // --- Manual boxing ---
+    const canvasA = document.getElementById("canvasA");
+    const canvasB = document.getElementById("canvasB");
+    const wrapA = document.getElementById("wrapA");
+    const wrapB = document.getElementById("wrapB");
+    const boxModeBtn = document.getElementById("boxModeBtn");
+    const editCamA = document.getElementById("editCamA");
+    const editCamB = document.getElementById("editCamB");
+    const manualStatus = document.getElementById("manualStatus");
+    const saveKeyframeBtn = document.getElementById("saveKeyframeBtn");
+    const saveJsonBtn = document.getElementById("saveJsonBtn");
+    const renderManualBtn = document.getElementById("renderManualBtn");
+
+    let manualDoc = null;
+    let boxMode = false;
+    let editCam = "camera_1";
+    let draftBoxes = { camera_1: { persons: [], weapons: [] }, camera_2: { persons: [], weapons: [] } };
+    let drag = null;
+
+    function camMeta(side) {
+      return side === "camera_1"
+        ? { side, video: vidA, canvas: canvasA, wrap: wrapA, refKey: manualDoc?.camera_front || "camera_1" }
+        : { side, video: vidB, canvas: canvasB, wrap: wrapB, refKey: manualDoc?.camera_back || "camera_2" };
+    }
+
+    function activeMeta() { return camMeta(editCam); }
+
+    function frameIndex() {
+      const fps = (summaryCache?.frames_written && duration > 0)
+        ? summaryCache.frames_written / duration : 30;
+      return Math.max(0, Math.round(master().currentTime * fps));
+    }
+
+    function refSize(camKey) {
+      const ref = manualDoc?.ref?.[camKey] || {};
+      return { w: ref.width || 1920, h: ref.height || 1080 };
+    }
+
+    function resizeCanvas(meta) {
+      const rect = meta.video.getBoundingClientRect();
+      meta.canvas.width = Math.max(1, Math.round(rect.width));
+      meta.canvas.height = Math.max(1, Math.round(rect.height));
+    }
+
+    function resizeAllCanvas() {
+      resizeCanvas(camMeta("camera_1"));
+      resizeCanvas(camMeta("camera_2"));
+      redrawCanvas("camera_1");
+      redrawCanvas("camera_2");
+    }
+
+    function toNative(meta, x, y) {
+      const { w, h } = refSize(meta.refKey);
+      const cw = meta.canvas.width, ch = meta.canvas.height;
+      return [Math.round(x / cw * w), Math.round(y / ch * h)];
+    }
+
+    function toCanvas(meta, x, y) {
+      const { w, h } = refSize(meta.refKey);
+      const cw = meta.canvas.width, ch = meta.canvas.height;
+      return [x / w * cw, y / h * ch];
+    }
+
+    function redrawCanvas(camKey) {
+      const meta = camMeta(camKey);
+      resizeCanvas(meta);
+      const ctx = meta.canvas.getContext("2d");
+      ctx.clearRect(0, 0, meta.canvas.width, meta.canvas.height);
+      const boxes = draftBoxes[camKey] || { persons: [], weapons: [] };
+      for (const p of boxes.persons) {
+        const [x1,y1] = toCanvas(meta, p.x1, p.y1);
+        const [x2,y2] = toCanvas(meta, p.x2, p.y2);
+        ctx.strokeStyle = p.armed ? "#ff3333" : "#33ff66";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.font = "12px sans-serif";
+        ctx.fillText(`P${p.person_id}${p.armed ? " ARMED" : ""}`, x1 + 2, y1 + 14);
+      }
+      for (const g of boxes.weapons) {
+        const [x1,y1] = toCanvas(meta, g.x1, g.y1);
+        const [x2,y2] = toCanvas(meta, g.x2, g.y2);
+        ctx.strokeStyle = "#ff3333";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.fillStyle = "#ff3333";
+        ctx.fillText(g.label || "gun", x1 + 2, y1 + 14);
+      }
+    }
+
+    async function loadManualDoc(runId) {
+      const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/manual-annotations`);
+      manualDoc = await res.json();
+      draftBoxes = { camera_1: { persons: [], weapons: [] }, camera_2: { persons: [], weapons: [] } };
+      updateManualStatus();
+    }
+
+    function keyframeCount() {
+      if (!manualDoc?.keyframes) return 0;
+      let n = 0;
+      for (const cam of Object.values(manualDoc.keyframes)) n += Object.keys(cam || {}).length;
+      return n;
+    }
+
+    function updateManualStatus() {
+      manualStatus.textContent = `Frame ${frameIndex()} · keyframes ${keyframeCount()} · editing ${editCam}`;
+    }
+
+    function loadDraftFromSaved() {
+      if (!manualDoc) return;
+      const fi = String(frameIndex());
+      for (const cam of ["camera_1", "camera_2"]) {
+        const raw = manualDoc.keyframes?.[cam]?.[fi];
+        draftBoxes[cam] = raw
+          ? { persons: [...(raw.persons || [])], weapons: [...(raw.weapons || [])] }
+          : { persons: [], weapons: [] };
+      }
+      redrawCanvas("camera_1");
+      redrawCanvas("camera_2");
+    }
+
+    boxModeBtn.onclick = () => {
+      boxMode = !boxMode;
+      boxModeBtn.textContent = `Box mode: ${boxMode ? "ON" : "OFF"}`;
+      wrapA.classList.toggle("editing", boxMode && editCam === "camera_1");
+      wrapB.classList.toggle("editing", boxMode && editCam === "camera_2");
+      if (boxMode) loadDraftFromSaved();
+    };
+
+    function setEditCam(cam) {
+      editCam = cam;
+      editCamA.classList.toggle("active-cam", cam === "camera_1");
+      editCamB.classList.toggle("active-cam", cam === "camera_2");
+      wrapA.classList.toggle("editing", boxMode && cam === "camera_1");
+      wrapB.classList.toggle("editing", boxMode && cam === "camera_2");
+      updateManualStatus();
+    }
+    editCamA.onclick = () => setEditCam("camera_1");
+    editCamB.onclick = () => setEditCam("camera_2");
+
+    function attachDraw(meta) {
+      meta.canvas.onmousedown = (ev) => {
+        if (!boxMode || editCam !== meta.side) return;
+        const r = meta.canvas.getBoundingClientRect();
+        drag = { meta, x0: ev.clientX - r.left, y0: ev.clientY - r.top, x1: ev.clientX - r.left, y1: ev.clientY - r.top };
+      };
+      meta.canvas.onmousemove = (ev) => {
+        if (!drag || drag.meta !== meta) return;
+        const r = meta.canvas.getBoundingClientRect();
+        drag.x1 = ev.clientX - r.left;
+        drag.y1 = ev.clientY - r.top;
+        redrawCanvas(meta.side);
+        const ctx = meta.canvas.getContext("2d");
+        ctx.strokeStyle = "#4c8dff";
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(drag.x0, drag.y0, drag.x1 - drag.x0, drag.y1 - drag.y0);
+        ctx.setLineDash([]);
+      };
+      meta.canvas.onmouseup = () => {
+        if (!drag || drag.meta !== meta) return;
+        const x1c = Math.min(drag.x0, drag.x1), y1c = Math.min(drag.y0, drag.y1);
+        const x2c = Math.max(drag.x0, drag.x1), y2c = Math.max(drag.y0, drag.y1);
+        drag = null;
+        if (Math.abs(x2c - x1c) < 8 || Math.abs(y2c - y1c) < 8) return;
+        const [nx1, ny1] = toNative(meta, x1c, y1c);
+        const [nx2, ny2] = toNative(meta, x2c, y2c);
+        const box = { x1: nx1, y1: ny1, x2: nx2, y2: ny2 };
+        const type = document.getElementById("boxType").value;
+        const pid = Number(document.getElementById("personId").value) || 1;
+        if (type === "person") {
+          const gidRaw = document.getElementById("globalId").value;
+          draftBoxes[meta.side].persons.push({
+            ...box,
+            person_id: pid,
+            global_id: gidRaw ? Number(gidRaw) : null,
+            armed: document.getElementById("armedChk").checked,
+          });
+        } else {
+          draftBoxes[meta.side].weapons.push({
+            ...box,
+            label: document.getElementById("gunLabel").value || "gun",
+            person_id: pid,
+          });
+        }
+        redrawCanvas(meta.side);
+      };
+    }
+    attachDraw(camMeta("camera_1"));
+    attachDraw(camMeta("camera_2"));
+
+    saveKeyframeBtn.onclick = () => {
+      if (!manualDoc || !currentRun) return;
+      const fi = String(frameIndex());
+      if (!manualDoc.keyframes) manualDoc.keyframes = {};
+      for (const cam of ["camera_1", "camera_2"]) {
+        if (!manualDoc.keyframes[cam]) manualDoc.keyframes[cam] = {};
+        manualDoc.keyframes[cam][fi] = JSON.parse(JSON.stringify(draftBoxes[cam]));
+      }
+      updateManualStatus();
+      manualStatus.textContent += " · keyframe saved";
+    };
+
+    saveJsonBtn.onclick = async () => {
+      if (!manualDoc || !currentRun) return;
+      await fetch(`/api/runs/${encodeURIComponent(currentRun)}/manual-annotations`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: manualDoc }),
+      });
+      manualStatus.textContent = "Saved manual_annotations.json";
+    };
+
+    renderManualBtn.onclick = async () => {
+      if (!currentRun) return;
+      renderManualBtn.disabled = true;
+      renderManualBtn.textContent = "Rendering…";
+      try {
+        if (manualDoc) {
+          await fetch(`/api/runs/${encodeURIComponent(currentRun)}/manual-annotations`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: manualDoc }),
+          });
+        }
+        const res = await fetch(`/api/runs/${encodeURIComponent(currentRun)}/render-manual`, { method: "POST" });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.detail || "render failed");
+        manualStatus.textContent = "Render complete — reload clip";
+        if (currentRun) loadRun({ id: currentRun, ready: true });
+      } catch (e) {
+        manualStatus.textContent = String(e.message || e);
+      } finally {
+        renderManualBtn.disabled = false;
+        renderManualBtn.textContent = "Render demo (manual-only)";
+      }
+    };
+
+    window.addEventListener("resize", resizeAllCanvas);
+    vidA.addEventListener("timeupdate", () => { updateManualStatus(); if (boxMode) loadDraftFromSaved(); });
+    vidB.addEventListener("timeupdate", () => updateManualStatus());
+  </script>
+</body>
+</html>

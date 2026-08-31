@@ -96,6 +96,15 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "webcam_detect_retry_s": 8.0,
         "webcam_width": 3840,
         "webcam_height": 2160,
+        "source_mode": "local",
+        "jetson_ip": "",
+        "jetson_stream_port": "8554",
+        "jetson_stream_path": "/stream",
+        "jetson_stream_scheme": "rtsp",
+        "jetson_stream_url": "",
+        "capture_rotate": 0,
+        "capture_flip_h": 0,
+        "capture_flip_v": 0,
         "metrics_json": "layer8_ui/artifacts/live_threat_metrics.json",
         "active_model_profile_id": "",
         "weapon_checkpoint": "trained_models/gun_detection/gun_sohas_7class_phone_black_mix_v1.pt",
@@ -157,6 +166,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "weapon_assoc_min_speed": 1.5,
         "weapon_extra_args": "",
         "verbose": False,
+        "python": "",
+        "cuda_visible_devices": "0",
+        "cuda_mps_active_thread_percentage": 50,
     },
     "multi_camera": {
         "frames": 0,
@@ -176,6 +188,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "jetson_stream_path": "/stream",
         "jetson_stream_scheme": "rtsp",
         "jetson_stream_url": "",
+        "capture_rotate": 0,
+        "capture_flip_h": 0,
+        "capture_flip_v": 0,
         "metrics_json": "layer8_ui/artifacts/live_multi_camera_threat_metrics.json",
         "active_model_profile_id": "",
         "weapon_checkpoint": "trained_models/gun_detection/gun_sohas_6class.pt",
@@ -248,6 +263,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "weapon_assoc_min_speed": 1.5,
         "weapon_extra_args": "",
         "verbose": False,
+        "python": "",
+        "cuda_visible_devices": "0",
+        "cuda_mps_active_thread_percentage": 50,
     },
     "sentinel": {
         "enable": 1,
@@ -287,10 +305,22 @@ DEFAULT_SETTINGS: dict[str, Any] = {
             "association runs in the API Global ID service. Set enable=1 to activate."
         ),
     },
+    "jetson_back": {
+        "host": "",
+        "user": "insu",
+        "port": 22,
+        "identity_file": "layer8_ui/secrets/jetson_back.pem",
+        "connect_timeout_s": 10.0,
+        "services": {
+            "mediamtx": "mediamtx.service",
+            "cam_rtsp": "cam-rtsp.service",
+        },
+        "cam_rtsp_log": "/home/insu/cam_publish.log",
+    },
     "mmwave": {
         "frames": 0,
         "mmwave_only": 1,
-        "pipeline": "lab_replay",
+        "pipeline": "dual_replay",
         "session": "",
         "front_session": "",
         "back_session": "",
@@ -312,6 +342,29 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "no_frame_timeout_s": 30.0,
         "verbose": False,
         "extra_args": "",
+    },
+    "mmwave_root": {
+        "path": "../Mmwave",
+        "config_path": "configs/server_local.json",
+        "sensor_distance_m": 5.0,
+        "radar_a_usb_location": "",
+        "radar_b_usb_location": "",
+        "calibration_session_a": "",
+        "calibration_session_b": "",
+    },
+    "mmwave_fusion": {
+        "enable": 0,
+        "metrics_path": "layer8_ui/artifacts/live_mmwave_metrics.json",
+        "depth_gate_m": 0.6,
+        "lateral_gate_m": 0.5,
+        "corridor_half_width_m": 1.5,
+        "sensor_distance_m": 5.0,
+        "mount_lateral_m": 0.3,
+        "front_mount_lateral_m": 0.3,
+        "back_mount_lateral_m": 0.3,
+        "mount_height_m": 0.0,
+        "webcam_side": "front",
+        "multi_camera_side": "back",
     },
 }
 
@@ -410,7 +463,7 @@ def load(layer8_dir: Path) -> dict[str, Any]:
                 and isinstance(user.get("infineon"), dict)
             ):
                 merged["webcam"] = {**merged["webcam"], **user["infineon"]}
-            for key in ("thermal", "webcam", "multi_camera", "mmwave", "sentinel", "global_id"):
+            for key in ("thermal", "webcam", "multi_camera", "mmwave", "sentinel", "global_id", "jetson_back", "mmwave_root", "mmwave_fusion"):
                 if key in user and isinstance(user[key], dict):
                     merged[key] = {**merged[key], **user[key]}
             merged["thermal"] = _sanitize_thermal_block(

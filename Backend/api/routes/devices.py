@@ -48,6 +48,19 @@ def _probe_video_source(source: str, timeout_s: float | None = None) -> dict[str
     if not is_network and opened_as.startswith("/dev/video"):
         if not os.path.exists(opened_as):
             return {"ok": False, "error": f"{opened_as} does not exist", "source": opened_as}
+        try:
+            from layer8_ui.webcam_device import is_video_capture_node
+
+            idx_m = re.search(r"/dev/video(\d+)$", opened_as)
+            if idx_m and not is_video_capture_node(int(idx_m.group(1))):
+                return {
+                    "ok": False,
+                    "error": f"{opened_as} is a metadata node (not Video Capture)",
+                    "source": opened_as,
+                    "metadata": True,
+                }
+        except Exception:
+            pass
 
     result: dict[str, Any] = {}
 
@@ -92,6 +105,28 @@ def _probe_video_source(source: str, timeout_s: float | None = None) -> dict[str
                 h = int(frame.shape[0])
                 w = int(frame.shape[1])
             if not ok or frame is None:
+                # HDMI H.264 capture nodes often fail OpenCV read but work with FFmpeg CUVID.
+                try:
+                    from layer8_ui.webcam_device import is_video_capture_node
+
+                    idx_m = re.search(r"/dev/video(\d+)$", opened_as)
+                    if idx_m and is_video_capture_node(int(idx_m.group(1))):
+                        result.update(
+                            {
+                                "ok": True,
+                                "message": "OK (capture node; H.264 — OpenCV may not decode; FFmpeg CUVID will)",
+                                "source": opened_as,
+                                "width": w,
+                                "height": h,
+                                "fps": round(fps, 2) if fps else None,
+                                "elapsed_s": round(time.time() - t0, 3),
+                                "network": False,
+                                "hdmi_h264": True,
+                            }
+                        )
+                        return
+                except Exception:
+                    pass
                 result.update(
                     {
                         "ok": False,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any, Literal
 
@@ -14,6 +15,8 @@ ensure_legacy_imports()
 from runtime import sensor_runner  # noqa: E402
 
 SensorName = Literal["thermal", "webcam", "mmwave", "multi_camera"]
+
+logger = logging.getLogger("scanu.sensors")
 
 
 class SensorManager:
@@ -56,11 +59,16 @@ class SensorManager:
 
     def _pause_preview_stream(self, sensor_type: str) -> None:
         if sensor_type == "webcam":
-            self._webcam_stream.pause_for_webcam_subprocess()
+            logger.info("Pausing Front Cam V4L2 preview reader before infer subprocess")
+            self._webcam_stream.force_release_camera()
         elif sensor_type == "multi_camera":
-            self._multi_camera_stream.pause_for_multi_camera_subprocess()
+            logger.info("Pausing Back Cam V4L2 preview reader before infer subprocess")
+            self._multi_camera_stream.force_release_camera()
 
-    def _resume_preview_stream(self, sensor_type: str) -> None:
+    def _resume_preview_stream(self, sensor_type: str, *, start_ok: bool = False) -> None:
+        if start_ok:
+            # Infer subprocess owns the device; MJPEG/WebRTC use IPC until Stop.
+            return
         if sensor_type == "webcam":
             self._webcam_stream.resume_after_webcam_subprocess_attempt()
         elif sensor_type == "multi_camera":
@@ -83,10 +91,11 @@ class SensorManager:
             return result
         if sensor_type in ("webcam", "multi_camera"):
             self._pause_preview_stream(sensor_type)
+            result: dict[str, Any] = {"ok": False}
             try:
                 result = sensor_runner.start(sensor_type, s, self.layer8_dir)  # type: ignore[arg-type]
             finally:
-                self._resume_preview_stream(sensor_type)
+                self._resume_preview_stream(sensor_type, start_ok=bool(result.get("ok")))
             if not result.get("ok"):
                 return JSONResponse(result, status_code=409)
             return result
@@ -112,10 +121,11 @@ class SensorManager:
             return result
         if sensor_type in ("webcam", "multi_camera"):
             self._pause_preview_stream(sensor_type)
+            result: dict[str, Any] = {"ok": False}
             try:
                 result = sensor_runner.restart(sensor_type, s, self.layer8_dir)  # type: ignore[arg-type]
             finally:
-                self._resume_preview_stream(sensor_type)
+                self._resume_preview_stream(sensor_type, start_ok=bool(result.get("ok")))
             if not result.get("ok"):
                 return JSONResponse(result, status_code=409)
             return result
@@ -132,13 +142,14 @@ class SensorManager:
             self._thermal_stream.pause_for_thermal_subprocess()
         elif sensor in ("webcam", "multi_camera"):
             self._pause_preview_stream(sensor)
+        result: dict[str, Any] = {"ok": False}
         try:
             result = sensor_runner.start(sensor, s, self.layer8_dir)
         finally:
             if sensor == "thermal":
                 self._thermal_stream.resume_after_thermal_subprocess_attempt()
             elif sensor in ("webcam", "multi_camera"):
-                self._resume_preview_stream(sensor)
+                self._resume_preview_stream(sensor, start_ok=bool(result.get("ok")))
         if not result.get("ok"):
             return JSONResponse(result, status_code=409)
         return result
@@ -151,13 +162,14 @@ class SensorManager:
             self._thermal_stream.pause_for_thermal_subprocess()
         elif sensor in ("webcam", "multi_camera"):
             self._pause_preview_stream(sensor)
+        result: dict[str, Any] = {"ok": False}
         try:
             result = sensor_runner.restart(sensor, s, self.layer8_dir)
         finally:
             if sensor == "thermal":
                 self._thermal_stream.resume_after_thermal_subprocess_attempt()
             elif sensor in ("webcam", "multi_camera"):
-                self._resume_preview_stream(sensor)
+                self._resume_preview_stream(sensor, start_ok=bool(result.get("ok")))
         if not result.get("ok"):
             return JSONResponse(result, status_code=409)
         return result
@@ -172,15 +184,16 @@ class SensorManager:
         try:
             for sensor in ("thermal", "webcam", "multi_camera", "mmwave"):
                 if sensor == "webcam":
-                    self._webcam_stream.pause_for_webcam_subprocess()
+                    self._webcam_stream.force_release_camera()
                 elif sensor == "multi_camera":
-                    self._multi_camera_stream.pause_for_multi_camera_subprocess()
+                    self._multi_camera_stream.force_release_camera()
+                res: dict[str, Any] = {"ok": False}
                 try:
                     res = sensor_runner.start(sensor, s, self.layer8_dir)  # type: ignore[arg-type]
                 finally:
-                    if sensor == "webcam":
+                    if sensor == "webcam" and not res.get("ok"):
                         self._webcam_stream.resume_after_webcam_subprocess_attempt()
-                    elif sensor == "multi_camera":
+                    elif sensor == "multi_camera" and not res.get("ok"):
                         self._multi_camera_stream.resume_after_multi_camera_subprocess_attempt()
                 results[sensor] = res
                 if res.get("ok"):

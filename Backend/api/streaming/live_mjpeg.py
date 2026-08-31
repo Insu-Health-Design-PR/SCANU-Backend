@@ -78,6 +78,9 @@ async def ai_camera_live_mjpeg(ctx: RouterContext) -> StreamingResponse:
         ctx.webcam_stream.add_client(s)
         try:
             while True:
+                st_now = sensor_runner.status("webcam", layer8_dir)
+                if bool(st_now.get("running")) and not bool(st_now.get("preview_only")):
+                    break
                 payload = ctx.webcam_stream.latest_jpg()
                 if payload:
                     last_good = payload
@@ -148,6 +151,9 @@ async def multi_camera_live_mjpeg(ctx: RouterContext) -> StreamingResponse:
         ctx.multi_camera_stream.add_client(s)
         try:
             while True:
+                st_now = sensor_runner.status("multi_camera", layer8_dir)
+                if bool(st_now.get("running")) and not bool(st_now.get("preview_only")):
+                    break
                 payload = ctx.multi_camera_stream.latest_jpg()
                 if payload:
                     last_good = payload
@@ -235,21 +241,23 @@ async def thermal_live_mjpeg(ctx: RouterContext) -> StreamingResponse:
     )
 
 
-async def mmwave_live_mjpeg(ctx: RouterContext, *, side: str = "front") -> StreamingResponse:
-    """mmWave MJPEG from ``mmwave.live_frame`` (front) or ``mmwave.live_frame_back``."""
+async def mmwave_live_mjpeg(ctx: RouterContext, *, side: str = "fused") -> StreamingResponse:
+    """mmWave MJPEG; calibrated fused dashboard is the default view."""
     s = ctx.settings.get()
     m = s.get("mmwave") or {}
     side_l = str(side or "front").strip().lower()
-    if side_l in ("back", "b", "rear"):
+    if side_l in ("fused", "fusion", "dashboard", ""):
+        rel = m.get("live_frame_fused") or m.get("live_frame") or ""
+        label = "mmWave Fused"
+    elif side_l in ("back", "b", "rear"):
         rel = m.get("live_frame_back") or m.get("live_frame") or ""
         label = "mmWave Back"
     else:
         rel = m.get("live_frame") or ""
         label = "mmWave Front"
-    rpath = resolved_artifact_path(s, relative_to_software=str(rel), layer8_dir=ctx.layer8_dir)
     missing = mjpeg_placeholder_jpeg(
         f"{label}: no live JPEG yet",
-        f"Expected file: {rpath.name if rpath else 'configure mmwave.live_frame(_back)'}",
+        f"Expected file: {Path(str(rel)).name if rel else 'configure mmwave.live_frame(_back)'}",
         "Start the mmWave runner or fix live_frame in settings.",
     )
 
@@ -259,6 +267,14 @@ async def mmwave_live_mjpeg(ctx: RouterContext, *, side: str = "front") -> Strea
         try:
             while True:
                 payload: bytes | None = None
+                # Resolve on every frame. A dashboard may be created after the
+                # browser opened the stream; keeping an earlier ``None`` would
+                # otherwise make the placeholder permanent for that client.
+                rpath = resolved_artifact_path(
+                    ctx.settings.get(),
+                    relative_to_software=str(rel),
+                    layer8_dir=ctx.layer8_dir,
+                )
                 if rpath is not None and rpath.is_file():
                     try:
                         raw = rpath.read_bytes()

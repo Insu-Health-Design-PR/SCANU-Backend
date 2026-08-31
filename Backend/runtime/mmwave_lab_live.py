@@ -221,8 +221,8 @@ def run_live_uart(args: argparse.Namespace) -> int:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Layer 8 mmWave lab live JPEG publisher")
-    p.add_argument("--pipeline", choices=("lab_replay", "lab_live", "status"), default="lab_replay")
+    p = argparse.ArgumentParser(description="Layer 8 mmWave lab live JPEG publisher (legacy shim)")
+    p.add_argument("--pipeline", default="dual_replay")
     p.add_argument("--live-frame", required=True, help="Front JPEG path (mmwave.live_frame)")
     p.add_argument("--live-frame-back", default="", help="Back JPEG path (mmwave.live_frame_back)")
     p.add_argument("--session", default="", help="Front session dir")
@@ -232,17 +232,35 @@ def main() -> None:
     p.add_argument("--fps", type=float, default=2.0)
     p.add_argument("--cli-port", default="")
     p.add_argument("--data-port", default="")
-    args = p.parse_args()
+    args, rest = p.parse_known_args()
 
-    root = Path(__file__).resolve().parents[1]
-    if str(root) not in sys.path:
-        sys.path.insert(0, str(root))
+    from runtime.mmwave_dual_live import main as dual_main
 
-    if args.pipeline == "lab_replay":
-        raise SystemExit(run_replay(args))
-    if args.pipeline == "lab_live":
-        raise SystemExit(run_live_uart(args))
-    raise SystemExit(run_status(args))
+    argv = [
+        "--pipeline",
+        "dual_replay" if args.pipeline in ("lab_replay", "dual_replay") else (
+            "dual_live" if args.pipeline in ("lab_live", "dual_live") else "status"
+        ),
+        "--live-frame",
+        args.live_frame,
+        "--live-frame-back",
+        args.live_frame_back or "",
+        "--fps",
+        str(args.fps),
+    ]
+    if args.session:
+        argv.extend(["--session", args.session])
+    if args.session_back:
+        argv.extend(["--session-back", args.session_back])
+    if args.perception:
+        argv.extend(["--perception", args.perception])
+    if args.frames_jsonl:
+        argv.extend(["--frames-jsonl", args.frames_jsonl])
+    if args.cli_port:
+        argv.extend(["--cli-port", args.cli_port, "--front-cli-port", args.cli_port])
+    if args.data_port:
+        argv.extend(["--data-port", args.data_port, "--front-data-port", args.data_port])
+    raise SystemExit(dual_main(argv + rest))
 
 
 if __name__ == "__main__":

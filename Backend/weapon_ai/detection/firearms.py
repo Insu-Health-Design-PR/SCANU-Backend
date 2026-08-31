@@ -119,7 +119,7 @@ def normalize_firearm_class_display(gname: str) -> str:
         return "banknote"
     if n in ("tarjeta", "card"):
         return "card"
-    if n == "knife":
+    if n in ("knife", "cuchillo", "navaja"):
         return "knife"
     return n.replace(" ", "_") or "object"
 
@@ -129,6 +129,7 @@ _GUN_OVERLAY_PRESETS: dict[str, frozenset[str] | None] = {
     "gun_only": frozenset({"gun"}),
     "gun_and_knife": frozenset({"gun", "knife"}),
     "gun_knife_smartphone": frozenset({"gun", "knife", "smartphone"}),
+    "gun_smartphone": frozenset({"gun", "smartphone"}),
     "weapons": frozenset({"gun", "knife", "rifle", "shotgun", "long_gun"}),
 }
 

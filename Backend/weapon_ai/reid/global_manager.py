@@ -16,12 +16,29 @@ from weapon_ai.reid.embeddings import cosine_similarity
 logger = logging.getLogger(__name__)
 
 
+def lateral_mirror_score(cx_a: float, cx_b: float, *, tolerance: float) -> float:
+    """Score 0..1 for facing cameras: person left on A should appear right on B (cx_a + cx_b ≈ 1)."""
+    residual = abs(float(cx_a) + float(cx_b) - 1.0)
+    tol = max(1e-6, float(tolerance))
+    if residual > tol:
+        return 0.0
+    return 1.0 - residual / tol
+
+
+def bbox_lateral_norm(bbox: tuple[int, int, int, int] | None, frame_w: int) -> float | None:
+    if bbox is None or frame_w <= 0:
+        return None
+    x1, _y1, x2, _y2 = bbox
+    return float(x1 + x2) / (2.0 * float(frame_w))
+
+
 @dataclass
 class LocalObservation:
     camera_id: str
     local_track_id: int
     embedding: np.ndarray | None = None
     bbox: tuple[int, int, int, int] | None = None
+    lateral_norm: float | None = None
     depth_m: float | None = None
     weapon_detected: bool = False
     weapon_confidence: float = 0.0
@@ -34,9 +51,12 @@ class GlobalPersonState:
     camera_tracks: dict[str, int] = field(default_factory=dict)
     embeddings: deque = field(default_factory=lambda: deque(maxlen=12))
     depths: dict[str, float] = field(default_factory=dict)
+    lateral: dict[str, float] = field(default_factory=dict)
     weapon_detected: bool = False
     weapon_confidence: float = 0.0
     weapon_last_true_ts: float = 0.0
+    weapon_last_visible_ts: float = 0.0
+    concealed_latched: bool = False
     first_seen: float = 0.0
     last_seen: float = 0.0
     last_match_confidence: float = 0.0
@@ -94,6 +114,18 @@ class GlobalIDManager:
 
     def association_log(self) -> list[str]:
         return list(self._assoc_log)
+
+    def clear_weapon_state_for_globals(self, global_ids: set[int]) -> None:
+        """Demo override: keep these global identities unarmed across cameras."""
+        for gid in global_ids:
+            person = self._persons.get(int(gid))
+            if person is None:
+                continue
+            person.weapon_detected = False
+            person.weapon_confidence = 0.0
+            person.concealed_latched = False
+            person.weapon_last_true_ts = 0.0
+            person.weapon_last_visible_ts = 0.0
 
     def update_observations(
         self,
@@ -182,14 +214,12 @@ class GlobalIDManager:
             person.embeddings.append(np.asarray(obs.embedding, dtype=np.float32))
         if obs.depth_m is not None and float(obs.depth_m) > 0:
             person.depths[str(obs.camera_id)] = float(obs.depth_m)
+        if obs.lateral_norm is not None:
+            person.lateral[str(obs.camera_id)] = float(obs.lateral_norm)
         if obs.weapon_detected and float(obs.weapon_confidence) > 0:
             person.weapon_detected = True
             person.weapon_confidence = max(float(person.weapon_confidence), float(obs.weapon_confidence))
             person.weapon_last_true_ts = ts
-        elif obs.weapon_detected:
-            person.weapon_detected = True
-            person.weapon_last_true_ts = ts
-            person.weapon_confidence = max(float(person.weapon_confidence), 0.5)
 
     def _best_match(
         self, obs: LocalObservation, *, ts: float
@@ -231,12 +261,31 @@ class GlobalIDManager:
                     else:
                         depth_score = max(depth_score, 0.0)
 
+            lateral_score = 0.0
+            has_lateral = False
+            lat_tol = float(getattr(cfg, "lateral_tolerance_frac", 0.20))
+            obs_lat = obs.lateral_norm
+            if obs_lat is not None:
+                for other_cam, other_lat in person.lateral.items():
+                    if other_cam == obs.camera_id:
+                        continue
+                    lat_s = lateral_mirror_score(float(obs_lat), float(other_lat), tolerance=lat_tol)
+                    if lat_s > 0.0:
+                        lateral_score = max(lateral_score, lat_s)
+                        has_lateral = True
+
             age = max(0.0, ts - float(person.last_seen))
             temporal = max(0.0, 1.0 - age / max(float(cfg.track_timeout_s), 1e-6))
 
             # Need at least Re-ID or depth signal
             if not has_reid and not has_depth:
                 continue
+
+            is_cross_cam = any(c != obs.camera_id for c in person.camera_tracks)
+            if is_cross_cam and obs_lat is not None:
+                # Facing cameras: never link across views without mirrored lateral agreement.
+                if not has_lateral or lateral_score < 0.45:
+                    continue
 
             score = (
                 float(cfg.weight_reid) * reid_sim
@@ -258,20 +307,57 @@ class GlobalIDManager:
 
             hard = float(cfg.similarity_threshold)
             soft = float(cfg.soft_similarity_threshold)
+            boost_min_depth = float(getattr(cfg, "depth_boost_min_depth", 0.65))
+            boost_min_reid = float(getattr(cfg, "depth_boost_min_reid", 0.48))
+            strong_depth = float(getattr(cfg, "depth_boost_strong_depth", 0.85))
+            strong_min_reid = float(getattr(cfg, "depth_boost_strong_min_reid", 0.45))
             ok = False
             reason = ""
+            # Depth-only geometry cannot distinguish left vs right in a corridor; require
+            # mirrored horizontal position when both sides have lateral data.
+            lateral_ok = (not has_lateral) or lateral_score >= 0.45
             if has_reid and reid_sim >= hard:
                 ok = True
                 reason = f"reid>={hard:.2f}"
-            elif has_reid and has_depth and reid_sim >= soft and depth_score >= 0.5:
+            elif has_reid and has_depth and reid_sim >= soft and depth_score >= 0.5 and lateral_ok:
                 ok = True
-                reason = f"reid_soft+depth (sim={reid_sim:.2f})"
-            elif (not has_reid) and has_depth and depth_score >= 0.75 and temporal >= 0.4:
+                reason = f"reid_soft+depth (sim={reid_sim:.2f} depth={depth_score:.2f})"
+            elif (
+                has_reid
+                and has_depth
+                and depth_score >= strong_depth
+                and reid_sim >= strong_min_reid
+                and lateral_ok
+                and (not has_lateral or lateral_score >= 0.45)
+            ):
+                ok = True
+                reason = (
+                    f"depth_boost_strong (sim={reid_sim:.2f} depth={depth_score:.2f} "
+                    f"lat={lateral_score:.2f})"
+                )
+            elif (
+                has_reid
+                and has_depth
+                and depth_score >= boost_min_depth
+                and reid_sim >= boost_min_reid
+                and lateral_ok
+                and (not has_lateral or lateral_score >= 0.50)
+            ):
+                ok = True
+                reason = f"depth_boost (sim={reid_sim:.2f} depth={depth_score:.2f} lat={lateral_score:.2f})"
+            elif (not has_reid) and has_depth and depth_score >= 0.75 and temporal >= 0.4 and lateral_ok:
                 ok = True
                 reason = "depth_corridor"
 
-            if ok and score > best_score:
-                best_score = score if has_reid else depth_score
+            rank = float(score)
+            if has_depth:
+                rank += 0.45 * float(depth_score)
+            if has_lateral:
+                rank += 0.25 * float(lateral_score)
+            if has_reid and has_depth and reid_sim >= boost_min_reid:
+                rank += 0.20 * float(depth_score) * float(reid_sim)
+            if ok and rank > best_score:
+                best_score = rank
                 best_gid = gid
                 best_reason = reason
 
@@ -298,9 +384,13 @@ class GlobalIDManager:
                 self._local_to_global.pop(key, None)
 
     def _decay_weapons(self, ts: float) -> None:
+        if bool(getattr(self.config, "weapon_latch", False)):
+            return
         hold = float(self.config.weapon_hold_s)
         decay = float(self.config.weapon_conf_decay)
         for person in self._persons.values():
+            if bool(getattr(person, "concealed_latched", False)):
+                continue
             if not person.weapon_detected:
                 person.weapon_confidence = max(0.0, float(person.weapon_confidence) - decay * 0.0)
                 continue
@@ -340,6 +430,86 @@ class GlobalIDManager:
                 "baseline_m": float(self.config.baseline_m),
             },
         }
+
+    def synced_on_both_cameras(self, camera_id: str, local_display_id: int) -> bool:
+        """True when this local track's global person is linked on front and back."""
+        gid = self.get_global_id(str(camera_id), int(local_display_id))
+        if gid is None:
+            return False
+        person = self._persons.get(gid)
+        if person is None:
+            return False
+        front = str(self.config.camera_front)
+        back = str(self.config.camera_back)
+        cams = set(person.camera_tracks.keys())
+        return front in cams and back in cams
+
+    def weapon_armed_at(self, camera_id: str, local_display_id: int, *, ts: float) -> bool:
+        """True while global person is within the post-detection weapon hold window."""
+        gid = self.get_global_id(str(camera_id), int(local_display_id))
+        if gid is None:
+            return False
+        person = self._persons.get(gid)
+        if person is None or not person.weapon_detected:
+            return False
+        if bool(getattr(person, "concealed_latched", False)):
+            return True
+        if bool(getattr(self.config, "weapon_latch", False)):
+            return True
+        anchor = float(person.weapon_last_true_ts or 0.0)
+        if anchor <= 0.0:
+            return False
+        return (float(ts) - anchor) <= float(self.config.weapon_hold_s)
+
+    def note_weapon_visible(self, camera_id: str, local_display_id: int, *, ts: float) -> None:
+        """Refresh last gun/knife sighting time for cross-camera red persistence."""
+        gid = self.get_global_id(str(camera_id), int(local_display_id))
+        if gid is None:
+            return
+        person = self._persons.get(gid)
+        if person is None:
+            return
+        person.weapon_last_visible_ts = max(float(person.weapon_last_visible_ts or 0.0), float(ts))
+
+    def weapon_recently_visible_at(
+        self,
+        camera_id: str,
+        local_display_id: int,
+        *,
+        ts: float,
+        hold_s: float,
+    ) -> bool:
+        """True while still inside the armed-red window after the last weapon sighting."""
+        gid = self.get_global_id(str(camera_id), int(local_display_id))
+        if gid is None:
+            return False
+        person = self._persons.get(gid)
+        if person is None:
+            return False
+        anchor = float(person.weapon_last_visible_ts or 0.0)
+        if anchor <= 0.0:
+            return False
+        return (float(ts) - anchor) < float(hold_s)
+
+    def update_concealed_latches(self, *, ts: float, visible_hold_s: float) -> None:
+        """Cross-camera synced + armed + red window expired → concealed for rest of track."""
+        front = str(self.config.camera_front)
+        back = str(self.config.camera_back)
+        red_hold = max(0.0, float(visible_hold_s))
+        for gid, person in self._persons.items():
+            if bool(person.concealed_latched):
+                person.weapon_detected = True
+                continue
+            cams = set(person.camera_tracks.keys())
+            if front not in cams or back not in cams:
+                continue
+            if not person.weapon_detected:
+                continue
+            last_vis = float(person.weapon_last_visible_ts or 0.0)
+            if last_vis > 0.0 and red_hold > 0.0 and (float(ts) - last_vis) < red_hold:
+                continue
+            person.concealed_latched = True
+            person.weapon_detected = True
 
     def overlay_for(self, camera_id: str, local_display_id: int) -> dict[str, Any] | None:
         """Lookup used by infer overlay / UI for a single local track."""

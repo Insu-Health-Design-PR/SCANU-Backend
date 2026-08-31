@@ -475,33 +475,39 @@ def open_ffmpeg_cuda_webcam(
     keep_full_res: bool = False,
     full_fps: float = 30.0,
 ) -> FFmpegCudaWebcamCapture:
-    """Try MJPEG CUVID, then H.264 CUVID. Raises RuntimeError if neither produces a frame."""
+    """Try H.264 CUVID first (HDMI USB dongles), then MJPEG CUVID. Raises if neither produces a frame."""
     available = ffmpeg_cuvid_decoders()
     attempts: list[tuple[str, str]] = []
-    if "mjpeg_cuvid" in available:
-        attempts.append(("mjpeg", "mjpeg_cuvid"))
     if "h264_cuvid" in available:
         attempts.append(("h264", "h264_cuvid"))
+    if "mjpeg_cuvid" in available:
+        attempts.append(("mjpeg", "mjpeg_cuvid"))
     if not attempts:
         raise RuntimeError("FFmpeg has no mjpeg_cuvid/h264_cuvid decoder")
     errors: list[str] = []
     modes = [True, False] if keep_full_res else [False]
-    for use_full in modes:
-        for fmt, dec in attempts:
-            cap = FFmpegCudaWebcamCapture(
-                device,
-                width=width,
-                height=height,
-                fps=fps,
-                out_width=out_width,
-                input_format=fmt,
-                decoder=dec,
-                keep_full_res=use_full,
-                full_fps=full_fps,
-            )
-            cap.start()
-            if cap.wait_first_frame(timeout_s=8.0):
-                return cap
-            errors.append(f"{fmt}/{dec} full={use_full}: {cap.last_error or 'no frames'}")
-            cap.stop()
-    raise RuntimeError(" ; ".join(errors))
+    # HDMI USB nodes often return EIO if the API preview reader just released them.
+    for round_i in range(3):
+        if round_i:
+            time.sleep(0.45)
+        for use_full in modes:
+            for fmt, dec in attempts:
+                cap = FFmpegCudaWebcamCapture(
+                    device,
+                    width=width,
+                    height=height,
+                    fps=fps,
+                    out_width=out_width,
+                    input_format=fmt,
+                    decoder=dec,
+                    keep_full_res=use_full,
+                    full_fps=full_fps,
+                )
+                cap.start()
+                if cap.wait_first_frame(timeout_s=8.0):
+                    return cap
+                errors.append(
+                    f"try{round_i + 1} {fmt}/{dec} full={use_full}: {cap.last_error or 'no frames'}"
+                )
+                cap.stop()
+    raise RuntimeError(" ; ".join(errors[-6:] or errors))

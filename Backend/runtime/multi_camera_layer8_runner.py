@@ -82,8 +82,8 @@ def main() -> None:
     p.add_argument(
         "--gstreamer-capture",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Use GStreamer v4l2src→jpegdec for webcam capture (default on; --no-gstreamer-capture for OpenCV).",
+        default=False,
+        help="Use GStreamer v4l2src→jpegdec for webcam capture (off by default; FFmpeg CUVID is preferred).",
     )
     args = p.parse_args()
 

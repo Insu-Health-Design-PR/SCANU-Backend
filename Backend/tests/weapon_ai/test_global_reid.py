@@ -212,6 +212,39 @@ def test_depth_corridor_can_link_without_strong_reid():
     assert mgr.get_global_id("camera_1", 1) == mgr.get_global_id("camera_2", 2)
 
 
+def test_depth_boost_links_soft_reid_when_corridor_matches():
+    """Re-ID ~0.55 + d_front + d_back ≈ baseline should link via depth_boost."""
+    e_strong = _emb(42)
+    rng = np.random.default_rng(42)
+    noise = rng.standard_normal(64).astype(np.float32)
+    e_soft = e_strong * 0.72 + noise * 0.28
+    e_soft = e_soft / np.linalg.norm(e_soft)
+    sim = cosine_similarity(e_strong, e_soft)
+    assert 0.48 <= sim < 0.58
+
+    cfg = ReIDConfig(
+        similarity_threshold=0.72,
+        soft_similarity_threshold=0.58,
+        baseline_m=5.0,
+        depth_tolerance_frac=0.22,
+        depth_boost_min_reid=0.48,
+        depth_boost_min_depth=0.65,
+    )
+    mgr = GlobalIDManager(cfg)
+    mgr.update_observations(
+        [LocalObservation("camera_1", 1, embedding=e_strong, depth_m=1.0, timestamp=1.0)],
+        now=1.0,
+    )
+    mgr.update_observations(
+        [
+            LocalObservation("camera_1", 1, embedding=e_strong, depth_m=1.0, timestamp=1.2),
+            LocalObservation("camera_2", 2, embedding=e_soft, depth_m=4.0, timestamp=1.2),
+        ],
+        now=1.2,
+    )
+    assert mgr.get_global_id("camera_1", 1) == mgr.get_global_id("camera_2", 2)
+
+
 def test_association_log_mentions_weapon_inheritance():
     cfg = ReIDConfig(similarity_threshold=0.70)
     mgr = GlobalIDManager(cfg)
@@ -239,3 +272,79 @@ def test_association_log_mentions_weapon_inheritance():
     log = "\n".join(mgr.association_log())
     assert "Global ID" in log
     assert "Weapon state inherited: TRUE" in log
+
+
+def test_opposite_corridor_side_not_merged_by_depth_alone():
+    """Depth sum ≈ baseline must not link people on opposite lateral sides."""
+    cfg = ReIDConfig(
+        similarity_threshold=0.99,
+        soft_similarity_threshold=0.50,
+        baseline_m=10.0,
+        depth_tolerance_frac=0.25,
+        lateral_tolerance_frac=0.20,
+    )
+    mgr = GlobalIDManager(cfg)
+    e_armed = _emb(1)
+    e_other = _emb(99)
+    mgr.update_observations(
+        [
+            LocalObservation(
+                "camera_1",
+                1,
+                embedding=e_armed,
+                depth_m=3.0,
+                lateral_norm=0.20,
+                weapon_detected=True,
+                weapon_confidence=0.9,
+                timestamp=1.0,
+            )
+        ],
+        now=1.0,
+    )
+    # Same depth corridor as armed person but wrong mirror position (both on left).
+    mgr.update_observations(
+        [
+            LocalObservation(
+                "camera_2",
+                2,
+                embedding=e_other,
+                depth_m=7.0,
+                lateral_norm=0.22,
+                timestamp=1.2,
+            )
+        ],
+        now=1.2,
+    )
+    assert mgr.get_global_id("camera_1", 1) != mgr.get_global_id("camera_2", 2)
+    wrong_gid = mgr.get_global_id("camera_2", 2)
+    assert wrong_gid is not None
+    assert mgr.persons[wrong_gid].weapon_detected is False
+
+
+def test_mirrored_lateral_links_same_corridor_person():
+    cfg = ReIDConfig(
+        similarity_threshold=0.99,
+        soft_similarity_threshold=0.50,
+        baseline_m=10.0,
+        depth_tolerance_frac=0.25,
+        lateral_tolerance_frac=0.20,
+    )
+    mgr = GlobalIDManager(cfg)
+    e = _emb(7)
+    mgr.update_observations(
+        [
+            LocalObservation(
+                "camera_1", 1, embedding=e, depth_m=3.0, lateral_norm=0.18, timestamp=1.0
+            )
+        ],
+        now=1.0,
+    )
+    mgr.update_observations(
+        [
+            LocalObservation(
+                "camera_2", 2, embedding=e, depth_m=7.0, lateral_norm=0.82, timestamp=1.2
+            )
+        ],
+        now=1.2,
+    )
+    assert mgr.get_global_id("camera_1", 1) == mgr.get_global_id("camera_2", 2)

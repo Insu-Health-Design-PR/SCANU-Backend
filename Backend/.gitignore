@@ -24,6 +24,9 @@ htmlcov/
 .env
 .env.*
 !.env.example
+layer8_ui/secrets/
+!layer8_ui/secrets/.gitkeep
+!layer8_ui/secrets/README.md
 
 # --- OS / editor junk ---
 .DS_Store

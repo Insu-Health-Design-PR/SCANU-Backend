@@ -135,13 +135,67 @@ def _build_v4l2_response(
         else:
             suggested_thermal, suggested_webcam = all_indices[0], all_indices[-1]
 
+    # Prefer real Video Capture nodes for Front/Back (skip UVC metadata siblings).
+    capture_indices: list[int] = []
+    suggested_multi: int | None = None
+    try:
+        from layer8_ui.webcam_device import is_video_capture_node, list_capture_indices
+
+        capture_indices = list_capture_indices()
+        for g in g_sorted:
+            caps = [int(i) for i in g.get("indices", []) if is_video_capture_node(int(i))]
+            metas = [int(i) for i in g.get("indices", []) if int(i) not in caps]
+            g["capture_indices"] = caps
+            g["metadata_indices"] = metas
+        # Prefer capture nodes on different USB bus roots when possible.
+        uvc_capture: list[tuple[str, int]] = []
+        for g in uvc_groups or g_sorted:
+            name = str(g.get("name") or "")
+            bus = ""
+            for token in name.replace("(", " ").replace(")", " ").split():
+                if token.startswith("usb-"):
+                    bus = token.split("-")[0] + "-" + token.split("-")[1] if token.count("-") >= 1 else token
+                    # Keep controller root e.g. usb-0000:52:00.0
+                    if "usb-" in token:
+                        bus = token.rsplit("-", 1)[0] if token.count("-") >= 2 else token
+                    break
+            for i in g.get("capture_indices") or []:
+                uvc_capture.append((bus or name, int(i)))
+                break
+        if not uvc_capture:
+            uvc_capture = [("", i) for i in capture_indices]
+        if uvc_capture:
+            suggested_webcam = int(uvc_capture[0][1])
+            # Pick Back on a different USB root when available.
+            front_bus = uvc_capture[0][0]
+            alt = next((idx for bus, idx in uvc_capture[1:] if bus != front_bus), None)
+            if alt is None and len(uvc_capture) > 1:
+                alt = int(uvc_capture[1][1])
+            suggested_multi = alt
+        if thermal_groups:
+            t_caps = [
+                int(i)
+                for i in (thermal_groups[0].get("capture_indices") or thermal_groups[0].get("indices") or [])
+                if is_video_capture_node(int(i))
+            ]
+            if t_caps:
+                suggested_thermal = t_caps[0]
+    except Exception:
+        capture_indices = [i for i in all_indices if _is_v4l_capture_node(i)]
+        if capture_indices:
+            suggested_webcam = int(capture_indices[0])
+            if len(capture_indices) > 1:
+                suggested_multi = int(capture_indices[1])
+
     return {
         "ok": bool(g_sorted),
         "raw": raw,
         "groups": g_sorted,
         "all_indices": all_indices,
+        "capture_indices": capture_indices,
         "suggested_thermal": suggested_thermal,
         "suggested_webcam": suggested_webcam,
+        "suggested_multi_camera": suggested_multi,
         "warning": warn,
     }
 

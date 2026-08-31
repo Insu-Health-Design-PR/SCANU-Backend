@@ -131,6 +131,12 @@ from weapon_ai.overlay import (
     person_weapon_bracket as _person_weapon_bracket,
 )
 from weapon_ai.overlay.distance import depth_from_bbox_height, smooth_depth_m
+from weapon_ai.overlay.mmwave_fusion import (
+    compute_mmwave_torso_score,
+    draw_mmwave_fusion_overlay,
+    fusion_config_from_args,
+    load_mmwave_metrics,
+)
 from weapon_ai.live_preprocess import (
     downscale_to_max_width,
     resize_bgr_max_width,
@@ -259,6 +265,31 @@ def _frame_to_bgr_for_infer(frame: np.ndarray | None) -> np.ndarray | None:
     return None
 
 
+def _apply_capture_orientation(
+    bgr: np.ndarray | None,
+    *,
+    rotate: int = 0,
+    flip_h: bool = False,
+    flip_v: bool = False,
+) -> np.ndarray | None:
+    """Rotate / flip BGR frames for portrait vs landscape camera mounting."""
+    if bgr is None:
+        return None
+    out = bgr
+    rot = int(rotate) % 360
+    if rot == 90:
+        out = cv2.rotate(out, cv2.ROTATE_90_CLOCKWISE)
+    elif rot == 180:
+        out = cv2.rotate(out, cv2.ROTATE_180)
+    elif rot == 270:
+        out = cv2.rotate(out, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    if flip_h:
+        out = cv2.flip(out, 1)
+    if flip_v:
+        out = cv2.flip(out, 0)
+    return out
+
+
 def _frame_valid_for_infer(frame: np.ndarray | None) -> bool:
     """Reject empty / 1D / degenerate buffers that break YOLO letterbox resize."""
     if frame is None or not hasattr(frame, "shape") or frame.size == 0:
@@ -373,6 +404,25 @@ def main() -> None:
         type=float,
         default=30.0,
         help="Requested capture FPS when source is a webcam index.",
+    )
+    p.add_argument(
+        "--capture_rotate",
+        type=int,
+        default=0,
+        choices=(0, 90, 180, 270),
+        help="Rotate captured frames clockwise before infer/overlay (portrait/landscape).",
+    )
+    add_bool_optional_arg(
+        p,
+        "--capture_flip_h",
+        default=False,
+        help_text="Flip captured frames horizontally before infer/overlay.",
+    )
+    add_bool_optional_arg(
+        p,
+        "--capture_flip_v",
+        default=False,
+        help_text="Flip captured frames vertically before infer/overlay.",
     )
     p.add_argument(
         "--output_fps",
@@ -1198,6 +1248,36 @@ def main() -> None:
         default="",
         help="Logical camera id for cross-camera Global ID (e.g. camera_1 / camera_2).",
     )
+    add_bool_optional_arg(
+        p,
+        "--mmwave_overlay",
+        default=False,
+        help_text="Draw mmWave body dots + anomaly markers fused onto camera overlay.",
+    )
+    p.add_argument(
+        "--mmwave_side",
+        type=str,
+        default="front",
+        choices=("front", "back"),
+        help="Which mmWave metrics block to fuse (front or back radar).",
+    )
+    p.add_argument(
+        "--mmwave_metrics_path",
+        type=str,
+        default="",
+        help="Path to live_mmwave_metrics.json (defaults to layer8_ui artifact + /dev/shm fallback).",
+    )
+    p.add_argument("--mmwave_depth_gate_m", type=float, default=0.6)
+    p.add_argument("--mmwave_lateral_gate_m", type=float, default=0.5)
+    p.add_argument("--mmwave_corridor_half_width_m", type=float, default=1.5)
+    p.add_argument("--mmwave_mount_lateral_m", type=float, default=0.0)
+    p.add_argument("--mmwave_mount_height_m", type=float, default=1.2)
+    p.add_argument(
+        "--mmwave_sensor_distance_m",
+        type=float,
+        default=5.0,
+        help="Front↔Back radar baseline (m). Dual-live v2 points_b are in A-frame; Back overlay inverts with this D.",
+    )
     p.add_argument(
         "--global_id_state_json",
         type=Path,
@@ -1479,7 +1559,8 @@ def main() -> None:
                     out_w = explicit_w if explicit_w > 0 else auto_w
                     stride_n = max(1, int(getattr(args, "live_infer_stride", 1) or 1))
                     full_fps = max(15.0, float(args.capture_fps) / float(stride_n))
-                    keep_full = int(out_w) > 0 and int(args.capture_width) >= 2560
+                    keep_full = int(out_w) > 0 and int(args.capture_width) >= 3840
+                    sleep(0.35)
                     ff_try = open_ffmpeg_cuda_webcam(
                         v4l2_path,
                         width=int(args.capture_width),
@@ -2444,7 +2525,7 @@ def main() -> None:
             )
         print(
             "Live webcam: FFmpeg CUDA CUVID decode on background process; "
-            f"1080p overlay without JPEG re-encode.{extra}",
+            f"{ff_live_capture.width}x{ff_live_capture.height} overlay without JPEG re-encode.{extra}",
             flush=True,
         )
     elif gst_live_capture is not None:
@@ -2826,6 +2907,25 @@ def main() -> None:
             return False, None
         return True, bgr
 
+    def _orient_capture_bgr(frame: np.ndarray | None) -> np.ndarray | None:
+        """Match infer/gun crops to the rotated preview the operator sees."""
+        if frame is None:
+            return None
+        bgr = _frame_to_bgr_for_infer(frame)
+        if bgr is None:
+            return None
+        return _apply_capture_orientation(
+            bgr,
+            rotate=int(getattr(args, "capture_rotate", 0) or 0),
+            flip_h=bool(getattr(args, "capture_flip_h", False)),
+            flip_v=bool(getattr(args, "capture_flip_v", False)),
+        )
+
+    def _gun_src_for_infer() -> np.ndarray | None:
+        if not isinstance(live_capture, FFmpegCudaWebcamCapture):
+            return None
+        return _orient_capture_bgr(live_capture.snapshot_full())
+
     try:
         with torch.no_grad():
             while True:
@@ -2914,6 +3014,14 @@ def main() -> None:
                                 flush=True,
                             )
                         continue
+                    thermal = _apply_capture_orientation(
+                        thermal,
+                        rotate=int(getattr(args, "capture_rotate", 0) or 0),
+                        flip_h=bool(getattr(args, "capture_flip_h", False)),
+                        flip_v=bool(getattr(args, "capture_flip_v", False)),
+                    )
+                    if thermal is None:
+                        continue
                     if vis_buf is None or vis_buf.shape != thermal.shape:
                         vis_buf = np.empty_like(thermal)
                     np.copyto(vis_buf, thermal)
@@ -2938,10 +3046,9 @@ def main() -> None:
                         infer_future = None
 
                     if infer_future is None and (frame_count - last_infer_frame) >= infer_every_n:
-                        infer_frame = live_capture.snapshot() if live_capture is not None else thermal.copy()
-                        gun_src = None
-                        if isinstance(live_capture, FFmpegCudaWebcamCapture):
-                            gun_src = live_capture.snapshot_full()
+                        # Use oriented preview pixels — raw snapshot skips capture_rotate.
+                        infer_frame = thermal.copy()
+                        gun_src = _gun_src_for_infer()
                         if _frame_valid_for_infer(infer_frame):
                             infer_future = infer_pool.submit(
                                 _infer_annotations_for_frame, infer_frame, gun_src
@@ -2949,9 +3056,7 @@ def main() -> None:
                 else:
                     if (frame_count - last_infer_frame) >= infer_every_n:
                         try:
-                            gun_src = None
-                            if isinstance(live_capture, FFmpegCudaWebcamCapture):
-                                gun_src = live_capture.snapshot_full()
+                            gun_src = _gun_src_for_infer()
                             rows_new, gun_boxes_new, gun_count_new, probs, poses_new, hands_new, grips_new = _infer_annotations_for_frame(
                                 thermal.copy(), gun_src
                             )
@@ -3451,6 +3556,41 @@ def main() -> None:
                         thickness=_ov_label_thick,
                     )
 
+                mmwave_overlay_on = bool(getattr(args, "mmwave_overlay", False))
+                if mmwave_overlay_on:
+                    if not hasattr(args, "_mmwave_metrics_cache"):
+                        args._mmwave_metrics_cache = None
+                    if args._mmwave_metrics_cache is None or frame_count % 2 == 0:
+                        args._mmwave_metrics_cache = load_mmwave_metrics(
+                            str(getattr(args, "mmwave_metrics_path", "") or ""),
+                            sensor_distance_m=float(
+                                getattr(args, "mmwave_sensor_distance_m", 5.0) or 5.0
+                            ),
+                        )
+                    mmwave_metrics_cached = args._mmwave_metrics_cache
+                    if mmwave_metrics_cached:
+                        bt_for_fusion = []
+                        for ridx in range(len(rows)):
+                            if rows[ridx][5] not in (None, 0):
+                                continue
+                            bt_for_fusion.append(
+                                {
+                                    "bbox": [
+                                        int(rows[ridx][0]),
+                                        int(rows[ridx][1]),
+                                        int(rows[ridx][2]),
+                                        int(rows[ridx][3]),
+                                    ],
+                                }
+                            )
+                        vis = draw_mmwave_fusion_overlay(
+                            vis,
+                            bt_for_fusion,
+                            mmwave_metrics_cached,
+                            cfg=fusion_config_from_args(args),
+                            person_height_m=float(getattr(args, "person_height_m", 1.7) or 1.7),
+                        )
+
                 now_ts = time()
                 if last_frame_ts is not None:
                     dt = max(1e-6, now_ts - last_frame_ts)
@@ -3573,7 +3713,12 @@ def main() -> None:
                         "persons_with_gun": persons_with_gun,
                         "persons_total": persons_total,
                         "prediction": prediction,
-                        "mmwave_torso_score": None,
+                        "mmwave_torso_score": (
+                            compute_mmwave_torso_score(args._mmwave_metrics_cache)
+                            if bool(getattr(args, "mmwave_overlay", False))
+                            and getattr(args, "_mmwave_metrics_cache", None)
+                            else None
+                        ),
                         "camera_id": camera_id or None,
                         "byte_tracks": [
                             {

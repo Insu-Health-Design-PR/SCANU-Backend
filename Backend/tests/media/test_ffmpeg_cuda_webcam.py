@@ -5,6 +5,10 @@ def test_scaled_output_size_4k_to_1920():
     assert scaled_output_size(3840, 2160, 1920) == (1920, 1080)
 
 
+def test_scaled_output_size_4k_to_2k():
+    assert scaled_output_size(3840, 2160, 2560) == (2560, 1440)
+
+
 def test_scaled_output_size_keeps_small():
     assert scaled_output_size(1280, 720, 1920) == (1280, 720)
 

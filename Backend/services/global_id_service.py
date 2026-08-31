@@ -17,7 +17,7 @@ import numpy as np
 
 from weapon_ai.reid.config import ReIDConfig
 from weapon_ai.reid.embeddings import MockReIDEmbedder, PersonReIDEmbedder, TrackEmbeddingCache
-from weapon_ai.reid.global_manager import GlobalIDManager, LocalObservation
+from weapon_ai.reid.global_manager import GlobalIDManager, LocalObservation, bbox_lateral_norm
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +235,14 @@ class GlobalIDService:
                 depth_m = float(depth) if depth is not None else None
             except (TypeError, ValueError):
                 depth_m = None
+            lateral_norm = None
+            raw_lat = row.get("lateral_norm")
+            try:
+                lateral_norm = float(raw_lat) if raw_lat is not None else None
+            except (TypeError, ValueError):
+                lateral_norm = None
+            if lateral_norm is None and bbox is not None and src_w > 0:
+                lateral_norm = bbox_lateral_norm(bbox, src_w)
             visual = str(row.get("visual_state") or "")
             wconf = float(row.get("weapon_gun_conf") or 0.0)
             weapon = visual in {"armed_gun", "armed_concealed"} or wconf > 0.0
@@ -256,6 +264,7 @@ class GlobalIDService:
                     local_track_id=local_id,
                     embedding=emb,
                     bbox=bbox,
+                    lateral_norm=lateral_norm,
                     depth_m=depth_m,
                     weapon_detected=bool(weapon),
                     weapon_confidence=max(wconf, 0.5 if weapon and wconf <= 0 else wconf),

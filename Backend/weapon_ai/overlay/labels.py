@@ -122,12 +122,16 @@ def person_overlay_label(
     distance_m: float | None = None,
     global_id: int | None = None,
 ) -> str:
-    """On-frame person tag: ``Person N`` / ``Person N (5m)``.
+    """On-frame person tag: ``Person N``, ``Person N (Armed)``, or ``Person N (Concealed)``.
 
     When ``global_id`` is set (cross-camera Re-ID), that ID is shown instead of the
-    local display number so Front/Back share one identity. Armed / concealed / safe
-    stay color-coded; gun boxes carry weapon class separately.
+    local display number so Front/Back share one identity.
     """
-    del armed, weapon_bracket, concealed, visual_state, grip_state  # color encodes state
+    del weapon_bracket, visual_state, grip_state
     num = int(global_id) if global_id is not None and int(global_id) > 0 else int(display_num)
-    return f"{person_public_name(num)}{format_distance_suffix(distance_m)}"
+    base = f"{person_public_name(num)}{format_distance_suffix(distance_m)}"
+    if armed and concealed:
+        return f"{base} (Concealed)"
+    if armed:
+        return f"{base} (Armed)"
+    return base

@@ -7,6 +7,7 @@ Front Camera runs ``runtime.webcam_layer8_runner`` → ``weapon_ai.infer_objects
 
 from __future__ import annotations
 
+import logging
 import os
 import shlex
 import threading
@@ -20,8 +21,16 @@ import cv2
 import numpy as np
 
 from layer8_ui.artifact_paths import abs_software_path, software_root_from_settings
-from layer8_ui.webcam_device import detect_working_webcam_device
-from layer8_ui.weapon_cli_args import build_structured_weapon_args, resolve_gun_model_path
+from layer8_ui.webcam_device import peer_webcam_exclude, resolve_local_webcam_device
+from layer8_ui.weapon_cli_args import (
+    build_structured_weapon_args,
+    resolve_gun_model_path,
+    resolve_mmwave_fusion_block,
+)
+from media.encode.jpeg import encode_preview_jpeg
+from runtime.multi_camera_runner import resolve_multi_camera_source
+
+logger = logging.getLogger("scanu.sensors")
 
 _WEBCAM_CAM_CFG_LEN = 7
 
@@ -76,6 +85,7 @@ def _frame_to_bgr_for_jpeg(frame: Any) -> np.ndarray | None:
 def _webcam_structured_weapon_args(
     w: dict[str, Any], sw: Path, *, sentinel: dict[str, Any] | None = None,
     global_id: dict[str, Any] | None = None,
+    mmwave_fusion: dict[str, Any] | None = None,
 ) -> str:
     ww = dict(w)
     if not str(ww.get("camera_id") or "").strip():
@@ -88,7 +98,9 @@ def _webcam_structured_weapon_args(
         if g.get("camera_front"):
             ww["camera_id"] = str(g["camera_front"])
     return build_structured_weapon_args(
-        ww, sw, include_overlay_classes=True, sentinel=sentinel
+        ww, sw, include_overlay_classes=True, sentinel=sentinel,
+        mmwave_fusion=mmwave_fusion,
+        mmwave_side="front",
     )
 
 
@@ -131,10 +143,26 @@ def build_webcam_command(settings: dict[str, Any], layer8_dir: Path) -> list[str
         settings,
         str(w.get("metrics_json") or "layer8_ui/artifacts/live_threat_metrics.json"),
     )
-    webcam_device = int(w.get("webcam_device", 0))
     webcam_width = int(w.get("webcam_width", 3840))
     webcam_height = int(w.get("webcam_height", 2160))
     webcam_fps = float(w.get("fps", 30))
+    network_source, is_network = resolve_multi_camera_source(w)
+    if is_network:
+        webcam_source = str(network_source)
+    else:
+        webcam_device = int(w.get("webcam_device", 0))
+        auto_detect = bool(int(w.get("webcam_auto_detect", 1)))
+        detect_max = int(w.get("webcam_detect_max_index", 8))
+        exclude = peer_webcam_exclude(settings, self_sensor="webcam")
+        webcam_device = resolve_local_webcam_device(
+            webcam_device,
+            auto_detect=auto_detect,
+            exclude=exclude,
+            search_max_index=detect_max,
+            label="Front Cam",
+        )
+        w["webcam_device"] = webcam_device
+        webcam_source = f"/dev/video{int(webcam_device)}"
     ck_raw = str(
         w.get("weapon_checkpoint")
         or w.get("weapon_gun_yolo_model")
@@ -146,7 +174,7 @@ def build_webcam_command(settings: dict[str, Any], layer8_dir: Path) -> list[str
         "-m",
         "runtime.webcam_layer8_runner",
         "--webcam-device",
-        f"/dev/video{int(webcam_device)}",
+        webcam_source,
         "--capture-width",
         str(int(webcam_width)),
         "--capture-height",
@@ -158,6 +186,7 @@ def build_webcam_command(settings: dict[str, Any], layer8_dir: Path) -> list[str
         "--live-ipc-bgr-frame",
         str(_DEFAULT_WEBCAM_LIVE_BGR_IPC),
     ]
+    cmd.append("--no-gstreamer-capture")
     # For 1080p smooth WebRTC, avoid per-frame JPEG encode in infer subprocess.
     # Keep raw BGR mmap as primary live transport; UI still falls back to MJPEG paths
     # when WebRTC is unavailable or runner is off.
@@ -174,6 +203,7 @@ def build_webcam_command(settings: dict[str, Any], layer8_dir: Path) -> list[str
         sw,
         sentinel=settings.get("sentinel") if isinstance(settings, dict) else None,
         global_id=settings.get("global_id") if isinstance(settings, dict) else None,
+        mmwave_fusion=resolve_mmwave_fusion_block(settings) if isinstance(settings, dict) else None,
     ).strip()
     if extra:
         cmd.extend(["--weapon-extra-args", extra])
@@ -240,6 +270,8 @@ class WebcamSharedStream:
                 self._cfg_dirty = True
                 self._resolved_device = None
                 self._next_detect_retry_ts = 0.0
+            if self._subprocess_running():
+                return
             if self._thread is None or not self._thread.is_alive():
                 self._stop_event.clear()
                 self._thread = threading.Thread(target=self._run, name="webcam-shared-stream", daemon=True)
@@ -251,14 +283,25 @@ class WebcamSharedStream:
             if self._clients == 0:
                 self._stop_event.set()
 
-    def pause_for_webcam_subprocess(self, join_timeout_s: float = 6.0) -> None:
+    def pause_for_webcam_subprocess(self, join_timeout_s: float = 10.0) -> None:
+        self.force_release_camera(join_timeout_s=join_timeout_s)
+
+    def force_release_camera(self, join_timeout_s: float = 10.0) -> None:
+        """Stop the shared reader and release V4L2 before infer subprocess opens the camera."""
         with self._lock:
             self._stop_event.set()
         t = self._thread
         if t is not None and t.is_alive():
             t.join(timeout=float(join_timeout_s))
+            if t.is_alive():
+                logger.warning(
+                    "Front Cam preview reader did not stop within %.1fs — /dev/video may still be busy",
+                    join_timeout_s,
+                )
 
     def resume_after_webcam_subprocess_attempt(self) -> None:
+        if self._subprocess_running():
+            return
         with self._lock:
             self._stop_event.clear()
             if self._clients > 0 and (self._thread is None or not self._thread.is_alive()):
@@ -272,7 +315,11 @@ class WebcamSharedStream:
     def _subprocess_running(self) -> bool:
         from runtime import sensor_runner
 
-        return bool(sensor_runner.status("webcam", self._layer8_dir).get("running"))
+        status = sensor_runner.status("webcam", self._layer8_dir)
+        # ``preview_only`` is served by this shared reader. It is not an
+        # external process that must own the V4L2 device, so treating it as
+        # one causes the reader to pause itself indefinitely.
+        return bool(status.get("running")) and not bool(status.get("preview_only"))
 
     def _run(self) -> None:
         cap: cv2.VideoCapture | None = None
@@ -389,10 +436,10 @@ class WebcamSharedStream:
                     time.sleep(min(0.05, _capture_frame_sleep_s(capture_fps)))
                     continue
                 preview = cv2.resize(bgr, (int(width), int(height)), interpolation=cv2.INTER_LINEAR)
-                ok_enc, jpg = cv2.imencode(".jpg", preview, [int(cv2.IMWRITE_JPEG_QUALITY), 82])
-                if ok_enc:
+                jpg = encode_preview_jpeg(preview)
+                if jpg:
                     with self._lock:
-                        self._latest_jpg = jpg.tobytes()
+                        self._latest_jpg = jpg
                 time.sleep(_capture_frame_sleep_s(capture_fps))
         finally:
             if cap is not None:

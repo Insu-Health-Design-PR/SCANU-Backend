@@ -29,14 +29,22 @@ class ReIDConfig:
     max_embedding_history: int = 12
     track_timeout_s: float = 8.0
     # Scoring weights (cosine + corridor depth + temporal freshness)
-    weight_reid: float = 0.70
-    weight_depth: float = 0.20
+    weight_reid: float = 0.35
+    weight_depth: float = 0.55
     weight_temporal: float = 0.10
     baseline_m: float = 5.0
-    depth_tolerance_frac: float = 0.30  # |d_a + d_b - B| / B
+    depth_tolerance_frac: float = 0.22  # |d_a + d_b - B| / B
+    # Facing cameras mirror left/right: cx_front + cx_back ≈ 1
+    lateral_tolerance_frac: float = 0.20
+    # Corridor depth boost when Re-ID is soft (d_front + d_back ≈ baseline)
+    depth_boost_min_depth: float = 0.65
+    depth_boost_min_reid: float = 0.48
+    depth_boost_strong_depth: float = 0.85
+    depth_boost_strong_min_reid: float = 0.45
     # Weapon state on GLOBAL person
-    weapon_hold_s: float = 2.5
+    weapon_hold_s: float = 3.0
     weapon_conf_decay: float = 0.15  # per second without refresh
+    weapon_latch: bool = False  # once armed globally, never clear until track expires
     # Camera naming
     camera_front: str = "camera_1"
     camera_back: str = "camera_2"
@@ -98,8 +106,14 @@ class ReIDConfig:
             "weight_temporal": float(self.weight_temporal),
             "baseline_m": float(self.baseline_m),
             "depth_tolerance_frac": float(self.depth_tolerance_frac),
+            "lateral_tolerance_frac": float(self.lateral_tolerance_frac),
+            "depth_boost_min_depth": float(self.depth_boost_min_depth),
+            "depth_boost_min_reid": float(self.depth_boost_min_reid),
+            "depth_boost_strong_depth": float(self.depth_boost_strong_depth),
+            "depth_boost_strong_min_reid": float(self.depth_boost_strong_min_reid),
             "weapon_hold_s": float(self.weapon_hold_s),
             "weapon_conf_decay": float(self.weapon_conf_decay),
+            "weapon_latch": bool(self.weapon_latch),
             "camera_front": str(self.camera_front),
             "camera_back": str(self.camera_back),
         }
@@ -122,12 +136,17 @@ GLOBAL_ID_SETTINGS_DEFAULTS: dict[str, Any] = {
     "soft_similarity_threshold": 0.58,
     "max_embedding_history": 12,
     "track_timeout_s": 8.0,
-    "weight_reid": 0.70,
-    "weight_depth": 0.20,
+    "weight_reid": 0.35,
+    "weight_depth": 0.55,
     "weight_temporal": 0.10,
     "baseline_m": 5.0,
-    "depth_tolerance_frac": 0.30,
-    "weapon_hold_s": 2.5,
+    "depth_tolerance_frac": 0.22,
+    "lateral_tolerance_frac": 0.20,
+    "depth_boost_min_depth": 0.65,
+    "depth_boost_min_reid": 0.48,
+    "depth_boost_strong_depth": 0.85,
+    "depth_boost_strong_min_reid": 0.45,
+    "weapon_hold_s": 3.0,
     "weapon_conf_decay": 0.15,
     "camera_front": "camera_1",
     "camera_back": "camera_2",

@@ -16,6 +16,7 @@ from api.streaming.live_mjpeg import (
     multi_camera_live_mjpeg,
     thermal_live_mjpeg,
 )
+from api.streaming.mmwave_websocket import websocket_mmwave
 from api.streaming.webrtc import handle_multi_camera_offer, handle_webcam_offer
 from api.streaming.websocket import websocket_multi_camera, websocket_thermal, websocket_webcam
 
@@ -47,7 +48,7 @@ def build_preview_router(ctx: RouterContext) -> APIRouter:
     @router.get("/api/preview/live/{sensor}")
     async def preview_live(
         sensor: SensorName,
-        side: str = Query("front", description="mmWave side: front|back"),
+        side: str = Query("fused", description="mmWave view: fused|front|back"),
     ) -> StreamingResponse:
         if sensor == "webcam":
             return await ai_camera_live_mjpeg(ctx)
@@ -73,7 +74,7 @@ def build_preview_router(ctx: RouterContext) -> APIRouter:
     @router.get("/api/mmwave/preview/live")
     @router.get("/api/preview/live_direct/mmwave")
     async def mmwave_preview_live_aliases(
-        side: str = Query("front", description="mmWave side: front|back"),
+        side: str = Query("fused", description="mmWave view: fused|front|back"),
     ) -> StreamingResponse:
         return await mmwave_live_mjpeg(ctx, side=side)
 
@@ -88,6 +89,10 @@ def build_preview_router(ctx: RouterContext) -> APIRouter:
     @router.websocket("/ws/multi_camera")
     async def ws_multi_camera(websocket: WebSocket) -> None:
         await websocket_multi_camera(websocket, ctx)
+
+    @router.websocket("/ws/mmwave")
+    async def ws_mmwave(websocket: WebSocket) -> None:
+        await websocket_mmwave(websocket, ctx)
 
     @router.post("/api/webrtc/multi_camera/offer")
     async def webrtc_multi_camera_offer(body: WebRTCOfferBody) -> dict[str, str]:

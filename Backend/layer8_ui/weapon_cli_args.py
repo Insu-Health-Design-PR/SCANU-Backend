@@ -7,6 +7,29 @@ from pathlib import Path
 from typing import Any
 
 
+def resolve_mmwave_fusion_block(settings: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Fusion overlay settings with ``sensor_distance_m`` filled from related blocks."""
+    if not isinstance(settings, dict):
+        return None
+    fusion = dict(settings.get("mmwave_fusion") or {})
+    if fusion.get("sensor_distance_m") in (None, ""):
+        for block_name in ("mmwave_root", "mmwave", "sentinel", "global_id"):
+            block = settings.get(block_name) or {}
+            if not isinstance(block, dict):
+                continue
+            raw = block.get("sensor_distance_m", block.get("baseline_m"))
+            if raw is None or str(raw).strip() == "":
+                continue
+            try:
+                fusion["sensor_distance_m"] = float(raw)
+                break
+            except (TypeError, ValueError):
+                continue
+        else:
+            fusion["sensor_distance_m"] = 5.0
+    return fusion
+
+
 def resolve_gun_model_path(sw: Path, raw: str) -> str:
     val = str(raw or "").strip()
     if not val:
@@ -59,6 +82,8 @@ def build_structured_weapon_args(
     *,
     include_overlay_classes: bool = False,
     sentinel: dict[str, Any] | None = None,
+    mmwave_fusion: dict[str, Any] | None = None,
+    mmwave_side: str = "front",
 ) -> str:
     parts: list[str] = []
     no_gun = int(w.get("weapon_no_gun_yolo", 0))
@@ -267,6 +292,68 @@ def build_structured_weapon_args(
     elif overlay_on:
         default_state = sw / "layer8_ui" / "configs" / "global_person_ids.json"
         parts.extend(["--global_id_state_json", str(default_state.resolve())])
+
+    fusion = mmwave_fusion if isinstance(mmwave_fusion, dict) else {}
+    fusion_on = fusion.get("enable", w.get("weapon_mmwave_overlay", 0))
+    try:
+        fusion_enabled = bool(int(fusion_on)) if str(fusion_on).strip() != "" else False
+    except (TypeError, ValueError):
+        fusion_enabled = str(fusion_on).strip().lower() in {"1", "true", "yes", "on"}
+    if fusion_enabled:
+        parts.append("--mmwave_overlay")
+        if mmwave_side == "back":
+            side = str(fusion.get("multi_camera_side") or "back").strip()
+        else:
+            side = str(fusion.get("webcam_side") or "front").strip()
+        if side in ("front", "back"):
+            parts.extend(["--mmwave_side", side])
+        metrics_rel = str(fusion.get("metrics_path") or "layer8_ui/artifacts/live_mmwave_metrics.json").strip()
+        if metrics_rel:
+            mp = Path(metrics_rel).expanduser()
+            abs_metrics = str(mp.resolve()) if mp.is_absolute() else str((sw / metrics_rel).resolve())
+            parts.extend(["--mmwave_metrics_path", abs_metrics])
+        if mmwave_side == "back":
+            lat_raw = fusion.get("back_mount_lateral_m")
+            if lat_raw is None or str(lat_raw).strip() == "":
+                lat_raw = fusion.get("mount_lateral_m")
+        else:
+            lat_raw = fusion.get("front_mount_lateral_m")
+            if lat_raw is None or str(lat_raw).strip() == "":
+                lat_raw = fusion.get("mount_lateral_m")
+        if lat_raw is not None and str(lat_raw).strip() != "":
+            try:
+                parts.extend(["--mmwave_mount_lateral_m", str(float(lat_raw))])
+            except (TypeError, ValueError):
+                pass
+        for flag, key in (
+            ("--mmwave_depth_gate_m", "depth_gate_m"),
+            ("--mmwave_lateral_gate_m", "lateral_gate_m"),
+            ("--mmwave_corridor_half_width_m", "corridor_half_width_m"),
+            ("--mmwave_mount_height_m", "mount_height_m"),
+            ("--mmwave_sensor_distance_m", "sensor_distance_m"),
+        ):
+            raw = fusion.get(key)
+            if raw is not None and str(raw).strip() != "":
+                try:
+                    parts.extend([flag, str(float(raw))])
+                except (TypeError, ValueError):
+                    pass
+        # Fallback baseline when fusion block omits it (mmwave_root / default 5 m corridor).
+        if "--mmwave_sensor_distance_m" not in parts:
+            parts.extend(["--mmwave_sensor_distance_m", "5.0"])
+
+    rot = w.get("capture_rotate")
+    if rot is not None and str(rot).strip() != "":
+        try:
+            r = int(float(rot)) % 360
+            if r in (0, 90, 180, 270) and r != 0:
+                parts.extend(["--capture_rotate", str(r)])
+        except (TypeError, ValueError):
+            pass
+    if int(w.get("capture_flip_h", 0) or 0):
+        parts.append("--capture_flip_h")
+    if int(w.get("capture_flip_v", 0) or 0):
+        parts.append("--capture_flip_v")
 
     if not no_gun:
         gpath = str(w.get("weapon_gun_yolo_model") or "").strip()

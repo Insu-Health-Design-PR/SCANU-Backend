@@ -59,3 +59,13 @@ class ScreenshotService:
             "width": int(frame.shape[1]),
             "height": int(frame.shape[0]),
         }
+
+    def capture_jpeg_bytes(self, sensor: ScreenshotSensor, *, quality: int = 85) -> bytes | None:
+        """Return one annotated JPEG from IPC without opening an MJPEG stream."""
+        frame = self._grab_bgr(sensor)
+        if frame is None:
+            return None
+        ok, buf = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), int(quality)])
+        if not ok:
+            return None
+        return buf.tobytes()

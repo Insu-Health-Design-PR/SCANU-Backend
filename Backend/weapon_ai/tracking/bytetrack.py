@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ultralytics.engine.results import Boxes
+from ultralytics.trackers.bot_sort import BOTSORT
 from ultralytics.trackers.byte_tracker import BYTETracker
 from ultralytics.utils import IterableSimpleNamespace
 
@@ -896,6 +897,87 @@ class DisplayTrackIds:
         return self._by_tid[tid]
 
 
+class AppearanceDisplayIds:
+    """Stable Person N labels via Re-ID embeddings (survives ByteTrack id swaps).
+
+    Each frame, raw ``track_id`` boxes are matched to stored appearance profiles
+    so labels stay with the same person even when MOT reassigns track ids.
+    """
+
+    def __init__(
+        self,
+        *,
+        sim_threshold: float = 0.62,
+        profile_blend: float = 0.35,
+    ) -> None:
+        self._profiles: dict[int, np.ndarray] = {}
+        self._next = 1
+        self._sim_threshold = float(sim_threshold)
+        self._profile_blend = float(profile_blend)
+        self._track_hint: dict[int, int] = {}
+
+    @staticmethod
+    def _blend_profile(existing: np.ndarray, fresh: np.ndarray, alpha: float) -> np.ndarray:
+        from weapon_ai.reid.embeddings import _l2_normalize
+
+        a = float(alpha)
+        mixed = (1.0 - a) * existing + a * fresh
+        return _l2_normalize(mixed)
+
+    def assign(self, items: list[tuple[int, np.ndarray | None]]) -> dict[int, int]:
+        """Map raw ``track_id`` -> stable ``display_id`` for one frame."""
+        from weapon_ai.reid.embeddings import cosine_similarity
+
+        tracks = [(int(tid), emb) for tid, emb in items]
+        if not tracks:
+            return {}
+
+        candidates: list[tuple[float, int, int]] = []
+        for tid, emb in tracks:
+            if emb is None:
+                continue
+            for did, prof in self._profiles.items():
+                sim = cosine_similarity(emb, prof)
+                if sim >= self._sim_threshold:
+                    candidates.append((sim, tid, did))
+
+        candidates.sort(key=lambda row: -row[0])
+        out: dict[int, int] = {}
+        assigned_tracks: set[int] = set()
+        assigned_profiles: set[int] = set()
+
+        for sim, tid, did in candidates:
+            if tid in assigned_tracks or did in assigned_profiles:
+                continue
+            out[tid] = did
+            assigned_tracks.add(tid)
+            assigned_profiles.add(did)
+            prof = self._profiles[did]
+            emb = next(e for t, e in tracks if t == tid and e is not None)
+            self._profiles[did] = self._blend_profile(prof, emb, self._profile_blend)
+
+        for tid, emb in tracks:
+            if tid in out:
+                continue
+            if tid in self._track_hint:
+                did = self._track_hint[tid]
+            else:
+                did = self._next
+                self._next += 1
+                self._track_hint[tid] = did
+            out[tid] = did
+            if emb is None:
+                continue
+            if did in self._profiles:
+                self._profiles[did] = self._blend_profile(
+                    self._profiles[did], emb, self._profile_blend
+                )
+            else:
+                self._profiles[did] = emb
+
+        return out
+
+
 class IndexedBoxByteTracker:
     """ByteTrack on an ordered list of ``(x1, y1, x2, y2, det_conf)``; returns **index** -> ``track_id``."""
 
@@ -975,6 +1057,161 @@ class IndexedBoxByteTracker:
             if tid is not None:
                 out[local_i] = tid
         return out
+
+
+@dataclass
+class BotSortConfig:
+    """BoT-SORT tuning (Kalman XYWH + optional GMC / ReID)."""
+
+    frame_rate: float = 30.0
+    track_high_thresh: float = 0.15
+    track_low_thresh: float = 0.08
+    new_track_thresh: float = 0.12
+    track_buffer: int = 45
+    match_thresh: float = 0.48
+    fuse_score: bool = True
+    gmc_method: str = "sparseOptFlow"
+    proximity_thresh: float = 0.5
+    appearance_thresh: float = 0.25
+    with_reid: bool = False
+    reid_model: str = "auto"
+
+    @staticmethod
+    def for_persons(*, frame_rate: float = 30.0, track_buffer: int = 45) -> BotSortConfig:
+        """Crowd-friendly BoT-SORT defaults for facing corridor person MOT."""
+        return BotSortConfig(
+            frame_rate=frame_rate,
+            track_high_thresh=0.15,
+            track_low_thresh=0.08,
+            new_track_thresh=0.12,
+            track_buffer=track_buffer,
+            match_thresh=0.48,
+            fuse_score=True,
+            gmc_method="sparseOptFlow",
+            proximity_thresh=0.5,
+            appearance_thresh=0.25,
+            with_reid=False,
+        )
+
+
+def _tracker_namespace(
+    cfg: ByteTrackConfig | BotSortConfig,
+    *,
+    tracker_type: str,
+) -> IterableSimpleNamespace:
+    args = IterableSimpleNamespace(
+        tracker_type=str(tracker_type),
+        track_high_thresh=float(cfg.track_high_thresh),
+        track_low_thresh=float(cfg.track_low_thresh),
+        new_track_thresh=float(cfg.new_track_thresh),
+        track_buffer=int(cfg.track_buffer),
+        match_thresh=float(cfg.match_thresh),
+        fuse_score=bool(cfg.fuse_score),
+    )
+    if tracker_type == "botsort":
+        bcfg = cfg if isinstance(cfg, BotSortConfig) else BotSortConfig.for_persons(
+            frame_rate=float(getattr(cfg, "frame_rate", 30.0)),
+            track_buffer=int(getattr(cfg, "track_buffer", 45)),
+        )
+        args.gmc_method = str(bcfg.gmc_method)
+        args.proximity_thresh = float(bcfg.proximity_thresh)
+        args.appearance_thresh = float(bcfg.appearance_thresh)
+        args.with_reid = bool(bcfg.with_reid)
+        args.model = str(bcfg.reid_model)
+    return args
+
+
+class IndexedBoxBotSortTracker:
+    """BoT-SORT on ordered detections; returns **index** -> ``track_id``."""
+
+    def __init__(self, cfg: BotSortConfig | None = None) -> None:
+        self._cfg = cfg or BotSortConfig.for_persons()
+        args = _tracker_namespace(self._cfg, tracker_type="botsort")
+        self._tracker = BOTSORT(args)
+
+    def reset(self) -> None:
+        self._tracker.reset()
+
+    def predict_active(
+        self,
+        frame_hw: tuple[int, int],
+        orig_img: np.ndarray | None,
+    ) -> dict[int, tuple[int, int, int, int, float]]:
+        h, w = int(frame_hw[0]), int(frame_hw[1])
+        self._tracker.update(
+            Boxes(np.zeros((0, 6), dtype=np.float32), orig_shape=(h, w)),
+            orig_img,
+        )
+        out: dict[int, tuple[int, int, int, int, float]] = {}
+        for pool in (self._tracker.tracked_stracks, self._tracker.lost_stracks):
+            for track in pool:
+                if not track.is_activated:
+                    continue
+                tid = int(track.track_id)
+                if tid in out:
+                    continue
+                x1, y1, tw, th = track.tlwh
+                x2 = int(round(float(x1) + float(tw)))
+                y2 = int(round(float(y1) + float(th)))
+                out[tid] = (int(round(float(x1))), int(round(float(y1))), x2, y2, float(track.score))
+        return out
+
+    def update(
+        self,
+        entries: list[tuple[int, int, int, int, float]],
+        frame_hw: tuple[int, int],
+        orig_img: np.ndarray | None,
+        *,
+        yolo_cls: float = 0.0,
+        min_iou_match: float = 0.05,
+    ) -> dict[int, int]:
+        h, w = int(frame_hw[0]), int(frame_hw[1])
+        if not entries:
+            return {}
+
+        data_rows: list[list[float]] = []
+        for x1, y1, x2, y2, det_conf in entries:
+            dc = max(float(det_conf), 1e-4)
+            data_rows.append([float(x1), float(y1), float(x2), float(y2), dc, float(yolo_cls)])
+
+        boxes = Boxes(np.asarray(data_rows, dtype=np.float32), orig_shape=(h, w))
+        tracks: np.ndarray = self._tracker.update(boxes, orig_img)
+        if tracks.size == 0:
+            return {}
+
+        det_xyxy = np.asarray([[t[0], t[1], t[2], t[3]] for t in entries], dtype=np.float32)
+        txy = tracks[:, :4].astype(np.float32)
+        tids = tracks[:, 4]
+        assigned = _greedy_assign(det_xyxy, txy, tids, min_iou=min_iou_match)
+        out: dict[int, int] = {}
+        for local_i, tid in enumerate(assigned):
+            if tid is not None:
+                out[local_i] = tid
+        return out
+
+
+def make_indexed_box_tracker(
+    *,
+    tracker_type: str = "bytetrack",
+    frame_rate: float = 30.0,
+    track_buffer: int = 45,
+) -> IndexedBoxByteTracker | IndexedBoxBotSortTracker:
+    kind = str(tracker_type or "bytetrack").strip().lower()
+    if kind in {"botsort", "bot-sort", "bot_sort"}:
+        return IndexedBoxBotSortTracker(
+            BotSortConfig.for_persons(frame_rate=float(frame_rate), track_buffer=int(track_buffer))
+        )
+    return IndexedBoxByteTracker(
+        ByteTrackConfig(
+            frame_rate=float(frame_rate),
+            track_high_thresh=0.15,
+            track_low_thresh=0.08,
+            new_track_thresh=0.12,
+            track_buffer=int(track_buffer),
+            match_thresh=0.48,
+            fuse_score=True,
+        )
+    )
 
 
 class ThermalByteTracker:

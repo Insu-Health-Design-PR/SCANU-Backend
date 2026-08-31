@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SCANU — operations dashboard</title>
+  <title>SCANU — control center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -117,15 +117,43 @@
 
     .dash {
       display: grid;
-      grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr);
+      grid-template-columns: minmax(260px, 0.85fr) minmax(0, 2.6fr);
       gap: 1rem;
       padding: 1rem 1.25rem 1.5rem;
-      max-width: 1680px;
+      max-width: 1920px;
       margin: 0 auto;
       align-items: start;
     }
     @media (max-width: 960px) {
       .dash { grid-template-columns: 1fr; }
+    }
+
+    /* Left config column: long camera tabs must scroll — Run was clipped below the fold. */
+    .left-col > .panel {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 5.25rem);
+    }
+    .left-col > .panel > .panel-b {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-b-head {
+      flex-shrink: 0;
+      padding-bottom: 0.15rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .panel-b-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      padding-top: 0.65rem;
     }
 
     .panel {
@@ -239,10 +267,12 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0;
-      margin-top: 1rem;
+      margin-top: 0.65rem;
       border-bottom: 1px solid var(--border);
       background: var(--surface2);
       border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      position: relative;
+      z-index: 15;
     }
     .chrome-tabs button {
       flex: 1 1 auto;
@@ -257,6 +287,9 @@
       cursor: pointer;
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
+      position: relative;
+      z-index: 16;
+      pointer-events: auto;
     }
     .chrome-tabs button:hover { color: var(--text); }
     .chrome-tabs button.active {
@@ -268,6 +301,7 @@
 
     .tab-panel { display: none; padding: 0.75rem 0 0; }
     .tab-panel.active { display: block; }
+    .tab-hidden-iteration { display: none !important; }
 
     .config-section {
       font-size: 0.72rem;
@@ -352,6 +386,15 @@
       flex-wrap: wrap;
       gap: 0.35rem;
       margin-top: 0.65rem;
+    }
+    .row-actions.sensor-run-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 6;
+      padding: 0.5rem 0 0.35rem;
+      margin-bottom: 0.15rem;
+      background: linear-gradient(to top, var(--surface) 82%, rgba(18, 22, 32, 0));
+      border-top: 1px solid var(--border);
     }
 
     .status-line {
@@ -506,9 +549,10 @@
     .preview-frame {
       background: #000;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: min(62vh, 720px);
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      min-height: 0;
       padding: 0.5rem;
     }
     .preview-frame img {
@@ -531,18 +575,183 @@
     .live-grid {
       display: none;
       width: 100%;
-      height: 100%;
-      min-height: min(62vh, 720px);
+      height: auto;
+      flex: 0 0 auto;
+      min-height: 0;
       gap: 0.45rem;
     }
     .live-grid.active { display: grid; }
     .live-grid.ops {
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-rows: minmax(0, 2.6fr) minmax(0, 1fr);
+      min-height: min(72vh, 920px);
     }
+    .live-grid.ops [data-live-sensor="webcam"] { grid-column: 1 / 4; grid-row: 1; }
+    .live-grid.ops [data-live-sensor="multi_camera"] { grid-column: 4 / 7; grid-row: 1; }
+    .live-grid.ops [data-live-sensor="thermal"] { grid-column: 1 / 3; grid-row: 2; }
+    .live-grid.ops [data-live-sensor="mmwave"] { grid-column: 3 / 7; grid-row: 2; }
     .live-grid.binary {
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr;
+      min-height: min(72vh, 920px);
+      width: 100%;
+    }
+    .live-grid.alignment {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      min-height: min(68vh, 780px);
+    }
+    .align-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      width: 100%;
+      min-height: 0;
+    }
+    .align-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      padding: 0.35rem 0.15rem 0;
+    }
+    .align-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+    }
+    .align-status-pill .dot {
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .align-status-pill.ok {
+      border-color: rgba(52, 199, 89, 0.45);
+      background: rgba(52, 199, 89, 0.12);
+      color: var(--ok);
+    }
+    .align-status-pill.ok .dot { background: var(--ok); box-shadow: 0 0 8px rgba(52, 199, 89, 0.65); }
+    .align-status-pill.warn {
+      border-color: rgba(255, 159, 10, 0.45);
+      background: rgba(255, 159, 10, 0.1);
+      color: var(--warn);
+    }
+    .align-status-pill.warn .dot { background: var(--warn); }
+    .align-status-pill.bad {
+      border-color: rgba(255, 69, 58, 0.4);
+      background: rgba(255, 69, 58, 0.08);
+      color: var(--danger);
+    }
+    .align-status-pill.bad .dot { background: var(--danger); }
+    .jetson-svc-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.45rem 0 0.15rem;
+    }
+    .jetson-remote-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+    .align-cells {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    @media (max-width: 720px) {
+      .align-cells { grid-template-columns: 1fr; }
+    }
+    .align-cell {
+      position: relative;
+      background: #05080f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      min-height: min(42vh, 420px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .align-cell.aligned { border-color: rgba(52, 199, 89, 0.55); box-shadow: inset 0 0 0 1px rgba(52, 199, 89, 0.25); }
+    .align-cell .k {
+      position: absolute;
+      top: 0.35rem;
+      left: 0.45rem;
+      z-index: 3;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #e8eef6;
+      text-shadow: 0 1px 3px #000;
+      background: rgba(0,0,0,0.45);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+    .align-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .align-viewport img {
+      max-width: 100%;
+      max-height: 100%;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .align-viewport canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .align-scores {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.45rem;
+    }
+    .align-check {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.6rem;
+    }
+    .align-check.ok { border-color: rgba(52, 199, 89, 0.45); background: rgba(52, 199, 89, 0.08); }
+    .align-check .k {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
+    .align-check .v {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .align-check.ok .v { color: var(--ok); }
+    .align-msg {
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin: 0;
+      flex: 1 1 12rem;
     }
     .live-cell {
       position: relative;
@@ -583,6 +792,14 @@
       height: 100%;
       object-fit: contain;
       border-radius: 0;
+      pointer-events: none;
+    }
+    .live-cell > video { display: none; background: #000; }
+    .live-cell.rtc-live > video { display: block; }
+    .live-cell.rtc-live > img { display: none; }
+    .preview-frame.grid-mode #vid-main,
+    .preview-frame.grid-mode #vid-main-webrtc {
+      pointer-events: none !important;
     }
     .preview-frame.single-mode .live-grid { display: none !important; }
     .preview-frame.grid-mode #vid-main,
@@ -769,7 +986,7 @@
   <header class="topbar">
     <div class="brand">
       <h1>SCANU</h1>
-      <span>Layer 8 · operations</span>
+      <span>control center</span>
     </div>
     <div class="sys-metrics" id="sys-metrics" aria-live="polite" title="Host load (updates every few seconds)">
       <span>CPU <strong id="sys-cpu">—</strong></span>
@@ -796,6 +1013,7 @@
       <div class="panel">
         <div class="panel-h">Status</div>
         <div class="panel-b">
+          <div class="panel-b-head">
           <div class="metrics-line" id="metrics-line">
             <span>Unsafe <strong id="metric-unsafe">—</strong></span>
             <span class="sep">·</span>
@@ -809,30 +1027,27 @@
           </div>
           <p class="metrics-footnote" id="metrics-note" style="margin-top:0.4rem;margin-bottom:0;"></p>
 
-          <div class="panel-h" style="margin: 0.85rem -1rem 0.5rem; border-top: 1px solid var(--border);">Previews</div>
-          <div class="side-grid">
-            <div class="side-card" id="mmwave-plot-wrap">
-              <div class="k">mmWave Front</div>
-              <div class="side-slot">
-                <img id="vid-mmwave" alt="mmWave Front" src="/api/preview/live/mmwave" />
-              </div>
-            </div>
-            <div class="side-card" id="mmwave-plot-wrap-back">
-              <div class="k">mmWave Back</div>
-              <div class="side-slot">
-                <img id="vid-mmwave-back" alt="mmWave Back" src="/api/preview/live/mmwave?side=back" />
-              </div>
-            </div>
-          </div>
-
           <div class="chrome-tabs" role="tablist">
-            <button type="button" class="active" data-tab="thermal" id="tabbtn-thermal">Thermal</button>
-            <button type="button" data-tab="ai-camera" id="tabbtn-ai-camera">Front Camera · Multi Camera</button>
-            <button type="button" data-tab="multi-camera" id="tabbtn-multi-camera">Back Camera</button>
+            <button type="button" class="tab-hidden-iteration" data-tab="thermal" id="tabbtn-thermal">Thermal</button>
+            <button type="button" class="active" data-tab="ai-camera" id="tabbtn-ai-camera">Front Cam</button>
+            <button type="button" data-tab="multi-camera" id="tabbtn-multi-camera">Back Cam</button>
             <button type="button" data-tab="mmwave" id="tabbtn-mmwave">mmWave</button>
+            <button type="button" class="tab-hidden-iteration" data-tab="alignment" id="tabbtn-alignment">Alignment</button>
+          </div>
           </div>
 
-          <div class="tab-panel active" id="tab-thermal" role="tabpanel">
+          <div class="panel-b-scroll">
+          <div class="panel-h" style="margin: 0 0 0.5rem; border-top: none; padding-left: 0; padding-right: 0;">Previews</div>
+          <div class="side-grid">
+            <div class="side-card" id="mmwave-plot-wrap" style="grid-column: 1 / -1;">
+              <div class="k">Dual AWR1843 · fused live point-cloud dashboard</div>
+              <div class="side-slot">
+                <img id="vid-mmwave" alt="Fused dual-AWR1843 mmWave dashboard" src="/api/mmwave/preview/live?side=fused" />
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel tab-hidden-iteration" id="tab-thermal" role="tabpanel">
             <p class="tab-prose" style="margin-top:0;">PureThermal capture is usually <code>/dev/video2</code> (160×120 @ 9 fps, Y16). Resolution list comes from v4l2 for the device you pick — use <strong>Auto-configure</strong> to set device + resolution from <code>v4l2-ctl</code>.</p>
             <div class="fields" id="fields-thermal"></div>
             <div class="row-actions">
@@ -850,9 +1065,9 @@
             <pre class="log-mini" id="cmd-out-thermal" style="display:none;max-height:100px;"></pre>
           </div>
 
-          <div class="tab-panel" id="tab-ai-camera" role="tabpanel">
+          <div class="tab-panel active" id="tab-ai-camera" role="tabpanel">
             <p class="tab-prose">
-              <strong>Front Camera · Multi Camera</strong> — RGB + multi-class pipeline via
+              <strong>Front Cam</strong> — Local USB or Jetson IP stream →
               <code>infer_objects</code>. Run = camera + model.
             </p>
             <div class="form-row-2 form-row-profile" style="gap:0.5rem;">
@@ -891,7 +1106,7 @@
                 <div class="fields" id="fields-webcam-adv" style="margin-top:0.5rem;"></div>
               </details>
             </details>
-            <details class="flat-details" style="margin-top:0.5rem;" id="webcam-pose-wrap" open>
+            <details class="flat-details" style="margin-top:0.5rem;" id="webcam-pose-wrap">
               <summary>Pose estimation — skeleton / holding pose</summary>
               <p class="tab-prose" style="margin:0.35rem 0 0.25rem;">
                 Prefer <code>yolov8s-pose.pt</code> for clean general skeletons (per-person crop inference).
@@ -902,7 +1117,17 @@
               <summary>Sentinel distance (Front ↔ Back)</summary>
               <div class="fields" id="fields-webcam-sentinel" style="margin-top:0.4rem;"></div>
             </details>
-            <div class="row-actions">
+            <details class="adv-block" id="webcam-v4l2-wrap" style="margin-top:0.45rem;">
+              <summary>Camera controls (brightness, zoom, exposure)</summary>
+              <p class="tab-prose" style="margin:0.35rem 0 0;">Applies to local USB only (<code>/dev/videoN</code>). Hidden for Jetson RTSP.</p>
+              <div id="webcam-v4l2-status" aria-live="polite"></div>
+              <div class="row-actions" style="margin-top:0.35rem;">
+                <button type="button" class="btn ghost" id="btn-webcam-v4l2-refresh">Refresh</button>
+                <button type="button" class="btn ghost" id="btn-webcam-v4l2-reset">Reset to defaults</button>
+              </div>
+              <div id="webcam-v4l2-controls"></div>
+            </details>
+            <div class="row-actions sensor-run-bar">
               <button type="button" class="btn primary" id="run-webcam">Run</button>
               <button type="button" class="btn" id="stop-webcam">Stop</button>
               <button type="button" class="btn" id="restart-webcam">Restart</button>
@@ -912,7 +1137,7 @@
               <button type="button" class="btn ghost" id="cmd-webcam">Cmd</button>
             </div>
             <div class="err" id="err-webcam"></div>
-            <div class="status-line" id="st-webcam"><span class="dot off"></span><span class="txt">Front Camera · Multi Camera · idle</span></div>
+            <div class="status-line" id="st-webcam"><span class="dot off"></span><span class="txt">Front Cam · idle</span></div>
             <pre class="log-mini" id="log-webcam"></pre>
             <pre class="log-mini" id="cmd-out-webcam" style="display:none;max-height:100px;"></pre>
             <pre class="log-mini" id="cmd-out-model" style="display:none;max-height:100px;"></pre>
@@ -920,7 +1145,7 @@
 
           <div class="tab-panel" id="tab-multi-camera" role="tabpanel">
             <p class="tab-prose">
-              <strong>Back Camera</strong> — Local USB or Jetson IP stream →
+              <strong>Back Cam</strong> — Local USB or Jetson IP stream →
               <code>infer_objects</code>. Run = camera + model.
             </p>
             <div class="form-row-2 form-row-profile" style="gap:0.5rem;">
@@ -956,21 +1181,47 @@
                 <div class="fields" id="fields-multi_camera-adv" style="margin-top:0.5rem;"></div>
               </details>
             </details>
-            <details class="adv-block" id="webcam-v4l2-wrap" style="margin-top:0.45rem;">
-              <summary>USB camera controls (brightness, zoom, exposure)</summary>
-              <p class="tab-prose" style="margin:0.35rem 0 0;">Applies to local USB source only (<code>/dev/videoN</code>). Hidden / inactive for Jetson RTSP.</p>
-              <div id="webcam-v4l2-status" aria-live="polite"></div>
+            <details class="adv-block" id="multi_camera-v4l2-wrap" style="margin-top:0.45rem;">
+              <summary>Camera controls (brightness, zoom, exposure)</summary>
+              <p class="tab-prose" style="margin:0.35rem 0 0;">Applies to local USB Back Cam only (<code>/dev/videoN</code>). Hidden for Jetson RTSP.</p>
+              <div id="multi_camera-v4l2-status" aria-live="polite"></div>
               <div class="row-actions" style="margin:0.2rem 0 0.35rem;">
-                <button type="button" class="btn ghost" id="btn-webcam-v4l2-refresh">Refresh</button>
-                <button type="button" class="btn ghost" id="btn-webcam-v4l2-reset">Reset to defaults</button>
+                <button type="button" class="btn ghost" id="btn-multi_camera-v4l2-refresh">Refresh</button>
+                <button type="button" class="btn ghost" id="btn-multi_camera-v4l2-reset">Reset to defaults</button>
               </div>
-              <div id="webcam-v4l2-controls"></div>
+              <div id="multi_camera-v4l2-controls"></div>
+            </details>
+            <details class="adv-block" id="multi_camera-jetson-remote-wrap" style="margin-top:0.45rem;display:none;">
+              <summary>Jetson remote (SSH · MediaMTX · cam-rtsp)</summary>
+              <p class="tab-prose" style="margin:0.35rem 0 0;">
+                SSH to the Back Cam Jetson using a PEM key. Check and restart
+                <code>mediamtx.service</code> and <code>cam-rtsp.service</code> without manual terminal access.
+                Place the key at <code>layer8_ui/secrets/jetson_back.pem</code> (chmod 600) or set
+                <code>JETSON_SSH_IDENTITY_FILE</code> in <code>.env</code>.
+              </p>
+              <div class="fields" id="fields-jetson_back" style="margin-top:0.45rem;"></div>
+              <div class="jetson-svc-row">
+                <span class="align-status-pill warn" id="jetson-pill-mtx"><span class="dot"></span><span class="txt">MediaMTX · —</span></span>
+                <span class="align-status-pill warn" id="jetson-pill-cam"><span class="dot"></span><span class="txt">cam-rtsp · —</span></span>
+                <span class="align-status-pill warn" id="jetson-pill-ssh"><span class="dot"></span><span class="txt">SSH · —</span></span>
+              </div>
+              <div class="jetson-remote-meta" id="jetson-remote-meta" aria-live="polite"></div>
+              <div class="row-actions" style="margin-top:0.35rem;">
+                <button type="button" class="btn ghost" id="btn-jetson-connect-test">Test SSH</button>
+                <button type="button" class="btn ghost" id="btn-jetson-refresh">Refresh services</button>
+                <button type="button" class="btn" id="btn-jetson-save-config">Save SSH config</button>
+                <button type="button" class="btn ghost" id="btn-jetson-mtx-restart">Restart MTX</button>
+                <button type="button" class="btn ghost" id="btn-jetson-cam-restart">Restart cam-rtsp</button>
+                <button type="button" class="btn ghost" id="btn-jetson-cam-logs">cam-rtsp logs</button>
+                <button type="button" class="btn ghost" id="btn-jetson-v4l2">List v4l2</button>
+              </div>
+              <pre class="log-mini" id="jetson-remote-log" style="max-height:140px;margin-top:0.35rem;"></pre>
             </details>
             <details class="flat-details" style="margin-top:0.5rem;" id="multi-camera-sentinel-wrap">
               <summary>Sentinel distance (Front ↔ Back)</summary>
               <div class="fields" id="fields-multi_camera-sentinel" style="margin-top:0.4rem;"></div>
             </details>
-            <div class="row-actions">
+            <div class="row-actions sensor-run-bar">
               <button type="button" class="btn primary" id="run-multi_camera">Run</button>
               <button type="button" class="btn" id="stop-multi_camera">Stop</button>
               <button type="button" class="btn" id="restart-multi_camera">Restart</button>
@@ -980,17 +1231,33 @@
               <button type="button" class="btn ghost" id="cmd-multi_camera">Cmd</button>
             </div>
             <div class="err" id="err-multi_camera"></div>
-            <div class="status-line" id="st-multi_camera"><span class="dot off"></span><span class="txt">Back Camera · idle</span></div>
+            <div class="status-line" id="st-multi_camera"><span class="dot off"></span><span class="txt">Back Cam · idle</span></div>
             <pre class="log-mini" id="log-multi_camera"></pre>
             <pre class="log-mini" id="cmd-out-multi_camera" style="display:none;max-height:100px;"></pre>
           </div>
 
           <div class="tab-panel" id="tab-mmwave" role="tabpanel">
             <p class="tab-prose" style="margin-top:0;">
-              Dual mmWave (Adrian lab): <strong>Front</strong> and <strong>Back</strong> radar pairs.
-              Default publisher writes perception JPEGs for both slots. Set session / ports per side.
+              Dual mmWave via <code>MMWAVE_ROOT</code> (standalone Mmwave repo). Pipelines:
+              <code>dual_live</code> (UART) or <code>dual_replay</code> (sessions). Enable
+              <strong>Fusion overlay</strong> to draw radar dots on Front/Back camera infer frames.
             </p>
+            <div id="mmwave-root-status" class="jetson-remote-meta" aria-live="polite"></div>
             <div class="fields" id="fields-mmwave"></div>
+            <details class="adv-block" id="mmwave-root-wrap" style="margin-top:0.45rem;">
+              <summary>MMWAVE_ROOT adapter</summary>
+              <div class="fields" id="fields-mmwave_root" style="margin-top:0.4rem;"></div>
+            </details>
+            <details class="adv-block" id="mmwave-fusion-wrap" style="margin-top:0.45rem;">
+              <summary>Camera + mmWave fusion overlay</summary>
+              <div class="fields" id="fields-mmwave_fusion" style="margin-top:0.4rem;"></div>
+            </details>
+            <div class="row-actions" style="margin-top:0.35rem;">
+              <button type="button" class="btn ghost" id="btn-mmwave-preflight">Preflight</button>
+              <button type="button" class="btn primary" id="btn-mmwave-probe">System probe</button>
+              <button type="button" class="btn ghost" id="btn-mmwave-live-metrics">Refresh metrics</button>
+            </div>
+            <pre class="log-mini" id="mmwave-preflight-log" style="max-height:100px;margin-top:0.35rem;"></pre>
             <div class="row-actions">
               <button type="button" class="btn primary" id="run-mmwave">Run</button>
               <button type="button" class="btn" id="stop-mmwave">Stop</button>
@@ -1006,6 +1273,23 @@
             <pre class="log-mini" id="log-mmwave"></pre>
             <pre class="log-mini" id="cmd-out-mmwave" style="display:none;max-height:100px;"></pre>
           </div>
+
+          <div class="tab-panel tab-hidden-iteration" id="tab-alignment" role="tabpanel">
+            <p class="tab-prose" style="margin-top:0;">
+              <strong>Corridor alignment</strong> — calibrate Front ↔ Back geometry. Stand in the corridor;
+              when <span style="color:var(--ok);">lateral</span> + <span style="color:var(--ok);">depth</span> turn green,
+              cross-camera Re-ID can link reliably. Open the <strong>Alignment</strong> preview layout on the right.
+            </p>
+            <div class="fields" id="fields-alignment"></div>
+            <div class="row-actions" style="margin-top:0.5rem;">
+              <button type="button" class="btn primary" id="btn-alignment-save">Save calibration</button>
+              <button type="button" class="btn" id="btn-alignment-view">Show alignment view</button>
+              <button type="button" class="btn ghost" id="btn-alignment-reload-gid">Reload Global ID</button>
+            </div>
+            <div class="err" id="err-alignment" style="margin-top:0.35rem;"></div>
+            <p class="tab-prose" id="align-sidebar-summary" style="margin-top:0.5rem;font-family:var(--mono);font-size:0.72rem;"></p>
+          </div>
+          </div>
         </div>
       </div>
     </aside>
@@ -1018,17 +1302,17 @@
             <label for="live-focus-camera">Camera</label>
             <select id="live-focus-camera" aria-label="Live view camera">
               <option value="thermal">Thermal</option>
-              <option value="webcam">Front Camera</option>
-              <option value="multi_camera">Back Camera</option>
-              <option value="mmwave">mmWave Front</option>
-              <option value="mmwave_back">mmWave Back</option>
+              <option value="webcam">Front Cam</option>
+              <option value="multi_camera">Back Cam</option>
+              <option value="mmwave">mmWave Fusion</option>
             </select>
             <button type="button" class="btn ghost btn-sm" id="btn-live-enlarge" title="Show selected camera large">Enlarge</button>
             <button type="button" class="btn ghost btn-sm" id="btn-live-grid" title="Back to multi-camera grid" hidden>Grid</button>
           </div>
           <div class="seg" role="group" aria-label="Layout mode">
-            <button type="button" class="active" id="layout-ops" data-layout="ops" title="Thermal · Front · Back · mmWave Front/Back">Ops</button>
-            <button type="button" id="layout-binary" data-layout="binary" title="Front + Back classifiers (infer_objects)">Classifiers only</button>
+            <button type="button" id="layout-ops" data-layout="ops" title="Front + Back landscape, thermal and mmWave below">Ops</button>
+            <button type="button" class="active" id="layout-binary" data-layout="binary" title="Front over Back, full panel width">Classifiers only</button>
+            <button type="button" id="layout-alignment" class="tab-hidden-iteration" data-layout="alignment" title="Front ↔ Back corridor alignment">Alignment</button>
           </div>
           <button type="button" class="btn ghost btn-sm" id="btn-preview-device-config" title="Assign V4L2 /dev/video devices">Configure</button>
         </div>
@@ -1036,40 +1320,81 @@
       <div class="preview-frame grid-mode" id="preview-frame">
         <img id="vid-main" alt="Main preview" style="display:none;" />
         <video id="vid-main-webrtc" autoplay playsinline muted style="display:none;"></video>
-        <div class="live-grid ops active" id="live-grid-ops" aria-label="Ops panel">
+        <div class="live-grid ops" id="live-grid-ops" aria-label="Ops panel">
+          <div class="live-cell" data-live-sensor="webcam">
+            <div class="k">Front Cam · infer_objects</div>
+            <video id="vid-ops-front-rtc" autoplay playsinline muted></video>
+            <img id="vid-ops-front" alt="Front Cam" />
+          </div>
+          <div class="live-cell" data-live-sensor="multi_camera">
+            <div class="k">Back Cam · infer_objects</div>
+            <video id="vid-ops-back-rtc" autoplay playsinline muted></video>
+            <img id="vid-ops-back" alt="Back Cam" />
+          </div>
           <div class="live-cell" data-live-sensor="thermal">
             <div class="k">Thermal</div>
             <img id="vid-ops-thermal" alt="Thermal" />
           </div>
-          <div class="live-cell" data-live-sensor="webcam">
-            <div class="k">Front Camera · Multi / infer_objects</div>
-            <img id="vid-ops-front" alt="Front Camera" />
-          </div>
-          <div class="live-cell" data-live-sensor="multi_camera">
-            <div class="k">Back Camera · infer_objects</div>
-            <img id="vid-ops-back" alt="Back Camera" />
-          </div>
           <div class="live-cell" data-live-sensor="mmwave">
-            <div class="k">mmWave Front</div>
-            <img id="vid-ops-mmwave-front" alt="mmWave Front" />
-          </div>
-          <div class="live-cell" data-live-sensor="mmwave_back">
-            <div class="k">mmWave Back</div>
-            <img id="vid-ops-mmwave-back" alt="mmWave Back" />
-          </div>
-          <div class="live-cell" style="opacity:0.55; cursor:default;" data-live-sensor="">
-            <div class="k">Reserved</div>
-            <div class="tab-prose" style="padding:1rem;color:#9aafc2;">Thermal · Front · Back · mmWave×2</div>
+            <div class="k">mmWave Fusion · dual AWR1843 dashboard</div>
+            <img id="vid-ops-mmwave-fused" alt="Fused dual-AWR1843 mmWave dashboard" />
           </div>
         </div>
-        <div class="live-grid binary" id="live-grid-binary" aria-label="Classifier dual panel">
+        <div class="live-grid binary active" id="live-grid-binary" aria-label="Classifier dual panel">
           <div class="live-cell" data-live-sensor="webcam">
-            <div class="k">Front Camera · Multi / infer_objects</div>
-            <img id="vid-bin-ai" alt="Front Camera" />
+            <div class="k">Front Cam · infer_objects</div>
+            <video id="vid-bin-ai-rtc" autoplay playsinline muted></video>
+            <img id="vid-bin-ai" alt="Front Cam" />
           </div>
           <div class="live-cell" data-live-sensor="multi_camera">
-            <div class="k">Back Camera · Multi / infer_objects (+ Jetson IP)</div>
-            <img id="vid-bin-multi" alt="Back Camera" />
+            <div class="k">Back Cam · infer_objects</div>
+            <video id="vid-bin-multi-rtc" autoplay playsinline muted></video>
+            <img id="vid-bin-multi" alt="Back Cam" />
+          </div>
+        </div>
+        <div class="live-grid alignment" id="live-grid-alignment" aria-label="Corridor alignment panel">
+          <div class="align-stage">
+            <div class="align-head">
+              <div class="align-status-pill warn" id="align-status-pill">
+                <span class="dot"></span>
+                <span id="align-status-text">Waiting for data…</span>
+              </div>
+              <p class="align-msg" id="align-status-msg">Start Front + Back infer and stand in the corridor.</p>
+            </div>
+            <div class="align-cells">
+              <div class="align-cell" id="align-cell-front">
+                <div class="k">Front · facing corridor</div>
+                <div class="align-viewport">
+                  <img id="align-vid-front" alt="Front alignment preview" src="/api/preview/live/webcam" />
+                  <canvas id="align-canvas-front" aria-hidden="true"></canvas>
+                </div>
+              </div>
+              <div class="align-cell" id="align-cell-back">
+                <div class="k">Back · facing corridor</div>
+                <div class="align-viewport">
+                  <img id="align-vid-back" alt="Back alignment preview" src="/api/preview/live/multi_camera" />
+                  <canvas id="align-canvas-back" aria-hidden="true"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="align-scores" id="align-scores">
+              <div class="align-check" id="align-check-lateral">
+                <div class="k">Lateral mirror</div>
+                <div class="v">—</div>
+              </div>
+              <div class="align-check" id="align-check-depth">
+                <div class="k">Depth corridor</div>
+                <div class="v">—</div>
+              </div>
+              <div class="align-check" id="align-check-reid">
+                <div class="k">Re-ID similarity</div>
+                <div class="v">—</div>
+              </div>
+              <div class="align-check" id="align-check-baseline">
+                <div class="k">d_front + d_back</div>
+                <div class="v">—</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1094,7 +1419,7 @@
   <div id="device-config-modal" class="modal-overlay" hidden>
     <div class="modal-card" role="dialog" aria-labelledby="device-config-title" aria-modal="true">
       <h3 id="device-config-title">V4L2 device assignment</h3>
-      <p class="modal-prose">Pick which <code>/dev/videoN</code> node each pipeline uses. Saved to <code>ui_settings.json</code>. Stop and restart a sensor if it is already running.</p>
+      <p class="modal-prose">Pick which <strong>Video Capture</strong> <code>/dev/videoN</code> node each pipeline uses (HDMI dongles also expose a metadata node — skip those). Saved to <code>ui_settings.json</code>. Stop and restart a sensor if it is already running.</p>
       <p class="device-config-info" id="device-config-info"></p>
       <p class="device-config-warn" id="device-config-warn"></p>
       <div class="device-assign-row">
@@ -1102,11 +1427,11 @@
         <select id="device-config-thermal"></select>
       </div>
       <div class="device-assign-row">
-        <label for="device-config-webcam">Front Camera · Multi Camera</label>
+        <label for="device-config-webcam">Front Cam</label>
         <select id="device-config-webcam"></select>
       </div>
       <div class="device-assign-row">
-        <label for="device-config-multi_camera">Back Camera</label>
+        <label for="device-config-multi_camera">Back Cam</label>
         <select id="device-config-multi_camera"></select>
       </div>
       <div class="modal-actions">
@@ -1120,16 +1445,18 @@
 
   <script>
     const SENSORS = ["thermal", "webcam", "multi_camera", "mmwave"];
-    const TAB_IDS = ["thermal", "ai-camera", "multi-camera", "mmwave"];
+    const TAB_IDS = ["ai-camera", "multi-camera", "mmwave"];
+    const TAB_IDS_ALL = ["thermal", "ai-camera", "multi-camera", "mmwave", "alignment"];
     const PREVIEW_KEY = "scanu_main_preview";
     const LIVE_ENLARGE_KEY = "scanu_live_enlarge";
-    const LIVE_FOCUS_OPTIONS = ["thermal", "webcam", "multi_camera", "mmwave", "mmwave_back"];
+    const LIVE_FOCUS_OPTIONS = ["thermal", "webcam", "multi_camera", "mmwave"];
     /** 720p, 1080p, 1440p, 4K @ 30/60 fps */
     const AI_RES_LADDER = [
       { id: "custom", label: "Custom (use fields below)", w: 0, h: 0, fps: 30 },
       { id: "r720", label: "720p 1280×720 @ 30", w: 1280, h: 720, fps: 30 },
       { id: "r1080", label: "1080p 1920×1080 @ 30 (default)", w: 1920, h: 1080, fps: 30 },
       { id: "r1440", label: "1440p 2560×1440 @ 30", w: 2560, h: 1440, fps: 30 },
+      { id: "r1440_60", label: "2K 2560×1440 @ 60 (dual cam)", w: 2560, h: 1440, fps: 60 },
       { id: "r4k", label: "4K 3840×2160 @ 30", w: 3840, h: 2160, fps: 30 },
       { id: "r4k60", label: "4K 3840×2160 @ 60", w: 3840, h: 2160, fps: 60 },
     ];
@@ -1156,6 +1483,8 @@
     let _multiCameraWsReconnect = null;
     let webcamPc = null;
     let multiCameraPc = null;
+    let webcamRtcVideoId = "vid-main-webrtc";
+    let multiCameraRtcVideoId = "vid-main-webrtc";
     let recordPollTimer = null;
 
     const WEAPON_DEVICE_OPTIONS = [
@@ -1339,7 +1668,7 @@
     const WEAPON_POSE_GROUP = {
       id: "pose",
       title: "Pose & hands",
-      open: true,
+      open: false,
       fields: [
         ["weapon_pose_enable", "yesno"],
         ["weapon_pose_draw", "yesno"],
@@ -1398,12 +1727,14 @@
 
     function el(id) { return document.getElementById(id); }
 
-    let liveLayoutMode = "ops"; // ops | binary
+    let liveLayoutMode = localStorage.getItem("scanu_live_layout") || "binary"; // ops | binary | alignment
+    if (!["ops", "binary", "alignment"].includes(liveLayoutMode)) liveLayoutMode = "binary";
+    let alignPollTimer = null;
     let liveEnlarge = localStorage.getItem(LIVE_ENLARGE_KEY) === "1";
 
     function mainPreviewMode() {
-      const mode = localStorage.getItem(PREVIEW_KEY) || "thermal";
-      return LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "thermal";
+      const mode = localStorage.getItem(PREVIEW_KEY) || "webcam";
+      return LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "webcam";
     }
 
     function setLiveEnlarge(on) {
@@ -1475,20 +1806,23 @@
           if (img) img.src = previewUrl(sensor);
           startMultiCameraWs();
         });
-      } else if (sensor === "mmwave" || sensor === "mmwave_back") {
+      } else if (sensor === "mmwave") {
         if (img) img.src = previewUrl(sensor);
       }
-      // mmwave / mmwave_back: MJPEG via img.src above
+      // Fused mmWave dashboard uses MJPEG via img.src above.
     }
 
     function applyLiveViewMode() {
       const ops = el("live-grid-ops");
       const bin = el("live-grid-binary");
+      const align = el("live-grid-alignment");
       const frame = el("preview-frame");
       const mode = mainPreviewMode();
       if (liveEnlarge) {
         if (ops) ops.classList.remove("active");
         if (bin) bin.classList.remove("active");
+        if (align) align.classList.remove("active");
+        stopAlignmentPoll();
         if (frame) {
           frame.classList.remove("grid-mode");
           frame.classList.add("single-mode");
@@ -1503,24 +1837,35 @@
         }
         if (ops) ops.classList.toggle("active", liveLayoutMode === "ops");
         if (bin) bin.classList.toggle("active", liveLayoutMode === "binary");
+        if (align) align.classList.toggle("active", liveLayoutMode === "alignment");
+        if (liveLayoutMode === "alignment") {
+          refreshAlignmentPreviews();
+          startAlignmentPoll();
+        } else {
+          stopAlignmentPoll();
+        }
+        if (liveLayoutMode === "binary" || liveLayoutMode === "ops") {
+          startGridWebRTC();
+        }
         refreshAllLivePanels();
       }
       el("layout-ops")?.classList.toggle("active", liveLayoutMode === "ops");
       el("layout-binary")?.classList.toggle("active", liveLayoutMode === "binary");
+      el("layout-alignment")?.classList.toggle("active", liveLayoutMode === "alignment");
       syncLiveFocusControls();
     }
 
     function setLiveLayout(mode) {
-      liveLayoutMode = mode === "binary" ? "binary" : "ops";
+      liveLayoutMode = ["binary", "alignment"].includes(mode) ? mode : "ops";
       localStorage.setItem("scanu_live_layout", liveLayoutMode);
-      // Switching Ops/Classifiers exits enlarge so the grid is visible.
+      // Switching layout exits enlarge so the grid is visible.
       liveEnlarge = false;
       localStorage.setItem(LIVE_ENLARGE_KEY, "0");
       applyLiveViewMode();
     }
 
     function setPreviewSource(mode) {
-      const next = LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "thermal";
+      const next = LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "webcam";
       localStorage.setItem(PREVIEW_KEY, next);
       syncLiveFocusControls();
     }
@@ -1537,10 +1882,10 @@
       const q = bust ? `?t=${Date.now()}` : "";
       if (sensor === "webcam") return `/api/ai_camera/preview/live${q}`;
       if (sensor === "multi_camera") return `/api/multi_camera/preview/live${q}`;
-      if (sensor === "mmwave_back") {
+      if (sensor === "mmwave") {
         return bust
-          ? `/api/preview/live/mmwave?side=back&t=${Date.now()}`
-          : `/api/preview/live/mmwave?side=back`;
+          ? `/api/mmwave/preview/live?side=fused&t=${Date.now()}`
+          : "/api/mmwave/preview/live?side=fused";
       }
       return `/api/preview/live/${sensor}${q}`;
     }
@@ -1561,8 +1906,7 @@
       setImg("vid-ops-thermal", "thermal");
       setImg("vid-ops-front", "webcam");
       setImg("vid-ops-back", "multi_camera");
-      setImg("vid-ops-mmwave-front", "mmwave");
-      setImg("vid-ops-mmwave-back", "mmwave_back");
+      setImg("vid-ops-mmwave-fused", "mmwave");
     }
 
     function refreshBinaryGrid() {
@@ -1575,7 +1919,7 @@
         const sensor = mainPreviewMode();
         const img = el("vid-main");
         if (!img) return;
-        if (sensor === "mmwave" || sensor === "mmwave_back") {
+        if (sensor === "mmwave") {
           img.src = previewUrl(sensor);
         } else if (!img.getAttribute("src")) {
           img.src = previewUrl(sensor);
@@ -1622,9 +1966,23 @@
       }
     }
 
-    async function startWebcamWebRTC() {
+    function stopWebcamWebRTC() {
+      const video = el(webcamRtcVideoId) || el("vid-main-webrtc");
+      if (video) {
+        try { video.pause(); } catch (_) {}
+        video.srcObject = null;
+      }
+      if (webcamPc) {
+        try { webcamPc.close(); } catch (_) {}
+        webcamPc = null;
+      }
+      document.querySelectorAll(".live-cell[data-live-sensor='webcam']").forEach((c) => c.classList.remove("rtc-live"));
+    }
+
+    async function startWebcamWebRTC(videoId) {
       stopWebcamWebRTC();
-      const video = el("vid-main-webrtc");
+      webcamRtcVideoId = videoId || "vid-main-webrtc";
+      const video = el(webcamRtcVideoId);
       if (!video) return;
       const pc = new RTCPeerConnection({ iceServers: [] });
       webcamPc = pc;
@@ -1637,6 +1995,8 @@
       pc.ontrack = (ev) => {
         const [stream] = ev.streams;
         if (stream) video.srcObject = stream;
+        const cell = video.closest(".live-cell");
+        if (cell) cell.classList.add("rtc-live");
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -1654,7 +2014,7 @@
     }
 
     function stopMultiCameraWebRTC() {
-      const video = el("vid-main-webrtc");
+      const video = el(multiCameraRtcVideoId) || el("vid-main-webrtc");
       if (video) {
         try { video.pause(); } catch (_) {}
         video.srcObject = null;
@@ -1663,11 +2023,13 @@
         try { multiCameraPc.close(); } catch (_) {}
         multiCameraPc = null;
       }
+      document.querySelectorAll(".live-cell[data-live-sensor='multi_camera']").forEach((c) => c.classList.remove("rtc-live"));
     }
 
-    async function startMultiCameraWebRTC() {
+    async function startMultiCameraWebRTC(videoId) {
       stopMultiCameraWebRTC();
-      const video = el("vid-main-webrtc");
+      multiCameraRtcVideoId = videoId || "vid-main-webrtc";
+      const video = el(multiCameraRtcVideoId);
       if (!video) return;
       const pc = new RTCPeerConnection({ iceServers: [] });
       multiCameraPc = pc;
@@ -1680,6 +2042,8 @@
       pc.ontrack = (ev) => {
         const [stream] = ev.streams;
         if (stream) video.srcObject = stream;
+        const cell = video.closest(".live-cell");
+        if (cell) cell.classList.add("rtc-live");
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -1696,16 +2060,11 @@
       await pc.setRemoteDescription(answer);
     }
 
-    function stopWebcamWebRTC() {
-      const video = el("vid-main-webrtc");
-      if (video) {
-        try { video.pause(); } catch (_) {}
-        video.srcObject = null;
-      }
-      if (webcamPc) {
-        try { webcamPc.close(); } catch (_) {}
-        webcamPc = null;
-      }
+    function startGridWebRTC() {
+      const frontId = liveLayoutMode === "ops" ? "vid-ops-front-rtc" : "vid-bin-ai-rtc";
+      const backId = liveLayoutMode === "ops" ? "vid-ops-back-rtc" : "vid-bin-multi-rtc";
+      startWebcamWebRTC(frontId).catch(() => {});
+      startMultiCameraWebRTC(backId).catch(() => {});
     }
 
     function stopThermalWs() {
@@ -1826,24 +2185,13 @@
 
     function refreshMmwaveThumb({ bust = false } = {}) {
       const front = el("vid-mmwave");
-      const back = el("vid-mmwave-back");
       const frontUrl = bust
-        ? `/api/preview/live/mmwave?t=${Date.now()}`
-        : `/api/preview/live/mmwave`;
-      const backUrl = bust
-        ? `/api/preview/live/mmwave?side=back&t=${Date.now()}`
-        : `/api/preview/live/mmwave?side=back`;
+        ? `/api/mmwave/preview/live?side=fused&t=${Date.now()}`
+        : "/api/mmwave/preview/live?side=fused";
       if (front) {
         const cur = front.getAttribute("src") || "";
         if (bust || !cur || cur.split("?t=")[0].split("&t=")[0] !== frontUrl.split("?t=")[0]) {
           front.src = frontUrl;
-        }
-      }
-      if (back) {
-        const cur = back.getAttribute("src") || "";
-        const base = (u) => u.replace(/([?&])t=\d+/g, "").replace(/[?&]$/, "");
-        if (bust || !cur || base(cur) !== base(backUrl)) {
-          back.src = backUrl;
         }
       }
     }
@@ -1944,9 +2292,11 @@
       }
     }
 
-    function setError(sensor, msg) {
+    function setError(sensor, msg, { ok = false } = {}) {
       const n = el("err-" + sensor);
-      if (n) n.textContent = msg || "";
+      if (!n) return;
+      n.textContent = msg || "";
+      n.style.color = ok ? "var(--ok)" : "var(--danger)";
     }
 
     function clearErrors() {
@@ -2187,12 +2537,33 @@
     }
 
     function getWebcamDeviceIndex() {
-      // USB controls live on Back Camera tab — use multi_camera local index.
+      const inp = el("webcam-webcam_device");
+      if (inp && inp.value !== "") return Math.max(0, parseInt(inp.value, 10) || 0);
+      const sec = settings.webcam || {};
+      return Math.max(0, parseInt(sec.webcam_device, 10) || 0);
+    }
+
+    function getMultiCameraDeviceIndex() {
       const inp = el("multi_camera-webcam_device");
       if (inp && inp.value !== "") return Math.max(0, parseInt(inp.value, 10) || 0);
       const sec = settings.multi_camera || {};
       return Math.max(0, parseInt(sec.webcam_device, 10) || 0);
     }
+
+    const V4L2_PANELS = {
+      webcam: {
+        wrapId: "webcam-v4l2-wrap",
+        statusId: "webcam-v4l2-status",
+        controlsId: "webcam-v4l2-controls",
+        getIndex: getWebcamDeviceIndex,
+      },
+      multi_camera: {
+        wrapId: "multi_camera-v4l2-wrap",
+        statusId: "multi_camera-v4l2-status",
+        controlsId: "multi_camera-v4l2-controls",
+        getIndex: getMultiCameraDeviceIndex,
+      },
+    };
 
     let _probeTimer = null;
     function setProbeStatus(elId, j) {
@@ -2312,31 +2683,318 @@
       if (rootId === "fields-multi_camera-sentinel") renderSentinelFields("fields-webcam-sentinel", "webcam-sentinel");
     }
 
+    /* ---- Corridor alignment tab ---- */
+    function readAlignmentFields() {
+      return readFieldsRoot(el("fields-alignment"));
+    }
+
+    function renderAlignmentTab() {
+      const root = el("fields-alignment");
+      if (!root) return;
+      root.innerHTML = "";
+      const sent = settings.sentinel || {};
+      const gid = settings.global_id || {};
+      const hint = document.createElement("p");
+      hint.className = "tab-prose";
+      hint.style.margin = "0 0 0.4rem";
+      hint.textContent =
+        "Tune corridor geometry. Place a person at a known distance to calibrate VFOV; measure Front↔Back distance for baseline.";
+      root.appendChild(hint);
+      const rows = [
+        ["baseline_m", "Baseline Front ↔ Back (m)", sent.baseline_m ?? gid.baseline_m ?? 5, "sentinel"],
+        ["person_height_m", "Assumed person height (m)", sent.person_height_m ?? 1.7, "sentinel"],
+        ["vertical_fov_deg", "Vertical FOV (deg)", sent.vertical_fov_deg ?? 60, "sentinel"],
+        ["depth_tolerance_frac", "Depth tolerance (fraction of baseline)", gid.depth_tolerance_frac ?? 0.22, "global_id"],
+        ["lateral_tolerance_frac", "Lateral mirror tolerance", gid.lateral_tolerance_frac ?? 0.20, "global_id"],
+      ];
+      rows.forEach(([key, lab, defVal, block]) => {
+        const wrap = document.createElement("div");
+        const label = document.createElement("label");
+        label.textContent = lab;
+        label.htmlFor = `align-${key}`;
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "any";
+        input.id = `align-${key}`;
+        input.dataset.key = key;
+        input.dataset.block = block;
+        const cur = block === "sentinel" ? sent[key] : gid[key];
+        input.value = cur != null && cur !== "" ? String(cur) : String(defVal ?? "");
+        wrap.appendChild(label);
+        wrap.appendChild(input);
+        root.appendChild(wrap);
+      });
+    }
+
+    function refreshAlignmentPreviews() {
+      const bust = Date.now();
+      const f = el("align-vid-front");
+      const b = el("align-vid-back");
+      if (f) f.src = previewUrl("webcam") + (previewUrl("webcam").includes("?") ? "&" : "?") + "t=" + bust;
+      if (b) b.src = previewUrl("multi_camera") + (previewUrl("multi_camera").includes("?") ? "&" : "?") + "t=" + bust;
+    }
+
+    function stopAlignmentPoll() {
+      if (alignPollTimer) {
+        clearInterval(alignPollTimer);
+        alignPollTimer = null;
+      }
+    }
+
+    function startAlignmentPoll() {
+      stopAlignmentPoll();
+      pollAlignmentStatus();
+      alignPollTimer = setInterval(() => {
+        if (document.hidden || liveLayoutMode !== "alignment" || liveEnlarge) return;
+        pollAlignmentStatus();
+      }, 600);
+    }
+
+    function setAlignCheck(id, ok, text) {
+      const node = el(id);
+      if (!node) return;
+      node.classList.toggle("ok", !!ok);
+      const v = node.querySelector(".v");
+      if (v) v.textContent = text;
+    }
+
+    function drawAlignmentOverlay(canvas, img, side, data, pair, overlay) {
+      if (!canvas || !img) return;
+      const vp = canvas.parentElement;
+      if (!vp) return;
+      const rect = vp.getBoundingClientRect();
+      const cw = Math.max(1, Math.round(rect.width));
+      const ch = Math.max(1, Math.round(rect.height));
+      if (canvas.width !== cw || canvas.height !== ch) {
+        canvas.width = cw;
+        canvas.height = ch;
+      }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, cw, ch);
+
+      const iw = img.naturalWidth || 1920;
+      const ih = img.naturalHeight || 1080;
+      const scale = Math.min(cw / iw, ch / ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      const ox = (cw - dw) / 2;
+      const oy = (ch - dh) / 2;
+
+      const og = overlay || {};
+      const cx = ox + (og.center_line_x ?? 0.5) * dw;
+      const lx = ox + (og.corridor_left_x ?? 0.15) * dw;
+      const rx = ox + (og.corridor_right_x ?? 0.85) * dw;
+      const fy = oy + (og.floor_band_y ?? 0.72) * dh;
+
+      ctx.setLineDash([6, 5]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(120, 160, 220, 0.55)";
+      [lx, cx, rx].forEach((x) => {
+        ctx.beginPath();
+        ctx.moveTo(x, oy);
+        ctx.lineTo(x, oy + dh);
+        ctx.stroke();
+      });
+      ctx.beginPath();
+      ctx.moveTo(ox, fy);
+      ctx.lineTo(ox + dw, fy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const tracks = (data && data.tracks && data.tracks[side]) || [];
+      const aligned = !!(pair && pair.aligned);
+      tracks.forEach((t) => {
+        if (!t.bbox || t.bbox.length < 4) return;
+        const [x1, y1, x2, y2] = t.bbox;
+        const bx1 = ox + (x1 / iw) * dw;
+        const by1 = oy + (y1 / ih) * dh;
+        const bx2 = ox + (x2 / iw) * dw;
+        const by2 = oy + (y2 / ih) * dh;
+        const isPair =
+          pair &&
+          ((side === "front" && pair.front_track_id === t.id) ||
+            (side === "back" && pair.back_track_id === t.id));
+        ctx.strokeStyle = isPair && aligned ? "rgba(52, 199, 89, 0.95)" : "rgba(255, 159, 10, 0.85)";
+        ctx.lineWidth = isPair ? 3 : 2;
+        ctx.strokeRect(bx1, by1, bx2 - bx1, by2 - by1);
+        if (t.lateral_norm != null) {
+          const lxPerson = ox + t.lateral_norm * dw;
+          ctx.strokeStyle = isPair && aligned ? "rgba(52, 199, 89, 0.7)" : "rgba(255, 159, 10, 0.55)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(lxPerson, by1);
+          ctx.lineTo(lxPerson, by2);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function applyAlignmentUi(data) {
+      if (!data || typeof data !== "object") return;
+      const pill = el("align-status-pill");
+      const txt = el("align-status-text");
+      const msg = el("align-status-msg");
+      const summary = el("align-sidebar-summary");
+      const phase = data.phase || "unknown";
+      const aligned = !!data.aligned;
+      if (pill) {
+        pill.classList.remove("ok", "warn", "bad");
+        if (aligned) pill.classList.add("ok");
+        else if (phase === "no_person" || phase === "runners_off") pill.classList.add("warn");
+        else pill.classList.add("bad");
+      }
+      if (txt) {
+        txt.textContent = aligned
+          ? "Aligned"
+          : phase === "no_person"
+            ? "Waiting for person"
+            : phase === "runners_off"
+              ? "Runners off"
+              : phase === "single_camera"
+                ? "Single-camera view"
+                : "Not aligned";
+      }
+      if (msg) msg.textContent = data.message || "";
+      el("align-cell-front")?.classList.toggle("aligned", aligned);
+      el("align-cell-back")?.classList.toggle("aligned", aligned);
+
+      const pair = data.best_pair;
+      const checks = (pair && pair.checks) || {};
+      const lat = checks.lateral || {};
+      const dep = checks.depth || {};
+      const reid = checks.reid || {};
+      setAlignCheck(
+        "align-check-lateral",
+        lat.ok,
+        lat.score != null ? `${(lat.score * 100).toFixed(0)}% · cx sum ${lat.residual != null ? (1 - lat.residual).toFixed(2) : "—"}` : "—",
+      );
+      setAlignCheck(
+        "align-check-depth",
+        dep.ok,
+        dep.score != null ? `${(dep.score * 100).toFixed(0)}% · Δ ${dep.residual_m != null ? dep.residual_m.toFixed(2) + "m" : "—"}` : "—",
+      );
+      setAlignCheck(
+        "align-check-reid",
+        reid.ok,
+        reid.score != null ? `${(reid.score * 100).toFixed(0)}%` : "n/a",
+      );
+      const sum = dep.sum_m;
+      const baseline = (data.config && data.config.baseline_m) || "—";
+      setAlignCheck(
+        "align-check-baseline",
+        dep.ok,
+        sum != null ? `${sum}m / ${baseline}m` : `target ${baseline}m`,
+      );
+
+      if (summary) {
+        const ff = data.frames && data.frames.front;
+        const bb = data.frames && data.frames.back;
+        summary.textContent =
+          `Front persons: ${ff && ff.persons != null ? ff.persons : "—"} · ` +
+          `Back persons: ${bb && bb.persons != null ? bb.persons : "—"} · ` +
+          `baseline ${baseline}m`;
+      }
+
+      const overlay = data.overlay;
+      ["front", "back"].forEach((side) => {
+        const canvas = el(side === "front" ? "align-canvas-front" : "align-canvas-back");
+        const img = el(side === "front" ? "align-vid-front" : "align-vid-back");
+        drawAlignmentOverlay(canvas, img, side, data, pair, overlay);
+      });
+    }
+
+    async function pollAlignmentStatus() {
+      try {
+        const r = await fetch("/api/alignment/status");
+        const data = await r.json();
+        applyAlignmentUi(data);
+      } catch (_) {
+        /* ignore transient errors */
+      }
+    }
+
+    async function saveAlignmentConfig() {
+      const errEl = el("err-alignment");
+      if (errEl) errEl.textContent = "";
+      const fields = readAlignmentFields();
+      const sentinel = {};
+      const global_id = {};
+      Object.entries(fields).forEach(([key, val]) => {
+        const input = el("fields-alignment")?.querySelector(`[data-key="${key}"]`);
+        const block = input?.dataset?.block || "sentinel";
+        const num = Number(val);
+        const out = Number.isFinite(num) ? num : val;
+        if (block === "global_id") global_id[key] = out;
+        else sentinel[key] = out;
+      });
+      if (sentinel.baseline_m != null) global_id.baseline_m = sentinel.baseline_m;
+      const r = await fetch("/api/alignment/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sentinel, global_id }),
+      });
+      let payload = {};
+      try {
+        payload = await r.json();
+      } catch (_) {}
+      if (!r.ok) {
+        if (errEl) errEl.textContent = apiErrorMessage(payload) || "Save failed";
+        return;
+      }
+      const cr = await fetch("/api/config");
+      settings = await cr.json();
+      renderAlignmentTab();
+      if (errEl) errEl.textContent = "Saved — restart infer if VFOV/baseline changed.";
+    }
+
+    function switchConfigTab(tabId) {
+      document.querySelectorAll(".chrome-tabs button").forEach((b) => {
+        b.classList.toggle("active", b.dataset.tab === tabId);
+      });
+      TAB_IDS_ALL.forEach((t) => {
+        const panel = el("tab-" + t);
+        if (panel) panel.classList.toggle("active", t === tabId);
+      });
+      const scroll = document.querySelector(".panel-b-scroll");
+      if (scroll) scroll.scrollTop = 0;
+      if (tabId === "alignment") setLiveLayout("alignment");
+    }
+
+    function openAlignmentView() {
+      switchConfigTab("alignment");
+      setLiveLayout("alignment");
+    }
+
     let v4l2ApplyTimer = null;
     const v4l2Pending = {};
+    let v4l2ApplyPanel = "webcam";
 
-    function setV4l2Status(msg, isErr) {
-      const st = el("webcam-v4l2-status");
+    function setV4l2Status(panelKey, msg, isErr) {
+      const cfg = V4L2_PANELS[panelKey] || V4L2_PANELS.webcam;
+      const st = el(cfg.statusId);
       if (!st) return;
       st.textContent = msg || "";
       st.style.color = isErr ? "var(--danger, #f87171)" : "var(--muted)";
     }
 
-    function scheduleV4l2Apply(ctrlId, value) {
+    function scheduleV4l2Apply(panelKey, ctrlId, value) {
+      v4l2ApplyPanel = panelKey;
       v4l2Pending[ctrlId] = value;
       if (v4l2ApplyTimer) clearTimeout(v4l2ApplyTimer);
       v4l2ApplyTimer = setTimeout(() => {
         v4l2ApplyTimer = null;
         const batch = { ...v4l2Pending };
         Object.keys(v4l2Pending).forEach((k) => delete v4l2Pending[k]);
-        applyV4l2Controls(batch).catch((e) => setV4l2Status(String(e), true));
+        applyV4l2Controls(v4l2ApplyPanel, batch).catch((e) => setV4l2Status(v4l2ApplyPanel, String(e), true));
       }, 280);
     }
 
-    async function applyV4l2Controls(controls) {
+    async function applyV4l2Controls(panelKey, controls) {
       if (!controls || !Object.keys(controls).length) return;
-      const index = getWebcamDeviceIndex();
-      setV4l2Status("Applying…");
+      const cfg = V4L2_PANELS[panelKey] || V4L2_PANELS.webcam;
+      const index = cfg.getIndex();
+      setV4l2Status(panelKey, "Applying…");
       const r = await fetch("/api/devices/v4l2/controls/set", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2347,11 +3005,11 @@
         const detail = j.detail || j.error || r.statusText;
         throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
       }
-      renderV4l2ControlsPanel(j);
-      setV4l2Status("Applied to /dev/video" + index);
+      renderV4l2ControlsPanel(panelKey, j);
+      setV4l2Status(panelKey, "Applied to /dev/video" + index);
     }
 
-    function renderV4l2ControlRow(ctrl) {
+    function renderV4l2ControlRow(panelKey, ctrl) {
       const row = document.createElement("div");
       row.className = "v4l2-ctrl-row" + (ctrl.inactive ? " inactive" : "");
       const label = document.createElement("label");
@@ -2359,7 +3017,7 @@
       title.textContent = v4l2HumanLabel(ctrl.id);
       const valSpan = document.createElement("span");
       valSpan.className = "v4l2-ctrl-val";
-      valSpan.id = "v4l2-val-" + ctrl.id;
+      valSpan.id = panelKey + "-v4l2-val-" + ctrl.id;
       label.appendChild(title);
       label.appendChild(valSpan);
       row.appendChild(label);
@@ -2375,16 +3033,16 @@
         cb.type = "checkbox";
         cb.checked = !!ctrl.value;
         cb.disabled = inactive;
-        cb.id = "v4l2-ctrl-" + ctrl.id;
+        cb.id = panelKey + "-v4l2-ctrl-" + ctrl.id;
         updateVal(ctrl.value ? "on" : "off");
         cb.onchange = () => {
           updateVal(cb.checked ? "on" : "off");
-          if (!inactive) applyV4l2Controls({ [ctrl.id]: cb.checked }).catch((e) => setV4l2Status(String(e), true));
+          if (!inactive) applyV4l2Controls(panelKey, { [ctrl.id]: cb.checked }).catch((e) => setV4l2Status(panelKey, String(e), true));
         };
         row.appendChild(cb);
       } else if (ctype === "menu" && (ctrl.menu_options || []).length) {
         const sel = document.createElement("select");
-        sel.id = "v4l2-ctrl-" + ctrl.id;
+        sel.id = panelKey + "-v4l2-ctrl-" + ctrl.id;
         sel.disabled = inactive;
         (ctrl.menu_options || []).forEach((opt) => {
           const o = document.createElement("option");
@@ -2398,7 +3056,7 @@
         sel.onchange = () => {
           const opt = (ctrl.menu_options || []).find((o) => String(o.value) === sel.value);
           updateVal(sel.value, opt ? opt.label : sel.value);
-          if (!inactive) applyV4l2Controls({ [ctrl.id]: parseInt(sel.value, 10) }).catch((e) => setV4l2Status(String(e), true));
+          if (!inactive) applyV4l2Controls(panelKey, { [ctrl.id]: parseInt(sel.value, 10) }).catch((e) => setV4l2Status(panelKey, String(e), true));
         };
         row.appendChild(sel);
       } else if (ctype === "int" && ctrl.min != null && ctrl.max != null) {
@@ -2409,11 +3067,11 @@
         rng.step = String(ctrl.step != null ? ctrl.step : 1);
         rng.value = String(ctrl.value != null ? ctrl.value : ctrl.default != null ? ctrl.default : ctrl.min);
         rng.disabled = inactive;
-        rng.id = "v4l2-ctrl-" + ctrl.id;
+        rng.id = panelKey + "-v4l2-ctrl-" + ctrl.id;
         updateVal(rng.value);
         rng.oninput = () => updateVal(rng.value);
         rng.onchange = () => {
-          if (!inactive) scheduleV4l2Apply(ctrl.id, parseInt(rng.value, 10));
+          if (!inactive) scheduleV4l2Apply(panelKey, ctrl.id, parseInt(rng.value, 10));
         };
         row.appendChild(rng);
       } else {
@@ -2423,8 +3081,9 @@
       return row;
     }
 
-    function renderV4l2ControlsPanel(payload) {
-      const root = el("webcam-v4l2-controls");
+    function renderV4l2ControlsPanel(panelKey, payload) {
+      const cfg = V4L2_PANELS[panelKey] || V4L2_PANELS.webcam;
+      const root = el(cfg.controlsId);
       if (!root) return;
       root.innerHTML = "";
       const groups = payload.groups || [];
@@ -2438,7 +3097,7 @@
         root.appendChild(title);
         (g.controls || []).forEach((c) => {
           if (c.type === "button") return;
-          root.appendChild(renderV4l2ControlRow(c));
+          root.appendChild(renderV4l2ControlRow(panelKey, c));
         });
       });
       if (!root.children.length) {
@@ -2449,11 +3108,12 @@
       }
     }
 
-    async function loadV4l2CameraControls() {
-      const wrap = el("webcam-v4l2-wrap");
+    async function loadV4l2CameraControls(panelKey = "webcam") {
+      const cfg = V4L2_PANELS[panelKey] || V4L2_PANELS.webcam;
+      const wrap = el(cfg.wrapId);
       if (!wrap || !wrap.open) return;
-      const index = getWebcamDeviceIndex();
-      setV4l2Status("Loading /dev/video" + index + "…");
+      const index = cfg.getIndex();
+      setV4l2Status(panelKey, "Loading /dev/video" + index + "…");
       try {
         const r = await fetch("/api/devices/v4l2/controls?index=" + encodeURIComponent(index));
         const j = await r.json().catch(() => ({}));
@@ -2461,29 +3121,210 @@
           const detail = j.detail || j.error || r.statusText;
           throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
         }
-        renderV4l2ControlsPanel(j);
-        setV4l2Status((j.controls || []).length + " controls on " + (j.device || "/dev/video" + index));
+        renderV4l2ControlsPanel(panelKey, j);
+        setV4l2Status(panelKey, (j.controls || []).length + " controls on " + (j.device || "/dev/video" + index));
       } catch (e) {
-        setV4l2Status(String(e), true);
-        const root = el("webcam-v4l2-controls");
+        setV4l2Status(panelKey, String(e), true);
+        const root = el(cfg.controlsId);
         if (root) root.innerHTML = "";
       }
     }
 
-    function renderWebcamForAi() {
-      const main = el("fields-webcam");
-      const adv = el("fields-webcam-adv");
-      if (!main || !adv) return;
-      const sec = settings.webcam || {};
-      main.innerHTML = "";
-      adv.innerHTML = "";
+    function bindV4l2Panel(panelKey) {
+      const cfg = V4L2_PANELS[panelKey];
+      if (!cfg) return;
+      const wrap = el(cfg.wrapId);
+      if (wrap) {
+        wrap.addEventListener("toggle", () => {
+          if (wrap.open) loadV4l2CameraControls(panelKey);
+        });
+      }
+      const refreshId = panelKey === "webcam" ? "btn-webcam-v4l2-refresh" : "btn-multi_camera-v4l2-refresh";
+      const resetId = panelKey === "webcam" ? "btn-webcam-v4l2-reset" : "btn-multi_camera-v4l2-reset";
+      el(refreshId)?.addEventListener("click", () => loadV4l2CameraControls(panelKey));
+      el(resetId)?.addEventListener("click", async () => {
+        const index = cfg.getIndex();
+        setV4l2Status(panelKey, "Resetting…");
+        try {
+          const r = await fetch("/api/devices/v4l2/controls/reset?index=" + encodeURIComponent(index), { method: "POST" });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            const detail = j.detail || j.error || r.statusText;
+            throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+          }
+          renderV4l2ControlsPanel(panelKey, j);
+          setV4l2Status(panelKey, "Reset to defaults on /dev/video" + index);
+        } catch (e) {
+          setV4l2Status(panelKey, String(e), true);
+        }
+      });
+    }
+
+    function _cameraIsJetsonMode(sec) {
+      const curMode = String(sec.source_mode || "local").trim().toLowerCase();
+      return curMode === "jetson" || curMode === "ip" || curMode === "network" || curMode === "rtsp";
+    }
+
+    function appendCameraSourceBlock(sensor, main, sec) {
+      const isJetson = _cameraIsJetsonMode(sec);
+      const srcLabel = document.createElement("div");
+      srcLabel.className = "line-label";
+      srcLabel.style.marginTop = "0";
+      srcLabel.textContent = "Camera source";
+      main.appendChild(srcLabel);
+      const srcSel = document.createElement("select");
+      srcSel.id = sensor + "-source_mode";
+      srcSel.dataset.sensor = sensor;
+      srcSel.dataset.key = "source_mode";
+      srcSel.style.width = "100%";
+      [
+        ["local", "Local USB"],
+        ["jetson", "Jetson IP stream"],
+      ].forEach(([val, lab]) => {
+        const o = document.createElement("option");
+        o.value = val;
+        o.textContent = lab;
+        srcSel.appendChild(o);
+      });
+      srcSel.value = isJetson ? "jetson" : "local";
+      main.appendChild(srcSel);
+
+      const localWrap = document.createElement("div");
+      localWrap.id = sensor + "-local-fields";
+      localWrap.style.display = isJetson ? "none" : "";
+      localWrap.style.marginTop = "0.4rem";
+      const lLocal = document.createElement("label");
+      lLocal.textContent = "USB device (/dev/video index)";
+      lLocal.htmlFor = sensor + "-webcam_device";
+      const inDev = document.createElement("input");
+      inDev.type = "number";
+      inDev.id = sensor + "-webcam_device";
+      inDev.dataset.sensor = sensor;
+      inDev.dataset.key = "webcam_device";
+      inDev.value = String(sec.webcam_device != null ? sec.webcam_device : 0);
+      const localProbe = document.createElement("div");
+      localProbe.id = sensor + "-probe-status-local";
+      localProbe.className = "tab-prose";
+      localProbe.style.margin = "0.25rem 0 0";
+      localWrap.appendChild(lLocal);
+      localWrap.appendChild(inDev);
+      localWrap.appendChild(localProbe);
+      main.appendChild(localWrap);
+
+      const jetsonWrap = document.createElement("div");
+      jetsonWrap.id = sensor + "-jetson-fields";
+      jetsonWrap.style.display = isJetson ? "" : "none";
+      jetsonWrap.style.marginTop = "0.4rem";
+      const lUrl = document.createElement("label");
+      lUrl.textContent = "Full stream URL";
+      lUrl.htmlFor = sensor + "-jetson_stream_url";
+      const inUrl = document.createElement("input");
+      inUrl.type = "text";
+      inUrl.id = sensor + "-jetson_stream_url";
+      inUrl.dataset.sensor = sensor;
+      inUrl.dataset.key = "jetson_stream_url";
+      inUrl.placeholder = sensor === "webcam" ? "rtsp://192.168.1.50:8554/front" : "rtsp://100.92.1.128:8554/cam";
+      inUrl.value = String(sec.jetson_stream_url || "").trim();
+      const jetProbe = document.createElement("div");
+      jetProbe.id = sensor + "-probe-status-jetson";
+      jetProbe.className = "tab-prose";
+      jetProbe.style.margin = "0.25rem 0 0";
+      jetsonWrap.appendChild(lUrl);
+      jetsonWrap.appendChild(inUrl);
+      jetsonWrap.appendChild(jetProbe);
+      main.appendChild(jetsonWrap);
+
+      const orientLabel = document.createElement("div");
+      orientLabel.className = "line-label";
+      orientLabel.textContent = "Orientation (portrait / landscape)";
+      orientLabel.style.marginTop = "0.55rem";
+      main.appendChild(orientLabel);
+      const orientWrap = document.createElement("div");
+      orientWrap.className = "form-row-2";
+      orientWrap.style.marginTop = "0.25rem";
+      const rotW = document.createElement("div");
+      const rotL = document.createElement("label");
+      rotL.textContent = "Rotate";
+      rotL.htmlFor = sensor + "-capture_rotate";
+      const rotSel = document.createElement("select");
+      rotSel.id = sensor + "-capture_rotate";
+      rotSel.dataset.sensor = sensor;
+      rotSel.dataset.key = "capture_rotate";
+      [
+        ["0", "0° (none)"],
+        ["90", "90° CW"],
+        ["180", "180°"],
+        ["270", "270° CW"],
+      ].forEach(([val, lab]) => {
+        const o = document.createElement("option");
+        o.value = val;
+        o.textContent = lab;
+        rotSel.appendChild(o);
+      });
+      rotSel.value = String(sec.capture_rotate != null ? sec.capture_rotate : 0);
+      rotW.appendChild(rotL);
+      rotW.appendChild(rotSel);
+      orientWrap.appendChild(rotW);
+      [
+        ["capture_flip_h", "Flip horizontal"],
+        ["capture_flip_v", "Flip vertical"],
+      ].forEach(([key, lab]) => {
+        const w = document.createElement("div");
+        const l = document.createElement("label");
+        l.htmlFor = sensor + "-" + key;
+        l.textContent = lab;
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = sensor + "-" + key;
+        cb.dataset.sensor = sensor;
+        cb.dataset.key = key;
+        cb.checked = Number(sec[key] || 0) !== 0;
+        w.appendChild(l);
+        w.appendChild(cb);
+        orientWrap.appendChild(w);
+      });
+      main.appendChild(orientWrap);
+
+      const syncSourceUi = () => {
+        const jet = srcSel.value === "jetson";
+        localWrap.style.display = jet ? "none" : "";
+        jetsonWrap.style.display = jet ? "" : "none";
+        const v4l2 = el(sensor + "-v4l2-wrap");
+        if (v4l2) v4l2.style.display = jet ? "none" : "";
+        const jetRemote = el(sensor + "-jetson-remote-wrap");
+        if (jetRemote) {
+          jetRemote.style.display = jet ? "" : "none";
+          if (jet && typeof refreshJetsonRemotePanel === "function") refreshJetsonRemotePanel(false);
+        }
+        if (jet) {
+          scheduleProbe(inUrl.value, sensor + "-probe-status-jetson");
+        } else {
+          scheduleProbe(String(inDev.value || "0"), sensor + "-probe-status-local");
+          if (typeof loadV4l2CameraControls === "function") loadV4l2CameraControls(sensor);
+        }
+      };
+      srcSel.onchange = syncSourceUi;
+      const probeLocal = () => scheduleProbe(String(inDev.value || "0"), sensor + "-probe-status-local");
+      const probeJet = () => scheduleProbe(inUrl.value, sensor + "-probe-status-jetson");
+      inDev.addEventListener("change", () => {
+        probeLocal();
+        if (typeof loadV4l2CameraControls === "function") loadV4l2CameraControls(sensor);
+      });
+      inDev.addEventListener("blur", probeLocal);
+      inUrl.addEventListener("change", probeJet);
+      inUrl.addEventListener("blur", probeJet);
+      inUrl.addEventListener("input", () => scheduleProbe(inUrl.value, sensor + "-probe-status-jetson"));
+      syncSourceUi();
+    }
+
+    function appendCameraResolutionBlock(sensor, main, sec, presetId) {
       const lres = document.createElement("div");
       lres.className = "line-label";
-      lres.style.marginTop = "0";
-      lres.textContent = "Resolution";
+      lres.style.marginTop = "0.55rem";
+      lres.textContent = "Capture resolution";
       main.appendChild(lres);
       const ps = document.createElement("select");
-      ps.id = "ai-webcam-preset";
+      ps.id = presetId;
       ps.style.width = "100%";
       AI_RES_LADDER.forEach((row) => {
         const o = document.createElement("option");
@@ -2498,7 +3339,7 @@
       ps.value = hit ? hit.id : "custom";
       main.appendChild(ps);
       const customWrap = document.createElement("div");
-      customWrap.id = "webcam-custom-dims";
+      customWrap.id = sensor + "-custom-dims";
       customWrap.className = "form-row-2";
       customWrap.style.display = ps.value === "custom" ? "" : "none";
       [
@@ -2509,11 +3350,11 @@
         const w = document.createElement("div");
         const l = document.createElement("label");
         l.textContent = shortLabel;
-        l.htmlFor = "webcam-" + key;
+        l.htmlFor = sensor + "-" + key;
         const inp = document.createElement("input");
         inp.type = "number";
-        inp.id = "webcam-" + key;
-        inp.dataset.sensor = "webcam";
+        inp.id = sensor + "-" + key;
+        inp.dataset.sensor = sensor;
         inp.dataset.key = key;
         inp.step = "any";
         const v = sec[key];
@@ -2523,43 +3364,32 @@
         customWrap.appendChild(w);
       });
       main.appendChild(customWrap);
-      const devRow = document.createElement("div");
-      const l = document.createElement("label");
-      l.textContent = "Device (/dev/video index)";
-      l.htmlFor = "webcam-webcam_device";
-      const inDev = document.createElement("input");
-      inDev.type = "number";
-      inDev.id = "webcam-webcam_device";
-      inDev.dataset.sensor = "webcam";
-      inDev.dataset.key = "webcam_device";
-      inDev.value = String(sec.webcam_device != null ? sec.webcam_device : 0);
-      const probeSt = document.createElement("div");
-      probeSt.id = "webcam-probe-status";
-      probeSt.className = "tab-prose";
-      probeSt.style.margin = "0.25rem 0 0";
-      const runProbe = () => scheduleProbe(String(inDev.value || "0"), "webcam-probe-status");
-      inDev.addEventListener("change", runProbe);
-      inDev.addEventListener("blur", runProbe);
-      devRow.appendChild(l);
-      devRow.appendChild(inDev);
-      main.appendChild(devRow);
-      main.appendChild(probeSt);
-      runProbe();
       ps.onchange = () => {
-        const c = el("webcam-custom-dims");
+        const c = el(sensor + "-custom-dims");
         if (c) c.style.display = ps.value === "custom" ? "" : "none";
         if (ps.value !== "custom") {
           const row = AI_RES_LADDER.find((x) => x.id === ps.value);
           if (row && row.w > 0) {
-            const iw = el("webcam-webcam_width");
-            const ih = el("webcam-webcam_height");
-            const fp = el("webcam-fps");
+            const iw = el(sensor + "-webcam_width");
+            const ih = el(sensor + "-webcam_height");
+            const fp = el(sensor + "-fps");
             if (iw) iw.value = String(row.w);
             if (ih) ih.value = String(row.h);
             if (fp) fp.value = String(row.fps);
           }
         }
       };
+    }
+
+    function renderWebcamForAi() {
+      const main = el("fields-webcam");
+      const adv = el("fields-webcam-adv");
+      if (!main || !adv) return;
+      const sec = settings.webcam || {};
+      main.innerHTML = "";
+      adv.innerHTML = "";
+      appendCameraSourceBlock("webcam", main, sec);
+      appendCameraResolutionBlock("webcam", main, sec, "ai-webcam-preset");
       FIELD_DEFS_WEBCAM_ADV.forEach(([k, t]) => {
         _appendFieldRow(adv, "webcam", k, t, sec);
       });
@@ -2578,6 +3408,8 @@
         includeOverlay: true,
         groups: [WEAPON_POSE_GROUP],
       });
+      const wrap = el("webcam-pose-wrap");
+      if (wrap) wrap.open = false;
     }
 
     function renderMultiCameraTab() {
@@ -2587,166 +3419,192 @@
       const sec = settings.multi_camera || {};
       main.innerHTML = "";
       adv.innerHTML = "";
-
-      const srcLabel = document.createElement("div");
-      srcLabel.className = "line-label";
-      srcLabel.style.marginTop = "0";
-      srcLabel.textContent = "Camera source";
-      main.appendChild(srcLabel);
-      const srcSel = document.createElement("select");
-      srcSel.id = "multi_camera-source_mode";
-      srcSel.dataset.sensor = "multi_camera";
-      srcSel.dataset.key = "source_mode";
-      srcSel.style.width = "100%";
-      [
-        ["local", "Local USB"],
-        ["jetson", "Jetson IP stream"],
-      ].forEach(([val, lab]) => {
-        const o = document.createElement("option");
-        o.value = val;
-        o.textContent = lab;
-        srcSel.appendChild(o);
-      });
-      const curMode = String(sec.source_mode || "local").trim().toLowerCase();
-      const isJetson = curMode === "jetson" || curMode === "ip" || curMode === "network" || curMode === "rtsp";
-      srcSel.value = isJetson ? "jetson" : "local";
-      main.appendChild(srcSel);
-
-      const localWrap = document.createElement("div");
-      localWrap.id = "multi_camera-local-fields";
-      localWrap.style.display = isJetson ? "none" : "";
-      localWrap.style.marginTop = "0.4rem";
-      const lLocal = document.createElement("label");
-      lLocal.textContent = "USB device (/dev/video index)";
-      lLocal.htmlFor = "multi_camera-webcam_device";
-      const inDev = document.createElement("input");
-      inDev.type = "number";
-      inDev.id = "multi_camera-webcam_device";
-      inDev.dataset.sensor = "multi_camera";
-      inDev.dataset.key = "webcam_device";
-      inDev.value = String(sec.webcam_device != null ? sec.webcam_device : 0);
-      const localProbe = document.createElement("div");
-      localProbe.id = "multi_camera-probe-status-local";
-      localProbe.className = "tab-prose";
-      localProbe.style.margin = "0.25rem 0 0";
-      localWrap.appendChild(lLocal);
-      localWrap.appendChild(inDev);
-      localWrap.appendChild(localProbe);
-      main.appendChild(localWrap);
-
-      const jetsonWrap = document.createElement("div");
-      jetsonWrap.id = "multi_camera-jetson-fields";
-      jetsonWrap.style.display = isJetson ? "" : "none";
-      jetsonWrap.style.marginTop = "0.4rem";
-      const lUrl = document.createElement("label");
-      lUrl.textContent = "Full stream URL";
-      lUrl.htmlFor = "multi_camera-jetson_stream_url";
-      const inUrl = document.createElement("input");
-      inUrl.type = "text";
-      inUrl.id = "multi_camera-jetson_stream_url";
-      inUrl.dataset.sensor = "multi_camera";
-      inUrl.dataset.key = "jetson_stream_url";
-      inUrl.placeholder = "rtsp://100.92.1.128:8554/cam";
-      inUrl.value = String(sec.jetson_stream_url || "").trim();
-      const jetProbe = document.createElement("div");
-      jetProbe.id = "multi_camera-probe-status-jetson";
-      jetProbe.className = "tab-prose";
-      jetProbe.style.margin = "0.25rem 0 0";
-      jetsonWrap.appendChild(lUrl);
-      jetsonWrap.appendChild(inUrl);
-      jetsonWrap.appendChild(jetProbe);
-      main.appendChild(jetsonWrap);
-
-      const lres = document.createElement("div");
-      lres.className = "line-label";
-      lres.textContent = "Capture resolution";
-      main.appendChild(lres);
-      const ps = document.createElement("select");
-      ps.id = "multi-camera-preset";
-      ps.style.width = "100%";
-      AI_RES_LADDER.forEach((row) => {
-        const o = document.createElement("option");
-        o.value = row.id;
-        o.textContent = row.label;
-        ps.appendChild(o);
-      });
-      const curW = Number(sec.webcam_width) || 3840;
-      const curH = Number(sec.webcam_height) || 2160;
-      const curFps = Number(sec.fps) || 30;
-      const hit = matchResLadder(curW, curH, curFps);
-      ps.value = hit ? hit.id : "custom";
-      main.appendChild(ps);
-      const customWrap = document.createElement("div");
-      customWrap.id = "multi_camera-custom-dims";
-      customWrap.className = "form-row-2";
-      customWrap.style.display = ps.value === "custom" ? "" : "none";
-      [
-        ["webcam_width", "W"],
-        ["webcam_height", "H"],
-        ["fps", "FPS"],
-      ].forEach(([key, shortLabel]) => {
-        const w = document.createElement("div");
-        const l = document.createElement("label");
-        l.textContent = shortLabel;
-        l.htmlFor = "multi_camera-" + key;
-        const inp = document.createElement("input");
-        inp.type = "number";
-        inp.id = "multi_camera-" + key;
-        inp.dataset.sensor = "multi_camera";
-        inp.dataset.key = key;
-        inp.step = "any";
-        const v = sec[key];
-        inp.value = v != null && v !== "" ? String(v) : key === "fps" ? "30" : key === "webcam_width" ? "3840" : "2160";
-        w.appendChild(l);
-        w.appendChild(inp);
-        customWrap.appendChild(w);
-      });
-      main.appendChild(customWrap);
-
-      const syncSourceUi = () => {
-        const jet = srcSel.value === "jetson";
-        localWrap.style.display = jet ? "none" : "";
-        jetsonWrap.style.display = jet ? "" : "none";
-        const v4l2 = el("webcam-v4l2-wrap");
-        if (v4l2) v4l2.style.display = jet ? "none" : "";
-        if (jet) {
-          scheduleProbe(inUrl.value, "multi_camera-probe-status-jetson");
-        } else {
-          scheduleProbe(String(inDev.value || "0"), "multi_camera-probe-status-local");
-          if (typeof loadV4l2CameraControls === "function") loadV4l2CameraControls();
-        }
-      };
-      srcSel.onchange = syncSourceUi;
-      const probeLocal = () => scheduleProbe(String(inDev.value || "0"), "multi_camera-probe-status-local");
-      const probeJet = () => scheduleProbe(inUrl.value, "multi_camera-probe-status-jetson");
-      inDev.addEventListener("change", () => {
-        probeLocal();
-        if (typeof loadV4l2CameraControls === "function") loadV4l2CameraControls();
-      });
-      inDev.addEventListener("blur", probeLocal);
-      inUrl.addEventListener("change", probeJet);
-      inUrl.addEventListener("blur", probeJet);
-      inUrl.addEventListener("input", () => scheduleProbe(inUrl.value, "multi_camera-probe-status-jetson"));
-      ps.onchange = () => {
-        const c = el("multi_camera-custom-dims");
-        if (c) c.style.display = ps.value === "custom" ? "" : "none";
-        if (ps.value !== "custom") {
-          const row = AI_RES_LADDER.find((x) => x.id === ps.value);
-          if (row && row.w > 0) {
-            const iw = el("multi_camera-webcam_width");
-            const ih = el("multi_camera-webcam_height");
-            const fp = el("multi_camera-fps");
-            if (iw) iw.value = String(row.w);
-            if (ih) ih.value = String(row.h);
-            if (fp) fp.value = String(row.fps);
-          }
-        }
-      };
+      appendCameraSourceBlock("multi_camera", main, sec);
+      appendCameraResolutionBlock("multi_camera", main, sec, "multi-camera-preset");
       FIELD_DEFS_WEBCAM_ADV.forEach(([k, t]) => {
         _appendFieldRow(adv, "multi_camera", k, t, sec);
       });
       renderSentinelFields("fields-multi_camera-sentinel", "mc-sentinel");
-      syncSourceUi();
+    }
+
+    function renderJetsonRemoteFields() {
+      const root = el("fields-jetson_back");
+      if (!root) return;
+      const jb = settings.jetson_back || {};
+      root.innerHTML = "";
+      [
+        ["host", "Jetson host (IP)", "text", jb.host || settings.multi_camera?.jetson_ip || ""],
+        ["user", "SSH user", "text", jb.user || "insu"],
+        ["port", "SSH port", "number", jb.port != null ? jb.port : 22],
+        ["identity_file", "PEM path (repo-relative or absolute)", "text", jb.identity_file || "layer8_ui/secrets/jetson_back.pem"],
+        ["connect_timeout_s", "Connect timeout (s)", "number", jb.connect_timeout_s != null ? jb.connect_timeout_s : 10],
+      ].forEach(([key, label, type, val]) => {
+        const w = document.createElement("div");
+        const l = document.createElement("label");
+        l.textContent = label;
+        l.htmlFor = "jetson_back-" + key;
+        const inp = document.createElement("input");
+        inp.type = type;
+        inp.id = "jetson_back-" + key;
+        inp.dataset.key = key;
+        inp.value = String(val ?? "");
+        if (type === "number") inp.step = "any";
+        w.appendChild(l);
+        w.appendChild(inp);
+        root.appendChild(w);
+      });
+    }
+
+    function readJetsonBackConfig() {
+      const out = {};
+      ["host", "user", "port", "identity_file", "connect_timeout_s"].forEach((key) => {
+        const node = el("jetson_back-" + key);
+        if (!node) return;
+        if (key === "port") out[key] = parseInt(node.value || "22", 10) || 22;
+        else if (key === "connect_timeout_s") out[key] = parseFloat(node.value || "10") || 10;
+        else out[key] = String(node.value || "").trim();
+      });
+      return out;
+    }
+
+    function setJetsonPill(pillId, state, text) {
+      const pill = el(pillId);
+      if (!pill) return;
+      pill.classList.remove("ok", "warn", "bad");
+      if (state === "ok") pill.classList.add("ok");
+      else if (state === "bad") pill.classList.add("bad");
+      else pill.classList.add("warn");
+      const txt = pill.querySelector(".txt");
+      if (txt) txt.textContent = text;
+    }
+
+    function appendJetsonLog(line) {
+      const log = el("jetson-remote-log");
+      if (!log) return;
+      const ts = new Date().toLocaleTimeString();
+      log.textContent = (log.textContent ? log.textContent + "\n" : "") + `[${ts}] ${line}`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function saveJetsonBackConfig() {
+      const body = readJetsonBackConfig();
+      const r = await fetch("/api/back_camera/jetson/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(apiErrorMessage(j) || "Save Jetson config failed");
+      settings.jetson_back = j.jetson_back || body;
+      if (body.host && settings.multi_camera) {
+        settings.multi_camera.jetson_ip = body.host;
+        if (!String(settings.multi_camera.jetson_stream_url || "").trim()) {
+          const port = settings.multi_camera.jetson_stream_port || "8554";
+          const path = settings.multi_camera.jetson_stream_path || "/cam";
+          settings.multi_camera.jetson_stream_url = `rtsp://${body.host}:${port}${path.startsWith("/") ? path : "/" + path}`;
+        }
+      }
+      const meta = el("jetson-remote-meta");
+      const exists = j.jetson_back?.identity_file_exists;
+      if (meta) {
+        meta.textContent = exists
+          ? `PEM found at ${j.jetson_back?.identity_file || body.identity_file}`
+          : `PEM missing at ${j.jetson_back?.identity_file || body.identity_file} — copy your key and chmod 600`;
+      }
+      appendJetsonLog("Saved Jetson SSH config.");
+      return j;
+    }
+
+    async function testJetsonConnect() {
+      appendJetsonLog("Testing SSH…");
+      const r = await fetch("/api/back_camera/jetson/connect");
+      const j = await r.json().catch(() => ({}));
+      if (j.ok) {
+        setJetsonPill("jetson-pill-ssh", "ok", `SSH · ${j.hostname || "connected"}`);
+        appendJetsonLog(`SSH ok — ${j.hostname || ""} ${j.uptime || ""}`.trim());
+      } else {
+        setJetsonPill("jetson-pill-ssh", "bad", "SSH · failed");
+        appendJetsonLog(`SSH failed: ${j.error || j.stderr || apiErrorMessage(j) || r.status}${j.hint ? " — " + j.hint : ""}`);
+      }
+      return j;
+    }
+
+    async function refreshJetsonServices() {
+      const r = await fetch("/api/back_camera/jetson/services");
+      const j = await r.json().catch(() => ({}));
+      const svcs = j.services || {};
+      const mtx = svcs.mediamtx || {};
+      const cam = svcs.cam_rtsp || {};
+      setJetsonPill(
+        "jetson-pill-mtx",
+        mtx.running ? "ok" : mtx.active_state === "activating" ? "warn" : "bad",
+        `MediaMTX · ${mtx.is_active || mtx.active_state || "—"}`
+      );
+      setJetsonPill(
+        "jetson-pill-cam",
+        cam.running ? "ok" : cam.active_state === "activating" ? "warn" : "bad",
+        `cam-rtsp · ${cam.is_active || cam.active_state || "—"}`
+      );
+      const cfg = j.config || {};
+      const meta = el("jetson-remote-meta");
+      if (meta) {
+        const pem = cfg.identity_file_exists ? "PEM ok" : "PEM missing";
+        meta.textContent = `${cfg.user || "insu"}@${cfg.host || "?"}:${cfg.port || 22} · ${pem}`;
+      }
+      if (!mtx.running || !cam.running) {
+        appendJetsonLog(
+          `Services — MTX: ${mtx.is_active || "?"} (${mtx.sub_state || ""}), cam-rtsp: ${cam.is_active || "?"} (${cam.sub_state || ""})`
+        );
+      }
+      return j;
+    }
+
+    async function jetsonServiceAction(serviceKey, action) {
+      appendJetsonLog(`${action} ${serviceKey}…`);
+      const r = await fetch(`/api/back_camera/jetson/services/${serviceKey}/${action}`, { method: "POST" });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        appendJetsonLog(`Failed: ${apiErrorMessage(j) || j.error || r.status}`);
+        throw new Error(apiErrorMessage(j) || j.error || "Jetson service action failed");
+      }
+      appendJetsonLog(`${action} ${serviceKey}: exit ${j.exit_code ?? "?"}`);
+      await refreshJetsonServices();
+      return j;
+    }
+
+    async function fetchJetsonCamLogs() {
+      appendJetsonLog("Fetching cam-rtsp journal…");
+      const r = await fetch("/api/back_camera/jetson/logs/cam_rtsp?lines=60");
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        appendJetsonLog(`Log fetch failed: ${apiErrorMessage(j) || r.status}`);
+        return;
+      }
+      const log = el("jetson-remote-log");
+      if (log) log.textContent = j.stdout || j.stderr || "(empty)";
+    }
+
+    async function fetchJetsonV4l2() {
+      appendJetsonLog("Listing v4l2 devices on Jetson…");
+      const r = await fetch("/api/back_camera/jetson/v4l2-devices");
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        appendJetsonLog(`v4l2 failed: ${apiErrorMessage(j) || r.status}`);
+        return;
+      }
+      const log = el("jetson-remote-log");
+      if (log) log.textContent = j.stdout || j.stderr || "(empty)";
+    }
+
+    async function refreshJetsonRemotePanel(runServices) {
+      renderJetsonRemoteFields();
+      if (runServices !== false) {
+        try {
+          await refreshJetsonServices();
+        } catch (e) {
+          appendJetsonLog(String(e));
+        }
+      }
     }
 
     function renderMultiCameraModelFields() {
@@ -2790,8 +3648,8 @@
       prose.className = "tab-prose";
       prose.innerHTML =
         "Dual mmWave: set <strong>Front</strong> and <strong>Back</strong> UART pairs / sessions. " +
-        "<code>pipeline=lab_replay</code> uses perception sessions for colored plots " +
-        "(body=blue, anomaly=orange/red).";
+        "Pipelines: <code>dual_live</code>, <code>dual_replay</code>, <code>status</code>. " +
+        "Publishes <code>live_mmwave_metrics.json</code> for fused camera overlay.";
       root.appendChild(prose);
       const g0 = document.createElement("div");
       g0.className = "form-row-2";
@@ -2805,7 +3663,7 @@
         inp.id = "mmwave-" + k;
         inp.dataset.sensor = "mmwave";
         inp.dataset.key = k;
-        inp.value = sec[k] != null ? String(sec[k]) : (k === "pipeline" ? "lab_replay" : "2");
+        inp.value = sec[k] != null ? String(sec[k]) : (k === "pipeline" ? "dual_replay" : "2");
         w.appendChild(l);
         w.appendChild(inp);
         g0.appendChild(w);
@@ -2873,7 +3731,7 @@
       const w = document.createElement("div");
       const l = document.createElement("label");
       l.htmlFor = "mmwave-mmwave_show_plot";
-      l.textContent = "Show mmWave Front/Back in sidebar";
+      l.textContent = "Show fused dual-mmWave dashboard in sidebar";
       const c = document.createElement("input");
       c.type = "checkbox";
       c.id = "mmwave-mmwave_show_plot";
@@ -2895,6 +3753,187 @@
       const cb = el("mmwave-mmwave_show_plot");
       if (cb) cb.addEventListener("change", applyMmwavePlotVis);
       applyMmwavePlotVis();
+      renderMmwaveRootFields();
+      renderMmwaveFusionFields();
+    }
+
+    function renderMmwaveRootFields() {
+      const root = el("fields-mmwave_root");
+      if (!root) return;
+      const mr = settings.mmwave_root || {};
+      root.innerHTML = "";
+      [
+        ["path", "MMWAVE_ROOT path", "text"],
+        ["config_path", "Config JSON (in Mmwave repo)", "text"],
+        ["sensor_distance_m", "Sensor distance (m)", "number"],
+        ["radar_a_usb_location", "Radar A USB location", "text"],
+        ["radar_b_usb_location", "Radar B USB location", "text"],
+        ["calibration_session_a", "Calibration session A", "text"],
+        ["calibration_session_b", "Calibration session B", "text"],
+      ].forEach(([k, lab, typ]) => {
+        const w = document.createElement("div");
+        const l = document.createElement("label");
+        l.textContent = lab;
+        l.htmlFor = "mmwave_root-" + k;
+        const inp = document.createElement("input");
+        inp.type = typ;
+        inp.id = "mmwave_root-" + k;
+        inp.dataset.block = "mmwave_root";
+        inp.dataset.key = k;
+        inp.value = mr[k] != null ? String(mr[k]) : "";
+        w.appendChild(l);
+        w.appendChild(inp);
+        root.appendChild(w);
+      });
+    }
+
+    function renderMmwaveFusionFields() {
+      const root = el("fields-mmwave_fusion");
+      if (!root) return;
+      const fusion = settings.mmwave_fusion || {};
+      root.innerHTML = "";
+      const enWrap = document.createElement("div");
+      const enLab = document.createElement("label");
+      enLab.htmlFor = "mmwave_fusion-enable";
+      enLab.textContent = "Enable fusion overlay on camera infer";
+      const en = document.createElement("input");
+      en.type = "checkbox";
+      en.id = "mmwave_fusion-enable";
+      en.dataset.block = "mmwave_fusion";
+      en.dataset.key = "enable";
+      en.checked = Number(fusion.enable || 0) !== 0;
+      enWrap.appendChild(enLab);
+      enWrap.appendChild(en);
+      root.appendChild(enWrap);
+      [
+        ["metrics_path", "Live metrics JSON path", "text"],
+        ["sensor_distance_m", "Front↔Back radar baseline (m)", "number"],
+        ["depth_gate_m", "Depth gate (m)", "number"],
+        ["lateral_gate_m", "Lateral gate (m)", "number"],
+        ["corridor_half_width_m", "Corridor half-width (m)", "number"],
+        ["front_mount_lateral_m", "Front radar vs camera, right is + (m)", "number"],
+        ["back_mount_lateral_m", "Back radar vs camera, right is + (m)", "number"],
+        ["mount_height_m", "Radar minus camera height (m, 0 if same bar)", "number"],
+        ["webcam_side", "Front camera radar side", "text"],
+        ["multi_camera_side", "Back camera radar side", "text"],
+      ].forEach(([k, lab, typ]) => {
+        const w = document.createElement("div");
+        const l = document.createElement("label");
+        l.textContent = lab;
+        l.htmlFor = "mmwave_fusion-" + k;
+        const inp = document.createElement("input");
+        inp.type = typ;
+        inp.id = "mmwave_fusion-" + k;
+        inp.dataset.block = "mmwave_fusion";
+        inp.dataset.key = k;
+        inp.value = fusion[k] != null ? String(fusion[k]) : "";
+        w.appendChild(l);
+        w.appendChild(inp);
+        root.appendChild(w);
+      });
+    }
+
+    function readMmwaveRootBlock() {
+      const out = {};
+      document.querySelectorAll("[data-block='mmwave_root']").forEach((node) => {
+        const k = node.dataset.key;
+        if (!k) return;
+        if (node.type === "checkbox") out[k] = node.checked ? 1 : 0;
+        else if (node.type === "number") out[k] = parseFloat(node.value || "0") || 0;
+        else out[k] = String(node.value || "").trim();
+      });
+      return out;
+    }
+
+    function readMmwaveFusionBlock() {
+      const out = {};
+      document.querySelectorAll("[data-block='mmwave_fusion']").forEach((node) => {
+        const k = node.dataset.key;
+        if (!k) return;
+        if (node.type === "checkbox") out[k] = node.checked ? 1 : 0;
+        else if (node.type === "number") out[k] = parseFloat(node.value || "0") || 0;
+        else out[k] = String(node.value || "").trim();
+      });
+      return out;
+    }
+
+    async function saveMmwaveRootConfig() {
+      const body = readMmwaveRootBlock();
+      const r = await fetch("/api/mmwave/root/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(apiErrorMessage(j) || "Save MMWAVE_ROOT failed");
+      settings.mmwave_root = j.mmwave_root || body;
+      const meta = el("mmwave-root-status");
+      if (meta && j.status) {
+        meta.textContent = j.status.ok
+          ? `MMWAVE_ROOT ok · ${j.status.mmwave_root}`
+          : `MMWAVE_ROOT missing files: ${(j.status.missing || []).join(", ")}`;
+      }
+      return j;
+    }
+
+    async function saveMmwaveFusionConfig() {
+      const body = readMmwaveFusionBlock();
+      const r = await fetch("/api/mmwave/fusion/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(apiErrorMessage(j) || "Save fusion config failed");
+      settings.mmwave_fusion = j.mmwave_fusion || body;
+      return j;
+    }
+
+    async function runMmwaveProbe() {
+      const log = el("mmwave-preflight-log");
+      if (log) log.textContent = "Running system probe…";
+      const r = await fetch("/api/mmwave/probe", { method: "POST" });
+      const j = await r.json().catch(() => ({}));
+      const lines = [
+        j.summary ? `summary: ${j.summary}` : "",
+        ...(j.checks || []).map((c) => `${c.ok ? "✓" : "✗"} ${c.name}: ${c.detail || ""}`),
+      ].filter(Boolean);
+      if (log) log.textContent = lines.join("\n");
+      const meta = el("mmwave-root-status");
+      if (meta) meta.textContent = j.operational ? "Probe: operational" : (j.ok ? "Probe: partial" : "Probe: issues");
+      return j;
+    }
+
+    async function runMmwavePreflight() {
+      const log = el("mmwave-preflight-log");
+      if (log) log.textContent = "Running preflight…";
+      const r = await fetch("/api/mmwave/preflight", { method: "POST" });
+      const j = await r.json().catch(() => ({}));
+      const lines = [
+        `root: ${j.mmwave_root || "?"}`,
+        `pairs: ${(j.pairs || []).length}`,
+        j.pair_a ? `A: ${j.pair_a.cli_port} / ${j.pair_a.data_port}` : "A: —",
+        j.pair_b ? `B: ${j.pair_b.cli_port} / ${j.pair_b.data_port}` : "B: —",
+        j.error ? `error: ${j.error}` : "",
+      ].filter(Boolean);
+      if (log) log.textContent = lines.join("\n");
+      const meta = el("mmwave-root-status");
+      if (meta) meta.textContent = j.ok ? "MMWAVE_ROOT valid" : "MMWAVE_ROOT check failed";
+      return j;
+    }
+
+    async function refreshMmwaveLiveMetrics() {
+      const log = el("mmwave-preflight-log");
+      const r = await fetch("/api/mmwave/live_metrics");
+      const j = await r.json().catch(() => ({}));
+      if (log) {
+        log.textContent = j.ok
+          ? `live metrics age=${j.age_s}s torso=${j.mmwave_torso_score ?? "—"}`
+          : `no live metrics at ${j.path || "?"}`;
+      }
+      const score = el("metric-mmwave-score");
+      if (score && j.mmwave_torso_score != null) score.textContent = String(j.mmwave_torso_score);
+      return j;
     }
 
     function applyMmwavePlotVis() {
@@ -3423,7 +4462,9 @@
       renderThermalTab();
       renderWebcamForAi();
       renderMultiCameraTab();
+      renderJetsonRemoteFields();
       renderMmwaveTab();
+      renderAlignmentTab();
       await loadModelOptions();
       renderModelFields();
       renderMultiCameraModelFields();
@@ -3518,6 +4559,8 @@
         settings.thermal = { ...(settings.thermal || {}), ...readFieldsRoot(el("fields-thermal")) };
       } else if (sensor === "mmwave") {
         settings.mmwave = { ...(settings.mmwave || {}), ...readFieldsRoot(el("fields-mmwave")) };
+        settings.mmwave_root = { ...(settings.mmwave_root || {}), ...readMmwaveRootBlock() };
+        settings.mmwave_fusion = { ...(settings.mmwave_fusion || {}), ...readMmwaveFusionBlock() };
       }
       await saveAllSettings();
       if (sensor === "thermal") renderThermalTab();
@@ -3653,16 +4696,24 @@
         }
         deviceConfigV4l2 = j;
         const labelByIndex = deviceLabelMapFromGroups(j.groups);
-        const indices = j.all_indices && j.all_indices.length ? j.all_indices : [0, 1, 2, 3, 4];
-        fillDeviceConfigSelect("device-config-thermal", indices, labelByIndex, settings.thermal?.thermal_device ?? 2);
-        fillDeviceConfigSelect("device-config-webcam", indices, labelByIndex, settings.webcam?.webcam_device ?? 0);
-        fillDeviceConfigSelect("device-config-multi_camera", indices, labelByIndex, settings.multi_camera?.webcam_device ?? 0);
-        const n = indices.length;
+        // Front/Back: Video Capture nodes only (skip HDMI metadata siblings).
+        const camIndices =
+          j.capture_indices && j.capture_indices.length
+            ? j.capture_indices
+            : j.all_indices && j.all_indices.length
+              ? j.all_indices
+              : [0, 1, 2, 3, 4];
+        const thermalIndices = j.all_indices && j.all_indices.length ? j.all_indices : camIndices;
+        fillDeviceConfigSelect("device-config-thermal", thermalIndices, labelByIndex, settings.thermal?.thermal_device ?? 2);
+        fillDeviceConfigSelect("device-config-webcam", camIndices, labelByIndex, settings.webcam?.webcam_device ?? 0);
+        fillDeviceConfigSelect("device-config-multi_camera", camIndices, labelByIndex, settings.multi_camera?.webcam_device ?? 0);
+        const n = camIndices.length;
         const parts = [];
         if (j.suggested_thermal != null) parts.push(`suggested thermal: /dev/video${j.suggested_thermal}`);
-        if (j.suggested_webcam != null) parts.push(`suggested webcam: /dev/video${j.suggested_webcam}`);
+        if (j.suggested_webcam != null) parts.push(`suggested Front: /dev/video${j.suggested_webcam}`);
+        if (j.suggested_multi_camera != null) parts.push(`suggested Back: /dev/video${j.suggested_multi_camera}`);
         if (info) {
-          info.textContent = `${n} device${n === 1 ? "" : "s"} found` + (parts.length ? ` · ${parts.join(" · ")}` : "");
+          info.textContent = `${n} capture node${n === 1 ? "" : "s"}` + (parts.length ? ` · ${parts.join(" · ")}` : "");
           if (j.warning) info.textContent += ` · ${j.warning}`;
         }
         updateDeviceConfigWarn();
@@ -3688,25 +4739,34 @@
       if (!deviceConfigV4l2) return;
       const j = deviceConfigV4l2;
       const labelByIndex = deviceLabelMapFromGroups(j.groups);
-      const indices = j.all_indices && j.all_indices.length ? j.all_indices : [0, 1, 2, 3, 4];
+      const camIndices =
+        j.capture_indices && j.capture_indices.length
+          ? j.capture_indices
+          : j.all_indices && j.all_indices.length
+            ? j.all_indices
+            : [0, 1, 2, 3, 4];
+      const thermalIndices = j.all_indices && j.all_indices.length ? j.all_indices : camIndices;
       const thermal = j.suggested_thermal != null ? Number(j.suggested_thermal) : null;
       const webcam = j.suggested_webcam != null ? Number(j.suggested_webcam) : null;
+      let multi = j.suggested_multi_camera != null ? Number(j.suggested_multi_camera) : null;
       if (thermal != null) {
-        fillDeviceConfigSelect("device-config-thermal", indices, labelByIndex, thermal);
+        fillDeviceConfigSelect("device-config-thermal", thermalIndices, labelByIndex, thermal);
         el("device-config-thermal").value = String(thermal);
       }
       if (webcam != null) {
-        fillDeviceConfigSelect("device-config-webcam", indices, labelByIndex, webcam);
+        fillDeviceConfigSelect("device-config-webcam", camIndices, labelByIndex, webcam);
         el("device-config-webcam").value = String(webcam);
       }
-      let multi = webcam;
-      if (multi != null) {
+      if (multi == null && webcam != null) {
+        multi = webcam;
         const used = new Set([thermal, webcam].filter((x) => x != null));
-        if (used.has(multi) && indices.length > 1) {
-          const alt = indices.map((x) => Number(x)).find((x) => !used.has(x));
+        if (used.has(multi) && camIndices.length > 1) {
+          const alt = camIndices.map((x) => Number(x)).find((x) => !used.has(x));
           if (alt != null) multi = alt;
         }
-        fillDeviceConfigSelect("device-config-multi_camera", indices, labelByIndex, multi);
+      }
+      if (multi != null) {
+        fillDeviceConfigSelect("device-config-multi_camera", camIndices, labelByIndex, multi);
         el("device-config-multi_camera").value = String(multi);
       }
       updateDeviceConfigWarn();
@@ -3722,7 +4782,10 @@
         renderThermalTab();
         renderWebcamForAi();
         renderMultiCameraTab();
-        if (typeof loadV4l2CameraControls === "function") loadV4l2CameraControls();
+        if (typeof loadV4l2CameraControls === "function") {
+          loadV4l2CameraControls("webcam");
+          loadV4l2CameraControls("multi_camera");
+        }
         closeDeviceConfigModal();
       } catch (e) {
         const warn = el("device-config-warn");
@@ -3745,8 +4808,8 @@
           const txt = line.querySelector(".txt");
           let name;
           if (sensor === "mmwave") name = "mmWave";
-          else if (sensor === "webcam") name = "Front Camera · Multi Camera";
-          else if (sensor === "multi_camera") name = "Back Camera";
+          else if (sensor === "webcam") name = "Front Cam";
+          else if (sensor === "multi_camera") name = "Back Cam";
           else name = sensor.charAt(0).toUpperCase() + sensor.slice(1);
           if (txt) {
             txt.textContent = running ? `${name} · pid ${info.pid}` : `${name} · idle`;
@@ -3816,6 +4879,8 @@
     }
 
     async function runAction(sensor, action) {
+      const runBtn = action === "run" ? el(`run-${sensor}`) : null;
+      if (runBtn) runBtn.disabled = true;
       if (action === "run" || action === "stop" || action === "restart") {
         clearLogPanel(sensor);
       }
@@ -3834,7 +4899,19 @@
             await saveAllSettings();
           } else if (sensor === "mmwave") {
             settings.mmwave = { ...(settings.mmwave || {}), ...readFieldsRoot(el("fields-mmwave")) };
+            settings.mmwave_root = { ...(settings.mmwave_root || {}), ...readMmwaveRootBlock() };
+            settings.mmwave_fusion = { ...(settings.mmwave_fusion || {}), ...readMmwaveFusionBlock() };
             await saveAllSettings();
+          }
+        }
+        // Soft Run: if already live, do not spam 409 / thrash the device.
+        if (action === "run" && (sensor === "webcam" || sensor === "multi_camera")) {
+          const st = lastStatus?.[sensor];
+          if (st && st.running) {
+            setError(sensor, `${sensor === "webcam" ? "Front" : "Back"} already running (pid ${st.pid})`, { ok: true });
+            await oneShotStatus();
+            if (runBtn) runBtn.disabled = false;
+            return;
           }
         }
         const r = await fetch(`/api/${action}/${sensor}`, { method: "POST" });
@@ -3845,6 +4922,8 @@
         const msg = apiErrorMessage(payload) || (!r.ok ? `HTTP ${r.status}` : "");
         if (!r.ok && msg) {
           setError(sensor, msg);
+        } else if (r.ok && (action === "run" || action === "restart") && payload.message) {
+          setError(sensor, payload.message, { ok: true });
         }
       } catch (e) {
         setError(
@@ -3854,6 +4933,7 @@
         );
       }
       await oneShotStatus();
+      if (runBtn) runBtn.disabled = false;
     }
 
     async function runGroup(action) {
@@ -3884,18 +4964,35 @@
 
     /* Tabs: thermal | ai-camera | mmwave */
     document.querySelectorAll(".chrome-tabs button").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
         const id = btn.dataset.tab;
-        document.querySelectorAll(".chrome-tabs button").forEach((b) => b.classList.toggle("active", b === btn));
-        TAB_IDS.forEach((t) => {
-          const panel = el("tab-" + t);
-          if (panel) panel.classList.toggle("active", t === id);
-        });
+        if (!id) return;
+        switchConfigTab(id);
       });
     });
 
     el("layout-ops")?.addEventListener("click", () => setLiveLayout("ops"));
     el("layout-binary")?.addEventListener("click", () => setLiveLayout("binary"));
+    el("layout-alignment")?.addEventListener("click", () => setLiveLayout("alignment"));
+    el("btn-alignment-save")?.addEventListener("click", () => saveAlignmentConfig().catch((e) => {
+      const errEl = el("err-alignment");
+      if (errEl) errEl.textContent = String(e);
+    }));
+    el("btn-alignment-view")?.addEventListener("click", () => openAlignmentView());
+    el("btn-alignment-reload-gid")?.addEventListener("click", async () => {
+      try {
+        await fetch("/api/global_id/reload_config", { method: "POST" });
+        const errEl = el("err-alignment");
+        if (errEl) errEl.textContent = "Global ID config reloaded.";
+      } catch (e) {
+        const errEl = el("err-alignment");
+        if (errEl) errEl.textContent = String(e);
+      }
+    });
+    ["align-vid-front", "align-vid-back"].forEach((id) => {
+      el(id)?.addEventListener("load", () => pollAlignmentStatus());
+    });
     el("live-focus-camera")?.addEventListener("change", (ev) => {
       const mode = ev.target.value;
       setPreviewSource(mode);
@@ -3908,6 +5005,8 @@
       cell.addEventListener("click", () => {
         const sensor = cell.getAttribute("data-live-sensor") || "";
         if (!sensor) return;
+        if (sensor === "webcam") switchConfigTab("ai-camera");
+        else if (sensor === "multi_camera") switchConfigTab("multi-camera");
         setPreviewSource(sensor);
         setLiveEnlarge(true);
       });
@@ -3920,41 +5019,42 @@
       if (document.hidden) return;
       refreshAllLivePanels();
     }, 1200);
-    el("btn-record-main").addEventListener("click", () => startLiveRecord().catch((e) => alert(e)));
-    el("btn-stop-record-main").addEventListener("click", () => stopLiveRecord().catch((e) => alert(e)));
-    el("btn-screenshot-main").addEventListener("click", () => captureMainScreenshot().catch((e) => alert(e)));
-    el("refresh-main").addEventListener("click", () => {
+    el("btn-record-main")?.addEventListener("click", () => startLiveRecord().catch((e) => alert(e)));
+    el("btn-stop-record-main")?.addEventListener("click", () => stopLiveRecord().catch((e) => alert(e)));
+    el("btn-screenshot-main")?.addEventListener("click", () => captureMainScreenshot().catch((e) => alert(e)));
+    el("refresh-main")?.addEventListener("click", () => {
       stopThermalWs();
       stopWebcamWs();
       stopMultiCameraWs();
       // Force reconnect continuous MJPEG streams.
-      ["vid-ops-thermal", "vid-ops-front", "vid-ops-back", "vid-ops-mmwave-front", "vid-ops-mmwave-back",
-       "vid-bin-ai", "vid-bin-multi", "vid-main"].forEach((id) => {
+      ["vid-ops-thermal", "vid-ops-front", "vid-ops-back", "vid-ops-mmwave-fused",
+       "vid-bin-ai", "vid-bin-multi", "vid-main", "align-vid-front", "align-vid-back"].forEach((id) => {
         const img = el(id);
         if (img) img.removeAttribute("src");
       });
       refreshMainPreview();
       refreshSecondaryPreview();
       refreshMmwaveThumb({ bust: true });
+      if (liveLayoutMode === "alignment") refreshAlignmentPreviews();
     });
 
-    el("run-all").addEventListener("click", () => runGroup("run_all"));
-    el("stop-all").addEventListener("click", () => runGroup("stop_all"));
-    el("restart-all").addEventListener("click", () => runGroup("restart_all"));
-    el("save-global").addEventListener("click", () => saveGlobal().catch((e) => alert(e)));
-    el("reset-all").addEventListener("click", () => resetAll().catch((e) => alert(e)));
+    el("run-all")?.addEventListener("click", () => runGroup("run_all"));
+    el("stop-all")?.addEventListener("click", () => runGroup("stop_all"));
+    el("restart-all")?.addEventListener("click", () => runGroup("restart_all"));
+    el("save-global")?.addEventListener("click", () => saveGlobal().catch((e) => alert(e)));
+    el("reset-all")?.addEventListener("click", () => resetAll().catch((e) => alert(e)));
 
     ["thermal", "webcam", "multi_camera", "mmwave"].forEach((sensor) => {
-      el(`run-${sensor}`).addEventListener("click", () => runAction(sensor, "run"));
-      el(`stop-${sensor}`).addEventListener("click", () => runAction(sensor, "stop"));
-      el(`restart-${sensor}`).addEventListener("click", () => runAction(sensor, "restart"));
-      el(`save-${sensor}`).addEventListener("click", () => saveSensor(sensor).catch((e) => setError(sensor, String(e))));
-      el(`reset-${sensor}`).addEventListener("click", () => resetSensor(sensor).catch((e) => setError(sensor, String(e))));
-      el(`cmd-${sensor}`).addEventListener("click", () => showCommand(sensor).catch((e) => setError(sensor, String(e))));
+      el(`run-${sensor}`)?.addEventListener("click", () => runAction(sensor, "run"));
+      el(`stop-${sensor}`)?.addEventListener("click", () => runAction(sensor, "stop"));
+      el(`restart-${sensor}`)?.addEventListener("click", () => runAction(sensor, "restart"));
+      el(`save-${sensor}`)?.addEventListener("click", () => saveSensor(sensor).catch((e) => setError(sensor, String(e))));
+      el(`reset-${sensor}`)?.addEventListener("click", () => resetSensor(sensor).catch((e) => setError(sensor, String(e))));
+      el(`cmd-${sensor}`)?.addEventListener("click", () => showCommand(sensor).catch((e) => setError(sensor, String(e))));
     });
 
-    el("reset-model").addEventListener("click", () => resetModel().catch((e) => setError("webcam", String(e))));
-    el("apply-profile").addEventListener("click", async () => {
+    el("reset-model")?.addEventListener("click", () => resetModel().catch((e) => setError("webcam", String(e))));
+    el("apply-profile")?.addEventListener("click", async () => {
       setError("webcam", "");
       const id = el("profile-select").value;
       if (!id) {
@@ -3976,8 +5076,8 @@
       }
       await loadConfig();
     });
-    el("refresh-profiles").addEventListener("click", () => loadProfiles().catch(() => {}));
-    el("save-profile-snapshot").addEventListener("click", async () => {
+    el("refresh-profiles")?.addEventListener("click", () => loadProfiles().catch(() => {}));
+    el("save-profile-snapshot")?.addEventListener("click", async () => {
       setError("webcam", "");
       const name = el("profile-new-name").value.trim();
       if (!name) {
@@ -4005,7 +5105,7 @@
       if (sel && savedKey && [...sel.options].some((o) => o.value === savedKey)) sel.value = savedKey;
     });
 
-    el("apply-multi-camera-profile").addEventListener("click", async () => {
+    el("apply-multi-camera-profile")?.addEventListener("click", async () => {
       setError("multi_camera", "");
       const id = el("multi-camera-profile-select").value;
       if (!id) {
@@ -4027,8 +5127,8 @@
       }
       await loadConfig();
     });
-    el("refresh-multi-camera-profiles").addEventListener("click", () => loadProfiles().catch(() => {}));
-    el("save-multi-camera-profile-snapshot").addEventListener("click", async () => {
+    el("refresh-multi-camera-profiles")?.addEventListener("click", () => loadProfiles().catch(() => {}));
+    el("save-multi-camera-profile-snapshot")?.addEventListener("click", async () => {
       setError("multi_camera", "");
       const name = el("multi-camera-profile-new-name").value.trim();
       if (!name) {
@@ -4056,7 +5156,7 @@
       if (sel && savedKey && [...sel.options].some((o) => o.value === savedKey)) sel.value = savedKey;
     });
 
-    el("btn-thermal-autoconf").addEventListener("click", async () => {
+    el("btn-thermal-autoconf")?.addEventListener("click", async () => {
       setError("thermal", "");
       try {
         const r = await fetch("/api/devices/v4l2");
@@ -4089,33 +5189,34 @@
       }
     });
 
-    el("reset-multi_camera-model").addEventListener("click", () => resetMultiCameraModel().catch((e) => setError("multi_camera", String(e))));
+    el("reset-multi_camera-model")?.addEventListener("click", () => resetMultiCameraModel().catch((e) => setError("multi_camera", String(e))));
 
-    const v4l2Wrap = el("webcam-v4l2-wrap");
-    if (v4l2Wrap) {
-      v4l2Wrap.addEventListener("toggle", () => {
-        if (v4l2Wrap.open) loadV4l2CameraControls();
-      });
-    }
-    el("btn-webcam-v4l2-refresh")?.addEventListener("click", () => loadV4l2CameraControls());
-    el("btn-webcam-v4l2-reset")?.addEventListener("click", async () => {
-      const index = getWebcamDeviceIndex();
-      setV4l2Status("Resetting…");
-      try {
-        const r = await fetch("/api/devices/v4l2/controls/reset?index=" + encodeURIComponent(index), { method: "POST" });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) {
-          const detail = j.detail || j.error || r.statusText;
-          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
-        }
-        renderV4l2ControlsPanel(j);
-        setV4l2Status("Reset to defaults on /dev/video" + index);
-      } catch (e) {
-        setV4l2Status(String(e), true);
-      }
-    });
+    bindV4l2Panel("webcam");
+    bindV4l2Panel("multi_camera");
 
-    el("btn-mmwave-autoconf").addEventListener("click", async () => {
+    el("btn-jetson-save-config")?.addEventListener("click", () =>
+      saveJetsonBackConfig().catch((e) => setError("multi_camera", String(e)))
+    );
+    el("btn-jetson-connect-test")?.addEventListener("click", () =>
+      testJetsonConnect().catch((e) => setError("multi_camera", String(e)))
+    );
+    el("btn-jetson-refresh")?.addEventListener("click", () =>
+      refreshJetsonServices().catch((e) => setError("multi_camera", String(e)))
+    );
+    el("btn-jetson-mtx-restart")?.addEventListener("click", () =>
+      jetsonServiceAction("mediamtx", "restart").catch((e) => setError("multi_camera", String(e)))
+    );
+    el("btn-jetson-cam-restart")?.addEventListener("click", () =>
+      jetsonServiceAction("cam_rtsp", "restart").catch((e) => setError("multi_camera", String(e)))
+    );
+    el("btn-jetson-cam-logs")?.addEventListener("click", () =>
+      fetchJetsonCamLogs().catch((e) => setError("multi_camera", String(e)))
+    );
+    el("btn-jetson-v4l2")?.addEventListener("click", () =>
+      fetchJetsonV4l2().catch((e) => setError("multi_camera", String(e)))
+    );
+
+    el("btn-mmwave-autoconf")?.addEventListener("click", async () => {
       setError("mmwave", "");
       try {
         const r = await fetch("/api/devices/serial");
@@ -4138,11 +5239,21 @@
       }
     });
 
-    el("btn-preview-device-config").addEventListener("click", () => openDeviceConfigModal());
-    el("device-config-cancel").addEventListener("click", () => closeDeviceConfigModal());
-    el("device-config-refresh").addEventListener("click", () => refreshDeviceConfigModal());
-    el("device-config-suggest").addEventListener("click", () => applyDeviceConfigSuggestions());
-    el("device-config-save").addEventListener("click", () => saveDeviceConfig());
+    el("btn-mmwave-preflight")?.addEventListener("click", () =>
+      runMmwavePreflight().catch((e) => setError("mmwave", String(e)))
+    );
+    el("btn-mmwave-probe")?.addEventListener("click", () =>
+      runMmwaveProbe().catch((e) => setError("mmwave", String(e)))
+    );
+    el("btn-mmwave-live-metrics")?.addEventListener("click", () =>
+      refreshMmwaveLiveMetrics().catch((e) => setError("mmwave", String(e)))
+    );
+
+    el("btn-preview-device-config")?.addEventListener("click", () => openDeviceConfigModal());
+    el("device-config-cancel")?.addEventListener("click", () => closeDeviceConfigModal());
+    el("device-config-refresh")?.addEventListener("click", () => refreshDeviceConfigModal());
+    el("device-config-suggest")?.addEventListener("click", () => applyDeviceConfigSuggestions());
+    el("device-config-save")?.addEventListener("click", () => saveDeviceConfig());
     ["device-config-thermal", "device-config-webcam", "device-config-multi_camera"].forEach((id) => {
       const node = el(id);
       if (node) node.addEventListener("change", updateDeviceConfigWarn);
@@ -4157,9 +5268,10 @@
       if (ev.key === "Escape" && deviceConfigModal && !deviceConfigModal.hidden) closeDeviceConfigModal();
     });
 
-    const savedPreview = localStorage.getItem(PREVIEW_KEY) || "thermal";
+    const savedPreview = localStorage.getItem(PREVIEW_KEY) || "webcam";
     setPreviewSource(savedPreview);
-    liveLayoutMode = (localStorage.getItem("scanu_live_layout") || "ops") === "binary" ? "binary" : "ops";
+    const savedLayout = localStorage.getItem("scanu_live_layout") || "binary";
+    liveLayoutMode = ["ops", "binary", "alignment"].includes(savedLayout) ? savedLayout : "binary";
     liveEnlarge = localStorage.getItem(LIVE_ENLARGE_KEY) === "1";
     applyLiveViewMode();
 
