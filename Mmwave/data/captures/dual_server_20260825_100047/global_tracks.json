@@ -1,0 +1,155 @@
+{
+  "schema_version": "scanu_lab_dual_global_tracks_v1",
+  "experimental": true,
+  "world_frame": "sensor_A; B is transformed with x'=-x, y'=D-y, z'=z",
+  "sensor_distance_m": 3.6576,
+  "matched_windows": 11,
+  "maximum_simultaneous_global_person_count": 0,
+  "unique_global_track_ids": [],
+  "parameters": {
+    "min_cluster_points": 15,
+    "cross_view_gate_m": 0.8,
+    "track_gate_m": 1.0,
+    "max_missed_windows": 3,
+    "clock_offset_b_minus_a_s": 0.0,
+    "window_tolerance_s": 0.25
+  },
+  "limitations": [
+    "post-CFAR/TLV track-level fusion only; raw ADC is not coherently combined",
+    "deduplication quality depends on measured extrinsics, host-clock offset, clutter calibration and association gates",
+    "a global track is an experimental spatial hypothesis, not a biometric identity or validated person-count metric",
+    "reflective evidence is not a metal, weapon, or firearm classification; controlled material calibration is required"
+  ],
+  "windows": [
+    {
+      "window_index": 0,
+      "time_s": 0.0,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 1,
+      "time_s": 0.4999587725033052,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 2,
+      "time_s": 0.9999277265160345,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 3,
+      "time_s": 1.4999457109952345,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 4,
+      "time_s": 1.9999673609854653,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 5,
+      "time_s": 2.49996182898758,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": [
+        {
+          "center_m": [
+            0.6011999845504761,
+            2.272599935531616,
+            0.5393999814987183
+          ],
+          "source_views": [
+            "B"
+          ],
+          "classification": "single_view_reflective_anomaly",
+          "material_confirmed": false,
+          "global_track_id": null
+        }
+      ]
+    },
+    {
+      "window_index": 6,
+      "time_s": 2.9999405724811368,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": [
+        {
+          "center_m": [
+            0.6011999845504761,
+            2.274099826812744,
+            0.5432000160217285
+          ],
+          "source_views": [
+            "B"
+          ],
+          "classification": "single_view_reflective_anomaly",
+          "material_confirmed": false,
+          "global_track_id": null
+        }
+      ]
+    },
+    {
+      "window_index": 7,
+      "time_s": 3.4999165830085985,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 8,
+      "time_s": 3.999938507506158,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 9,
+      "time_s": 4.4999296455061994,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": [
+        {
+          "center_m": [
+            0.6011999845504761,
+            2.2718000411987305,
+            0.5371999740600586
+          ],
+          "source_views": [
+            "B"
+          ],
+          "classification": "single_view_reflective_anomaly",
+          "material_confirmed": false,
+          "global_track_id": null
+        }
+      ]
+    },
+    {
+      "window_index": 10,
+      "time_s": 5.000030838011298,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    }
+  ]
+}

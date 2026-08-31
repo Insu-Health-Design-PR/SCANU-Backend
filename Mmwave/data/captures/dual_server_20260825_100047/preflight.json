@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "schema_version": "scanu_lab_dual_server_77ghz_v1",
+  "host": "insu-TRX50-AERO-D",
+  "radar_a": {
+    "serial_number": "R2091049",
+    "usb_location": "1-1",
+    "cli_port": "/dev/ttyACM0",
+    "data_port": "/dev/ttyACM1",
+    "assignment": "xds110_device_order_fallback"
+  },
+  "radar_b": {
+    "serial_number": "R2091049",
+    "usb_location": "7-2.4.1.1",
+    "cli_port": "/dev/ttyACM2",
+    "data_port": "/dev/ttyACM3",
+    "assignment": "xds110_device_order_fallback"
+  },
+  "camera_a": {
+    "device": "/dev/v4l/by-id/usb-USB_Cam_Manufacturer_HDMI_USB_Camera_510550000000100-video-index0",
+    "width": 3840,
+    "height": 2160,
+    "fps": 30.0,
+    "backend": "ffmpeg-copy",
+    "input_format": "h264"
+  },
+  "camera_b": null,
+  "single_host_clock": true,
+  "hardware_synchronized": false
+}

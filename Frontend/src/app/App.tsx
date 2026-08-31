@@ -6,6 +6,7 @@ import { SlabManagementPage } from './components/SlabManagementPage';
 import { SlabDetailView } from './components/SlabDetailView';
 import { PlaygroundView } from './components/PlaygroundView';
 import { ControlPanel } from './components/ControlPanel';
+import { ThreatAlertsView } from './components/ThreatAlertsView';
 import {
   scanuClient,
   DashboardSnapshot,
@@ -15,7 +16,7 @@ import {
 import { slabToDevice, slabsFromSnapshot } from './types/slab';
 import { downloadDataUrl, slabScreenshotName } from './utils/capturePreview';
 
-type AppPage = 'slabs' | 'slab-detail' | 'playground' | 'control';
+type AppPage = 'slabs' | 'slab-detail' | 'playground' | 'control' | 'alerts';
 
 export default function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot>(() => ({
@@ -48,7 +49,7 @@ export default function App() {
     alerts: [],
     detections: {},
     sensorLogs: { thermal: '', webcam: '', mmwave: '' },
-    sensorRunning: { thermal: false, webcam: false, mmwave: false },
+    sensorRunning: { thermal: false, webcam: false, mmwave: false, multi_camera: false },
   }));
 
   const [page, setPage] = useState<AppPage>('slabs');
@@ -58,7 +59,7 @@ export default function App() {
   const [jetsonModalOpen, setJetsonModalOpen] = useState(false);
   const [selectedJetsonForModal, setSelectedJetsonForModal] = useState<Device | null>(null);
 
-  const [activeView, setActiveView] = useState<'rgb' | 'thermal' | 'mmwave'>('rgb');
+  const [activeView, setActiveView] = useState<'rgb' | 'back' | 'thermal' | 'mmwave'>('rgb');
   const [previewLayout, setPreviewLayout] = useState<'single' | 'dual' | 'triple'>('single');
   const [showBoxes, setShowBoxes] = useState(true);
   const [showIds, setShowIds] = useState(true);
@@ -85,9 +86,21 @@ export default function App() {
     scanuClient.setOperatorMode(mode);
   };
 
+  useEffect(() => {
+    if (slabs.length > 0 && page === 'slabs' && !selectedSlabId) {
+      handleSelectSlab(slabs[0].id);
+    }
+  }, [slabs, page, selectedSlabId]);
+
   const handleScreenshot = async () => {
     const sensor =
-      activeView === 'thermal' ? 'thermal' : activeView === 'mmwave' ? 'mmwave' : 'webcam';
+      activeView === 'thermal'
+        ? 'thermal'
+        : activeView === 'mmwave'
+          ? 'mmwave'
+          : activeView === 'back'
+            ? 'multi_camera'
+            : 'webcam';
     const dataUrl = await scanuClient.captureScreenshot(sensor);
     if (dataUrl && selectedSlab) {
       downloadDataUrl(dataUrl, slabScreenshotName(selectedSlab.slabId, sensor));
@@ -143,6 +156,7 @@ export default function App() {
 
         {page === 'playground' && <PlaygroundView />}
         {page === 'control' && <ControlPanel metrics={metrics} />}
+        {page === 'alerts' && <ThreatAlertsView alerts={alerts} slabId={selectedSlab?.slabId} />}
       </div>
 
       <ConsoleBar sensorLogs={sensorLogs} backendOnline={status.backendOnline} />

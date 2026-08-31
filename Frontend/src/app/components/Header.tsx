@@ -1,7 +1,7 @@
-import { Activity, AlertTriangle, FlaskConical, LayoutGrid, Settings, Shield, WifiOff, RefreshCw } from 'lucide-react';
+import { Activity, AlertTriangle, Bell, FlaskConical, LayoutGrid, Settings, Shield, WifiOff, RefreshCw } from 'lucide-react';
 import { SystemStatus, OperatorMode } from '../api/client';
 
-type AppPage = 'slabs' | 'slab-detail' | 'playground' | 'control';
+type AppPage = 'slabs' | 'slab-detail' | 'playground' | 'control' | 'alerts';
 
 interface HeaderProps {
   systemStatus: SystemStatus;
@@ -78,11 +78,12 @@ export function Header({
           <div className="w-8 h-8 bg-white/10 rounded-md flex items-center justify-center border border-white/20">
             <Shield className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-lg font-semibold">SCAN-U</h1>
+          <h1 className="text-lg font-semibold">Threat Monitor</h1>
         </div>
 
         <div className="hidden sm:flex items-center gap-1 p-1 bg-white/[0.04] rounded-lg border border-white/10">
-          {navBtn('slabs', 'Slabs', LayoutGrid)}
+          {navBtn('slabs', 'Monitor', LayoutGrid)}
+          {navBtn('alerts', 'Alerts', Bell)}
           {navBtn('playground', 'Playground', FlaskConical)}
           {navBtn('control', 'Control', Settings)}
         </div>

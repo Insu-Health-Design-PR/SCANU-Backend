@@ -1,0 +1,6 @@
+[
+  {
+    "output": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/dual_server_triptych.mp4",
+    "metadata": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/dual_server_triptych.mp4.metadata.json"
+  }
+]

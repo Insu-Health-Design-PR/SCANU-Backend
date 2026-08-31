@@ -1,0 +1,72 @@
+{
+  "schema_version": "scanu_lab_awr1843_human_perception_v1",
+  "experimental": true,
+  "canonical_training_compatible": false,
+  "material_confirmed": false,
+  "weapon_classification": false,
+  "source_session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/participant/radar_b/capture_20260825_105233",
+  "source_frames": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/participant/radar_b/capture_20260825_105233/frames.jsonl",
+  "source_frames_sha256": "7657dbf9e1083ef29585863313d6f11014d4895b6ae2467924176ae54b291708",
+  "source_cube": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/participant/radar_b/capture_20260825_105233/rae_cube_tlv.npz",
+  "source_cube_sha256": "ea054f93deeb6e1eeed1f2a0611a0665bca72f790e4d6ff4ef94e950888958f2",
+  "calibration_session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/calibration/radar_b/capture_20260825_105157",
+  "person_reference_session": null,
+  "background_calibrated": true,
+  "calibration_compatibility_reason": "matching_ti_configuration_signature",
+  "person_reference_calibrated": false,
+  "person_reference_reason": "no_person_reference",
+  "person_reference_profile_frames": 0,
+  "startup_empty_windows": 0,
+  "startup_empty_mask_applied": false,
+  "spec": {
+    "near_field_m": 0.5,
+    "maximum_person_range_m": 5.0,
+    "person_cluster_radius_m": 0.42,
+    "person_cluster_min_points": 10,
+    "motion_threshold_mps": 0.12,
+    "association_gate_m": 1.1,
+    "maximum_missed_windows": 4,
+    "minimum_track_evidence": 0.34,
+    "body_margin_xy_m": 0.25,
+    "body_margin_z_m": 0.3,
+    "anomaly_cluster_radius_m": 0.18,
+    "anomaly_cluster_min_points": 2,
+    "anomaly_score_threshold": 0.68,
+    "anomaly_min_persistence": 3,
+    "person_reference_z_threshold": 6.0,
+    "initial_empty_windows": 0,
+    "startup_clutter_occupancy_threshold": 0.6
+  },
+  "statistics": {
+    "windows": 119,
+    "rejected_frame_rows": 0,
+    "input_windowed_points": 58472,
+    "clutter_suppressed_windowed_points": 28139,
+    "clutter_suppressed_fraction": 0.4812388835682036,
+    "tracked_windows": 80,
+    "observed_track_windows": 72,
+    "track_continuity_fraction": 0.9,
+    "persistent_anomaly_windows": 36,
+    "screening_state_windows": {
+      "background": 47,
+      "person": 36,
+      "suspicious_metal": 36,
+      "insufficient_signal": 0
+    }
+  },
+  "range_profile_mapping": {
+    "resolution_m": 0.04215831440625,
+    "source": "profileCfg"
+  },
+  "output": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/participant/radar_b/capture_20260825_105233/perception.jsonl",
+  "output_sha256": "bb520548935c61d26c051f9db406ca86c2ce9f08a995b079ced7ccfd4e5ea036",
+  "created_utc": "2026-08-25T14:53:39.230682+00:00",
+  "limitations": [
+    "track confidence and anomaly score are uncalibrated engineering rankings",
+    "body region uses the observed radar volume, not calibrated anatomy",
+    "sparse post-CFAR TLVs cannot recover dense complex radar imagery",
+    "suspicious_metal denotes body-associated radar anomaly, not confirmed material or weapon",
+    "person-reference subtraction requires matched position and motion without the test object",
+    "person identity requires controlled validation and preferably synchronized camera evidence"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": "scanu_lab_awr1843_sparse_rae_v1",
+  "experimental": true,
+  "representation": "sparse_tlv_point_accumulation",
+  "dense_adc_cube": false,
+  "canonical_training_compatible": false,
+  "source_session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610",
+  "source_frames": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/frames.jsonl",
+  "source_frames_sha256": "a651fbde131802fbb6a45393477ace519770400a63d1441095f3ad38ec5e5af6",
+  "output_npz": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/rae_cube_tlv.npz",
+  "output_npz_sha256": "29ea890afac34d713cb519e2525be268116ac3daf73c8010cd73099bd5576323",
+  "axis_order": [
+    "window",
+    "range",
+    "azimuth",
+    "elevation"
+  ],
+  "coordinate_convention": {
+    "x": "right_m",
+    "y": "forward_m",
+    "z": "up_m",
+    "azimuth": "atan2(x,y)_deg",
+    "elevation": "atan2(z,hypot(x,y))_deg"
+  },
+  "spec": {
+    "range_min_m": 0.25,
+    "range_max_m": 8.64,
+    "azimuth_min_deg": -50.0,
+    "azimuth_max_deg": 50.0,
+    "elevation_min_deg": -20.0,
+    "elevation_max_deg": 20.0,
+    "range_bins": 64,
+    "azimuth_bins": 48,
+    "elevation_bins": 24,
+    "window_frames": 10,
+    "stride_frames": 5
+  },
+  "statistics": {
+    "input_frames": 600,
+    "windows": 119,
+    "accepted_point_observations": 40559,
+    "dropped_nonfinite_points": 0,
+    "dropped_out_of_bounds_points": 0,
+    "clipped_hit_counts": 0,
+    "nonempty_voxels": 11664,
+    "rejected_frame_rows": 0
+  },
+  "created_utc": "2026-08-25T18:07:14.235778+00:00",
+  "limitations": [
+    "voxels contain accumulated detected points, not dense complex ADC samples",
+    "empty voxels mean no reported detection, not proven empty physical space",
+    "angular accuracy and resolution are limited by firmware, antenna geometry, calibration, multipath, and SNR",
+    "experimental laboratory artifact; not compatible with canonical SCAN-U training"
+  ]
+}

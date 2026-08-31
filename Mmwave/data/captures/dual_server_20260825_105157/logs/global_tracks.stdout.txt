@@ -1,0 +1,24 @@
+{
+  "matched_windows": 119,
+  "maximum_simultaneous_global_person_count": 5,
+  "unique_global_track_ids": [
+    "G001",
+    "G002",
+    "G003",
+    "G004",
+    "G005",
+    "G006",
+    "G007",
+    "G008",
+    "G009",
+    "G010",
+    "G011",
+    "G012",
+    "G013",
+    "G014",
+    "G015",
+    "G016",
+    "G017",
+    "G018"
+  ]
+}

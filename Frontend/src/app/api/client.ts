@@ -14,7 +14,8 @@ import { capturePreviewFrame } from '../utils/capturePreview';
 
 export type OperatorMode = 'central' | 'fallback' | 'local';
 export type SystemState = 'normal' | 'fallback' | 'recovery' | 'fault';
-export type SensorType = 'webcam' | 'thermal' | 'mmwave';
+export type SensorType = 'webcam' | 'thermal' | 'mmwave' | 'multi_camera';
+export type CameraSensor = 'webcam' | 'multi_camera';
 export type AlertSeverity = 'info' | 'warning' | 'critical';
 
 export interface Device {
@@ -120,7 +121,7 @@ export interface DashboardSnapshot {
   alerts: Alert[];
   detections: Record<string, Detection[]>;
   sensorLogs: Record<'thermal' | 'webcam' | 'mmwave', string>;
-  sensorRunning: Record<'thermal' | 'webcam' | 'mmwave', boolean>;
+  sensorRunning: Record<'thermal' | 'webcam' | 'mmwave' | 'multi_camera', boolean>;
 }
 
 type Listener = (snap: DashboardSnapshot) => void;
@@ -131,7 +132,44 @@ function detectionsFromThreat(_threat: Layer8ThreatMetrics | null): Detection[] 
 }
 
 function inferRunnerActive(status: Layer8AllStatus | null): boolean {
-  return Boolean(status?.webcam?.running || status?.thermal?.running);
+  return Boolean(
+    status?.webcam?.running || status?.thermal?.running || status?.multi_camera?.running,
+  );
+}
+
+function predictionLooksUnsafe(prediction: string | null | undefined): boolean {
+  if (!prediction) return false;
+  const p = prediction.toLowerCase();
+  return (
+    p.includes('unsafe') ||
+    p.includes('armed') ||
+    p.includes('concealed') ||
+    p.includes('suspicious')
+  );
+}
+
+function isUnsafeThreat(threat: Layer8ThreatMetrics | null): boolean {
+  if (!threat) return false;
+  if (threat.gun_detected === true) return true;
+  if ((threat.persons_with_gun ?? 0) > 0) return true;
+
+  const tracks = threat.byte_tracks ?? [];
+  const unsafeTracks = tracks.filter((t) => {
+    const weapon = t.weapon_gun_conf ?? 0;
+    const object = t.object_gun_conf ?? 0;
+    return weapon > 0.05 || object > 0.17 || t.bucket === 'unsafe' || t.threat >= 0.55;
+  });
+  if (unsafeTracks.length > 0) return true;
+
+  const persons = threat.persons_total ?? 0;
+  if (persons <= 0 && tracks.length === 0) return false;
+
+  const unsafeScore = Number(threat.unsafe_score ?? 0);
+  const unsafePct = Number(threat.unsafe_pct ?? 0);
+  if (unsafeScore >= 0.55 || unsafePct >= 55) return true;
+  if (predictionLooksUnsafe(threat.prediction)) return true;
+
+  return false;
 }
 
 function metricsFromDashboard(
@@ -189,53 +227,60 @@ function metricsFromDashboard(
   };
 }
 
-function alertsFromThreat(
+function alertsFromCameraThreat(
   threat: Layer8ThreatMetrics | null,
-  dash: Layer8DashboardMetrics | null,
-  inferActive: boolean,
+  sensor: CameraSensor,
+  running: boolean,
+  cameraLabel: string,
 ): Alert[] {
-  if (!inferActive || (threat?.gun_detected !== true && dash?.gun_detected !== true)) {
+  if (!running || !threat || !isUnsafeThreat(threat)) {
     return [];
   }
 
-  const frame = threat?.frame ?? dash?.frame ?? Date.now();
-  const tracks = threat?.byte_tracks ?? [];
+  const frame = threat.frame ?? Date.now();
+  const prefix = sensor === 'webcam' ? 'front' : 'back';
+  const tracks = threat.byte_tracks ?? [];
 
-  const armedTracks = tracks.filter((t) => {
+  const unsafeTracks = tracks.filter((t) => {
     const weapon = t.weapon_gun_conf ?? 0;
     const object = t.object_gun_conf ?? 0;
     return weapon > 0.05 || object > 0.17 || t.bucket === 'unsafe' || t.threat >= 0.55;
   });
 
-  if (armedTracks.length > 0) {
-    return armedTracks.map((t) => ({
-      id: `alert-f${frame}-p${t.display_id}`,
+  if (unsafeTracks.length > 0) {
+    return unsafeTracks.map((t) => ({
+      id: `alert-${prefix}-f${frame}-p${t.display_id}`,
       severity: 'critical' as const,
-      type: 'person_armed',
-      message: `Person ${t.display_id}: had gun`,
+      type: 'person_unsafe',
+      message: `${cameraLabel}: Person ${t.display_id} — unsafe`,
       personId: t.display_id,
       deviceId: LAYER8_LOCAL_DEVICE_ID,
-      sensor: 'webcam' as const,
+      sensor,
       confidence: Math.max(t.weapon_gun_conf ?? 0, t.object_gun_conf ?? 0, t.threat),
       timestamp: new Date().toISOString(),
       acknowledged: false,
     }));
   }
 
-  const score = Number(dash?.unsafe_score ?? threat?.weapon_gun_peak ?? 0);
-  return [
-    {
-      id: `alert-f${frame}`,
-      severity: 'critical',
-      type: 'weapon_detected',
-      message: `Weapon detected — ${dash?.persons_with_gun ?? threat?.persons_with_gun ?? 0} armed`,
-      deviceId: LAYER8_LOCAL_DEVICE_ID,
-      sensor: 'webcam',
-      confidence: score,
-      timestamp: new Date().toISOString(),
-      acknowledged: false,
-    },
-  ];
+  const persons = threat.persons_total ?? tracks.length;
+  if (persons > 0) {
+    const pred = threat.prediction?.trim();
+    return [
+      {
+        id: `alert-${prefix}-f${frame}`,
+        severity: 'critical',
+        type: 'threat_detected',
+        message: `${cameraLabel}: ${pred || 'Unsafe threat detected'} (${persons} person${persons > 1 ? 's' : ''})`,
+        deviceId: LAYER8_LOCAL_DEVICE_ID,
+        sensor,
+        confidence: Number(threat.unsafe_score ?? threat.weapon_gun_peak ?? 0.5),
+        timestamp: new Date().toISOString(),
+        acknowledged: false,
+      },
+    ];
+  }
+
+  return [];
 }
 
 function deviceFromStatus(status: Layer8AllStatus | null): Device {
@@ -246,7 +291,7 @@ function deviceFromStatus(status: Layer8AllStatus | null): Device {
 
   return {
     id: LAYER8_LOCAL_DEVICE_ID,
-    name: 'SCANU Layer 8',
+    name: 'Threat Monitor',
     location: 'localhost:8088',
     status: anyRunning ? 'online' : status ? 'degraded' : 'offline',
     cameras: { webcam: true, thermal: true },
@@ -259,10 +304,11 @@ function deviceFromStatus(status: Layer8AllStatus | null): Device {
 
 function sensorRunningFromStatus(
   status: Layer8AllStatus | null,
-): Record<'thermal' | 'webcam' | 'mmwave', boolean> {
+): Record<'thermal' | 'webcam' | 'mmwave' | 'multi_camera', boolean> {
   return {
     thermal: Boolean(status?.thermal?.running),
     webcam: Boolean(status?.webcam?.running),
+    multi_camera: Boolean(status?.multi_camera?.running),
     mmwave: Boolean(status?.mmwave?.running),
   };
 }
@@ -277,6 +323,9 @@ class ScanUClient {
   private lastFrameSample: { frame: number; ts: number } | null = null;
   private alertHistory: Alert[] = [];
   private seenAlertIds = new Set<string>();
+  private metricsRefreshInFlight = false;
+  private screenshotInFlight = false;
+  private screenshotQueue: Array<{ alertId: string; sensor: CameraSensor }> = [];
 
   private snapshot: DashboardSnapshot = {
     devices: [],
@@ -291,13 +340,13 @@ class ScanUClient {
     alerts: [],
     detections: {},
     sensorLogs: { thermal: '', webcam: '', mmwave: '' },
-    sensorRunning: { thermal: false, webcam: false, mmwave: false },
+    sensorRunning: { thermal: false, webcam: false, mmwave: false, multi_camera: false },
   };
 
   constructor() {
     void this.refreshMetrics();
     this.connectStatusStream();
-    this.pollTimer = setInterval(() => void this.refreshMetrics(), 1000);
+    this.pollTimer = setInterval(() => void this.refreshMetrics(), 2500);
   }
 
   isConnected() {
@@ -551,13 +600,13 @@ class ScanUClient {
 
   /** Capture current preview stream; optionally attach to a recent alert. */
   async captureScreenshot(sensor: SensorType = 'webcam'): Promise<string | null> {
-    const url =
-      sensor === 'thermal'
-        ? layer8Url('/api/thermal/preview/live')
-        : sensor === 'mmwave'
-          ? layer8Url('/api/mmwave/preview/live')
-          : layer8Url('/api/ai_camera/preview/live');
-    const dataUrl = await capturePreviewFrame(url);
+    const snapSensor =
+      sensor === 'multi_camera'
+        ? 'multi_camera'
+        : sensor === 'thermal'
+          ? 'thermal'
+          : 'webcam';
+    const dataUrl = await capturePreviewFrame('', snapSensor);
     if (!dataUrl) return null;
     if (this.alertHistory.length > 0) {
       const next = [...this.alertHistory];
@@ -570,33 +619,54 @@ class ScanUClient {
   }
 
   private mergeAlertHistory(incoming: Alert[]) {
-    let added = false;
+    const newAlerts: Alert[] = [];
     for (const a of incoming) {
       if (this.seenAlertIds.has(a.id)) continue;
       this.seenAlertIds.add(a.id);
       this.alertHistory.unshift(a);
-      added = true;
+      newAlerts.push(a);
     }
-    if (this.alertHistory.length > 16) {
-      this.alertHistory = this.alertHistory.slice(0, 16);
+    if (this.alertHistory.length > 32) {
+      this.alertHistory = this.alertHistory.slice(0, 32);
     }
-    if (this.seenAlertIds.size > 64) {
+    if (this.seenAlertIds.size > 128) {
       this.seenAlertIds = new Set(this.alertHistory.map((a) => a.id));
     }
-    if (added && incoming.some((a) => a.severity === 'critical')) {
-      void capturePreviewFrame(layer8Url('/api/ai_camera/preview/live')).then((dataUrl) => {
-        if (!dataUrl) return;
-        const targetId = incoming[0]?.id;
-        const idx = this.alertHistory.findIndex((a) => a.id === targetId);
-        if (idx < 0) return;
-        const next = [...this.alertHistory];
-        next[idx] = { ...next[idx], screenshotDataUrl: dataUrl };
-        this.alertHistory = next;
-        this.snapshot = { ...this.snapshot, alerts: next };
-        this.emit();
-      });
+    for (const a of newAlerts) {
+      if (a.severity !== 'critical') continue;
+      const sensor: CameraSensor = a.sensor === 'multi_camera' ? 'multi_camera' : 'webcam';
+      this.screenshotQueue.push({ alertId: a.id, sensor });
+      void this.drainScreenshotQueue();
     }
     return this.alertHistory;
+  }
+
+  private async drainScreenshotQueue() {
+    if (this.screenshotInFlight || this.screenshotQueue.length === 0) return;
+    this.screenshotInFlight = true;
+    const job = this.screenshotQueue.shift();
+    if (!job) {
+      this.screenshotInFlight = false;
+      return;
+    }
+    try {
+      const dataUrl = await capturePreviewFrame('', job.sensor);
+      if (dataUrl) {
+        const idx = this.alertHistory.findIndex((x) => x.id === job.alertId);
+        if (idx >= 0) {
+          const next = [...this.alertHistory];
+          next[idx] = { ...next[idx], screenshotDataUrl: dataUrl };
+          this.alertHistory = next;
+          this.snapshot = { ...this.snapshot, alerts: next };
+          this.emit();
+        }
+      }
+    } finally {
+      this.screenshotInFlight = false;
+      if (this.screenshotQueue.length > 0) {
+        void this.drainScreenshotQueue();
+      }
+    }
   }
 
   private connectStatusStream() {
@@ -625,6 +695,7 @@ class ScanUClient {
         status: { ...this.snapshot.status, backendOnline: true, state: 'normal' },
       };
       this.emit();
+      void this.refreshMetrics();
     };
 
     es.onerror = () => {
@@ -663,13 +734,10 @@ class ScanUClient {
       this.snapshot = {
         ...this.snapshot,
         metrics: metricsFromDashboard(null, null, false, 0),
-        alerts: [],
-        status: { ...this.snapshot.status, activeAlerts: 0 },
       };
     }
 
     this.emit();
-    void this.refreshMetrics();
   }
 
   private lastDashboardMetrics: Layer8DashboardMetrics | null = null;
@@ -684,47 +752,103 @@ class ScanUClient {
   }
 
   private async refreshMetrics() {
+    if (this.metricsRefreshInFlight) return;
+    this.metricsRefreshInFlight = true;
     try {
-      const [sysRes, dashRes, threatRes, statusRes] = await Promise.all([
+      const running = sensorRunningFromStatus(this.lastSensorStatus);
+      const fetches: Promise<Response>[] = [
         fetch(LAYER8.systemMetrics()),
         fetch(LAYER8.dashboardMetrics()),
-        fetch(LAYER8.threatMetrics()),
-        fetch(LAYER8.status()),
-      ]);
+      ];
+      if (running.webcam) {
+        fetches.push(fetch(LAYER8.frontCameraThreatMetrics()));
+      }
+      if (running.multi_camera) {
+        fetches.push(fetch(LAYER8.backCameraThreatMetrics()));
+      }
 
-      if (!dashRes.ok && !statusRes.ok) {
+      const results = await Promise.all(fetches);
+      const sysRes = results[0];
+      const dashRes = results[1];
+      let frontThreatRes: Response | null = null;
+      let backThreatRes: Response | null = null;
+      let ri = 2;
+      if (running.webcam) {
+        frontThreatRes = results[ri++];
+      }
+      if (running.multi_camera) {
+        backThreatRes = results[ri++];
+      }
+
+      if (!dashRes.ok && !this.lastSensorStatus) {
         throw new Error('Layer 8 unreachable');
       }
 
       const sys: Layer8SystemMetrics | null = sysRes.ok ? await sysRes.json() : null;
       const dash: Layer8DashboardMetrics | null = dashRes.ok ? await dashRes.json() : null;
-      const threat: Layer8ThreatMetrics | null = threatRes.ok ? await threatRes.json() : null;
-      const sensorStatus: Layer8AllStatus | null = statusRes.ok
-        ? await statusRes.json()
-        : this.lastSensorStatus;
+      const frontThreat: Layer8ThreatMetrics | null = frontThreatRes?.ok
+        ? await frontThreatRes.json()
+        : null;
+      const backThreat: Layer8ThreatMetrics | null = backThreatRes?.ok ? await backThreatRes.json() : null;
+      const sensorStatus = this.lastSensorStatus;
 
       if (dash) this.lastDashboardMetrics = dash;
-      if (sensorStatus) this.lastSensorStatus = sensorStatus;
 
+      const runningNow = sensorRunningFromStatus(sensorStatus);
       const inferActive = inferRunnerActive(sensorStatus);
       const fps = inferActive ? this.computeInferFps(dash?.frame ?? null, dash?.ts ?? null) : 0;
       const metrics = metricsFromDashboard(dash, sys, inferActive, fps);
-      const freshAlerts = alertsFromThreat(threat, dash, inferActive);
-      const alerts = freshAlerts.length > 0 ? this.mergeAlertHistory(freshAlerts) : this.alertHistory;
+
+      const frontAlerts = alertsFromCameraThreat(
+        frontThreat,
+        'webcam',
+        runningNow.webcam,
+        'Front Camera',
+      );
+      const backAlerts = alertsFromCameraThreat(
+        backThreat,
+        'multi_camera',
+        runningNow.multi_camera,
+        'Back Camera',
+      );
+      const freshAlerts = [...frontAlerts, ...backAlerts];
+      const alerts =
+        freshAlerts.length > 0 ? this.mergeAlertHistory(freshAlerts) : this.alertHistory;
       const device = deviceFromStatus(sensorStatus);
+      const threatForDetections = frontThreat?.byte_tracks?.length
+        ? frontThreat
+        : backThreat ?? frontThreat;
 
       this.backendReachable = true;
       this.snapshot = {
         ...this.snapshot,
         devices: [device],
-        metrics,
+        metrics: {
+          ...metrics,
+          gunDetected:
+            metrics.gunDetected ||
+            frontThreat?.gun_detected === true ||
+            backThreat?.gun_detected === true,
+          personDetections: Math.max(
+            metrics.personDetections ?? 0,
+            frontThreat?.persons_total ?? 0,
+            backThreat?.persons_total ?? 0,
+          ) || null,
+        },
         alerts,
-        detections: { [LAYER8_LOCAL_DEVICE_ID]: detectionsFromThreat(threat) },
+        detections: { [LAYER8_LOCAL_DEVICE_ID]: detectionsFromThreat(threatForDetections) },
         status: {
           ...this.snapshot.status,
           mode: this.currentOperatorMode,
           backendOnline: true,
-          state: metrics.gunDetected ? 'normal' : device.status === 'online' ? 'normal' : 'fallback',
+          state:
+            metrics.gunDetected ||
+            frontThreat?.gun_detected ||
+            backThreat?.gun_detected
+              ? 'normal'
+              : device.status === 'online'
+                ? 'normal'
+                : 'fallback',
           activeAlerts: alerts.length,
           timestamp: new Date().toISOString(),
         },
@@ -735,7 +859,7 @@ class ScanUClient {
               mmwave: sensorStatus.mmwave?.log_tail || '',
             }
           : this.snapshot.sensorLogs,
-        sensorRunning: sensorRunningFromStatus(sensorStatus),
+        sensorRunning: runningNow,
       };
       this.emit();
     } catch {
@@ -754,11 +878,13 @@ class ScanUClient {
         devices: [{ ...deviceFromStatus(null), status: 'offline' }],
         detections: {},
         alerts: [],
-        sensorRunning: { thermal: false, webcam: false, mmwave: false },
+        sensorRunning: { thermal: false, webcam: false, mmwave: false, multi_camera: false },
       };
       this.alertHistory = [];
       this.seenAlertIds.clear();
       this.emit();
+    } finally {
+      this.metricsRefreshInFlight = false;
     }
   }
 
@@ -795,7 +921,9 @@ class ScanUClient {
 export const scanuClient = new ScanUClient();
 
 export const previewUrls = {
-  rgb: LAYER8.previewWebcam(),
+  rgb: LAYER8.previewFrontCamera(),
+  front: LAYER8.previewFrontCamera(),
+  back: LAYER8.previewBackCamera(),
   thermal: LAYER8.previewThermal(),
   mmwave: LAYER8.previewMmwave(),
 } as const;

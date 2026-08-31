@@ -1,0 +1,2 @@
+/home/insu/Desktop/New_Backend/Backend/.venv/lib/python3.13/site-packages/numpy/linalg/_linalg.py:2804: RuntimeWarning: overflow encountered in multiply
+  s = (x.conj() * x).real

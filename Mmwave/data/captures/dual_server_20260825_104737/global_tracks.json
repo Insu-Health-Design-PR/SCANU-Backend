@@ -1,0 +1,977 @@
+{
+  "schema_version": "scanu_lab_dual_global_tracks_v1",
+  "experimental": true,
+  "world_frame": "sensor_A; B is transformed with x'=-x, y'=D-y, z'=z",
+  "sensor_distance_m": 3.6576,
+  "matched_windows": 119,
+  "maximum_simultaneous_global_person_count": 0,
+  "unique_global_track_ids": [],
+  "parameters": {
+    "min_cluster_points": 15,
+    "cross_view_gate_m": 0.8,
+    "track_gate_m": 1.0,
+    "max_missed_windows": 3,
+    "clock_offset_b_minus_a_s": 0.0,
+    "window_tolerance_s": 0.25
+  },
+  "limitations": [
+    "post-CFAR/TLV track-level fusion only; raw ADC is not coherently combined",
+    "deduplication quality depends on measured extrinsics, host-clock offset, clutter calibration and association gates",
+    "a global track is an experimental spatial hypothesis, not a biometric identity or validated person-count metric",
+    "reflective evidence is not a metal, weapon, or firearm classification; controlled material calibration is required"
+  ],
+  "windows": [
+    {
+      "window_index": 0,
+      "time_s": 0.0,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 1,
+      "time_s": 0.5000191584695131,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 2,
+      "time_s": 1.0000225029652938,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 3,
+      "time_s": 1.5000361269921996,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 4,
+      "time_s": 2.0000393349910155,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 5,
+      "time_s": 2.5000168249825947,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 6,
+      "time_s": 3.0000429690117016,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 7,
+      "time_s": 3.500101482961327,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 8,
+      "time_s": 4.0000982214696705,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 9,
+      "time_s": 4.500122086959891,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 10,
+      "time_s": 5.000082695507444,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 11,
+      "time_s": 5.50009654648602,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 12,
+      "time_s": 6.000117482501082,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 13,
+      "time_s": 6.500180688512046,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 14,
+      "time_s": 7.000116543495096,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 15,
+      "time_s": 7.500126197002828,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 16,
+      "time_s": 8.000191486964468,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 17,
+      "time_s": 8.500247337506153,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 18,
+      "time_s": 9.000121632008813,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 19,
+      "time_s": 9.500215000472963,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 20,
+      "time_s": 10.000177801004611,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 21,
+      "time_s": 10.500197435496375,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 22,
+      "time_s": 11.000216343963984,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 23,
+      "time_s": 11.500240205961745,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 24,
+      "time_s": 12.000262699497398,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 25,
+      "time_s": 12.50018029048806,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 26,
+      "time_s": 13.000223506474867,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 27,
+      "time_s": 13.500266717979684,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 28,
+      "time_s": 14.000287219008896,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 29,
+      "time_s": 14.500226378964726,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 30,
+      "time_s": 15.000234165461734,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 31,
+      "time_s": 15.500290777010377,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 32,
+      "time_s": 16.000290675496217,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 33,
+      "time_s": 16.500230396457482,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 34,
+      "time_s": 17.000286257010885,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 35,
+      "time_s": 17.500316177494824,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 36,
+      "time_s": 18.00033801497193,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 37,
+      "time_s": 18.5002971405047,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 38,
+      "time_s": 19.00032127200393,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 39,
+      "time_s": 19.5003161925124,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 40,
+      "time_s": 20.000325171509758,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 41,
+      "time_s": 20.500280315987766,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 42,
+      "time_s": 21.000303290958982,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 43,
+      "time_s": 21.500338144483976,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 44,
+      "time_s": 22.00033980148146,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 45,
+      "time_s": 22.500300092971884,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 46,
+      "time_s": 23.000331168994308,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 47,
+      "time_s": 23.50030718249036,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 48,
+      "time_s": 24.000398030504584,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 49,
+      "time_s": 24.500326214008965,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 50,
+      "time_s": 25.00031971349381,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 51,
+      "time_s": 25.50035064999247,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 52,
+      "time_s": 26.000296089507174,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 53,
+      "time_s": 26.50037845451152,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 54,
+      "time_s": 27.000407218467444,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 55,
+      "time_s": 27.5003312099725,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 56,
+      "time_s": 28.000348175002728,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 57,
+      "time_s": 28.500310455507133,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 58,
+      "time_s": 29.000391019973904,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 59,
+      "time_s": 29.500393321970478,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 60,
+      "time_s": 30.000335011456627,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 61,
+      "time_s": 30.500385181512684,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 62,
+      "time_s": 31.00043072149856,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 63,
+      "time_s": 31.5004193779896,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 64,
+      "time_s": 32.000368076958694,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 65,
+      "time_s": 32.50040297949454,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 66,
+      "time_s": 33.00040444050683,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 67,
+      "time_s": 33.500493757484946,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 68,
+      "time_s": 34.00041803496424,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 69,
+      "time_s": 34.50047170196194,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 70,
+      "time_s": 35.00046641746303,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 71,
+      "time_s": 35.50051950849593,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 72,
+      "time_s": 36.000444311473984,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 73,
+      "time_s": 36.50054013449699,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 74,
+      "time_s": 37.00055655796314,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 75,
+      "time_s": 37.50044447398977,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 76,
+      "time_s": 38.00048029847676,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 77,
+      "time_s": 38.5005751294666,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 78,
+      "time_s": 39.00052363949362,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 79,
+      "time_s": 39.50051245599752,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 80,
+      "time_s": 40.00053552648751,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 81,
+      "time_s": 40.500574659963604,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 82,
+      "time_s": 41.00049243250396,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 83,
+      "time_s": 41.50062468048418,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 84,
+      "time_s": 42.00051877601072,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 85,
+      "time_s": 42.50060043047415,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 86,
+      "time_s": 43.00056186050642,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 87,
+      "time_s": 43.50055733846966,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 88,
+      "time_s": 44.00054929050384,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 89,
+      "time_s": 44.500625887012575,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 90,
+      "time_s": 45.00053565198323,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 91,
+      "time_s": 45.50056630349718,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 92,
+      "time_s": 46.00057913799537,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 93,
+      "time_s": 46.500598076498136,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 94,
+      "time_s": 47.0006741284742,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 95,
+      "time_s": 47.50057203450706,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 96,
+      "time_s": 48.00071311148349,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 97,
+      "time_s": 48.50061696150806,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 98,
+      "time_s": 49.000657583470456,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 99,
+      "time_s": 49.50065051601268,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 100,
+      "time_s": 50.000692099973094,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 101,
+      "time_s": 50.50137014646316,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 102,
+      "time_s": 51.00067544198828,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 103,
+      "time_s": 51.50069417949999,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 104,
+      "time_s": 52.000727079459466,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 105,
+      "time_s": 52.501164113986306,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 106,
+      "time_s": 53.00062595750205,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 107,
+      "time_s": 53.50067690946162,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 108,
+      "time_s": 54.000745644501876,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 109,
+      "time_s": 54.500710023974534,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 110,
+      "time_s": 55.00069509446621,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 111,
+      "time_s": 55.50070497399429,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 112,
+      "time_s": 56.00080795149552,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 113,
+      "time_s": 56.500686157960445,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 114,
+      "time_s": 57.00072347000241,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 115,
+      "time_s": 57.50079107447527,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 116,
+      "time_s": 58.000734320958145,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 117,
+      "time_s": 58.50067456701072,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    },
+    {
+      "window_index": 118,
+      "time_s": 59.00066745647928,
+      "global_person_count": 0,
+      "observations": [],
+      "active_tracks": [],
+      "reflective_evidence": []
+    }
+  ]
+}

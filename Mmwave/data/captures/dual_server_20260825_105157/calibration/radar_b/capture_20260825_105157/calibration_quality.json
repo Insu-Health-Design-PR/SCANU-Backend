@@ -1,0 +1,79 @@
+{
+  "schema_version": "scanu_lab_awr1843_empty_room_baseline_v1",
+  "status": "ready",
+  "condition": "empty_room",
+  "usable_profile_frames": 199,
+  "required_profile_frames": 40,
+  "profile_presence_fraction": 0.995,
+  "profile_bins": 256,
+  "rae_baseline_available": true,
+  "transport_quality": {
+    "schema_version": "scanu_lab_awr1843_signal_artifacts_v1",
+    "experimental": true,
+    "source": "live_usb_capture",
+    "source_raw_uart": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/calibration/radar_b/capture_20260825_105157/raw_uart.bin",
+    "source_raw_uart_sha256": "e37d44f9edaca8436c99802dd4f9fe435bc5c0fc0f7a861121fc187478a93e8b",
+    "decoded_frames": 200,
+    "sequence": {
+      "first_frame": 1,
+      "last_frame": 201,
+      "sequence_gaps": 1,
+      "missing_frames": 1,
+      "duplicate_or_reversed_frames": 0,
+      "monotonic": true
+    },
+    "range_profiles": {
+      "present_frames": 199,
+      "missing_frames": 1,
+      "consistent_length": true,
+      "lengths": [
+        256
+      ]
+    },
+    "noise_profiles": {
+      "present_frames": 199,
+      "missing_frames": 1,
+      "consistent_length": true,
+      "lengths": [
+        256
+      ]
+    },
+    "stats_fields": [
+      "active_frame_cpu_load",
+      "inter_chirp_proc_margin",
+      "inter_frame_cpu_load",
+      "inter_frame_proc_margin",
+      "inter_frame_proc_time",
+      "transmit_out_time"
+    ],
+    "transport": {
+      "bytes_read": 393568,
+      "sha256": "e37d44f9edaca8436c99802dd4f9fe435bc5c0fc0f7a861121fc187478a93e8b",
+      "tlv_frames": 200,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 1023
+    },
+    "outputs": {
+      "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/calibration/radar_b/capture_20260825_105157/range_profiles.npz",
+      "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_105157/calibration/radar_b/capture_20260825_105157/noise_profiles.npz"
+    },
+    "created_utc": "2026-08-25T14:52:21.338397+00:00",
+    "limitations": [
+      "quality report validates capture integrity, not material classification",
+      "USB TLVs contain processed detections and profiles, not raw ADC samples"
+    ]
+  },
+  "checks": {
+    "enough_frames": true,
+    "range_noise_bins_match": true,
+    "all_range_statistics_finite": true,
+    "all_noise_statistics_finite": true,
+    "ti_configuration_signature_available": true
+  },
+  "limitations": [
+    "empty-room calibration removes stable scene response; it does not identify material",
+    "sparse RAE occupancy represents post-CFAR detections, not proven empty space",
+    "calibration is invalid after sensor or major scene geometry moves"
+  ]
+}

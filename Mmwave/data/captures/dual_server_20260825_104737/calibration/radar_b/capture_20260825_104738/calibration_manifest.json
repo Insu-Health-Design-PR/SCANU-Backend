@@ -1,0 +1,30 @@
+{
+  "schema_version": "scanu_lab_awr1843_empty_room_baseline_v1",
+  "experimental": true,
+  "canonical_training_compatible": false,
+  "calibration_id": "awr1843-empty-20260825T144802Z",
+  "condition": "empty_room",
+  "source_session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738",
+  "source_range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738/range_profiles.npz",
+  "source_range_profiles_sha256": "0295be8263fd6e784bae393307b06c3541fd2438ea8e2c36c3fa511dc1d143e6",
+  "source_noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738/noise_profiles.npz",
+  "source_noise_profiles_sha256": "a0a96ff87dd229666d20be4a29ffc9b3d94d4d061ad713bcecac90cc79c8d8b7",
+  "source_cube": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738/rae_cube_tlv.npz",
+  "source_cube_sha256": "788429f83257eec27ed3232ee407ec454f0bcb57f8ffd10ae3b5cd9f93c01bca",
+  "ti_configuration_signature": "dcc74e652e30b8ace584a40bdee07c855884cfbe03f24610c14755aa8288b6f5",
+  "spec": {
+    "min_frames": 40,
+    "near_field_m": 0.5,
+    "static_occupancy_threshold": 0.75,
+    "minimum_scale": 1.0
+  },
+  "outputs": {
+    "empty_room_baseline": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738/empty_room_baseline.npz",
+    "empty_room_baseline_sha256": "af5fcea385bae57564400bc70fba027d507c9313939a3fe8f72ae7856f89ab32",
+    "clutter_mask": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738/clutter_mask.npz",
+    "clutter_mask_sha256": "e8e73adf016ffc933267468d1e413f3f3b7d76554a611c17a3e20c596798c609",
+    "calibration_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_104737/calibration/radar_b/capture_20260825_104738/calibration_quality.json",
+    "calibration_quality_sha256": "287615ffebd1626b6a6c61dd4cca4b7733f5aeaf00cdf7df203562e73b3715c8"
+  },
+  "created_utc": "2026-08-25T14:48:02.079206+00:00"
+}

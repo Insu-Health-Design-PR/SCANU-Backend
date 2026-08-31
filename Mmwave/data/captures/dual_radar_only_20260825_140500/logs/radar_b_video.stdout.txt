@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "video": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/radar_b_classic.mp4",
+  "metadata": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/radar_b_classic.metadata.json",
+  "windows": 119,
+  "duration_s": 59.5,
+  "sha256": "d42e1de1779ab0bb8ae3e608def1cf095a66f34a6bc3d5913b246eff4360db0e"
+}

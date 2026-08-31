@@ -1,0 +1,2 @@
+/home/insu/Desktop/New_Backend/Mmwave/software/lab/dual_mmwave77_stereo/point_cloud_fusion.py:354: RuntimeWarning: invalid value encountered in cast
+  vox = np.floor(xyz / voxel_m).astype(np.int64)

@@ -1,0 +1,57 @@
+{
+  "schema_version": "scanu_lab_awr1843_signal_artifacts_v1",
+  "experimental": true,
+  "source": "live_usb_capture",
+  "source_raw_uart": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610/raw_uart.bin",
+  "source_raw_uart_sha256": "232ef6cb40abc79f01af28caba81679670f43e73b6394fbc03081762fb8b8682",
+  "decoded_frames": 599,
+  "sequence": {
+    "first_frame": 1,
+    "last_frame": 601,
+    "sequence_gaps": 1,
+    "missing_frames": 2,
+    "duplicate_or_reversed_frames": 0,
+    "monotonic": true
+  },
+  "range_profiles": {
+    "present_frames": 598,
+    "missing_frames": 1,
+    "consistent_length": true,
+    "lengths": [
+      256
+    ]
+  },
+  "noise_profiles": {
+    "present_frames": 598,
+    "missing_frames": 1,
+    "consistent_length": true,
+    "lengths": [
+      256
+    ]
+  },
+  "stats_fields": [
+    "active_frame_cpu_load",
+    "inter_chirp_proc_margin",
+    "inter_frame_cpu_load",
+    "inter_frame_proc_margin",
+    "inter_frame_proc_time",
+    "transmit_out_time"
+  ],
+  "transport": {
+    "bytes_read": 1277504,
+    "sha256": "232ef6cb40abc79f01af28caba81679670f43e73b6394fbc03081762fb8b8682",
+    "tlv_frames": 599,
+    "tlv_parse_errors": 0,
+    "tlv_invalid_headers": 0,
+    "tlv_discarded_bytes": 3551
+  },
+  "outputs": {
+    "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610/range_profiles.npz",
+    "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610/noise_profiles.npz"
+  },
+  "created_utc": "2026-08-25T18:07:13.677111+00:00",
+  "limitations": [
+    "quality report validates capture integrity, not material classification",
+    "USB TLVs contain processed detections and profiles, not raw ADC samples"
+  ]
+}

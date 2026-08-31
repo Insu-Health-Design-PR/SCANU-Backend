@@ -1,0 +1,68 @@
+{
+  "schema_version": "scanu_lab_dual_unified_fusion_video_v1",
+  "experimental": true,
+  "material_confirmed": false,
+  "weapon_classification": false,
+  "sensor_distance_m": 3.6576,
+  "clock_offset_b_minus_a_s_applied": 0.0,
+  "matched_window_pairs": 118,
+  "unified_point_cloud": "A + B transformed into A frame, one scatter",
+  "human_focus_display": false,
+  "classic_human_centric_display": true,
+  "temporal_display": {
+    "history_windows": 1,
+    "voxel_m": null,
+    "source": "current original track-associated post-CFAR returns only",
+    "sensor_density_balanced_for_display": false,
+    "does_not_add_physical_resolution": true
+  },
+  "layout": "classic_human_centric_fused_dashboard",
+  "camera_alignment_error_ms": {
+    "a_median": null,
+    "a_max_abs": null,
+    "b_median": null,
+    "b_max_abs": null
+  },
+  "dual_view_reflective_visualization": {
+    "association_gate_m": 0.35,
+    "requires_persistent_source_anomaly": true,
+    "requires_two_view_spatial_association": true,
+    "handheld_demo_torso_core_suppression_m": {
+      "lateral": 0.2,
+      "depth": 0.18,
+      "vertical": 0.25
+    },
+    "off_core_single_view_min_score": 0.75,
+    "single_view_off_core_candidate_may_be_transient": true,
+    "human_focus_single_view_is_current_observation": false,
+    "torso_core_suppression_may_hide_center_carried_objects": true,
+    "human_focus_colors": {
+      "yellow": "single-view reflective excess",
+      "orange": "persistent two-view reflective association"
+    },
+    "classic_colors": {
+      "yellow": "transient source reflective anomaly",
+      "red": "persistent source reflective anomaly"
+    },
+    "does_not_confirm_material": true
+  },
+  "source_session_a": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610",
+  "source_session_b": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610",
+  "source_camera_a": null,
+  "source_camera_b": null,
+  "output_video": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/dual_radar_only_classic_fused_dashboard.mp4",
+  "output_video_sha256": "5310f641c7344b69b513345f916940ee805e4dd2e07f7c6f8430c9751e81277a",
+  "duration_s": 59.0,
+  "resolution_px": [
+    1920,
+    1080
+  ],
+  "created_utc": "2026-08-25T18:13:48.142890+00:00",
+  "limitations": [
+    "one fused cloud is a descriptive overlay of two post-CFAR TLV pipelines, not coherent ADC fusion",
+    "yellow/red markers are uncalibrated reflective anomalies, not confirmed metal",
+    "camera frames are host-receipt aligned (no hardware sync with the radar)",
+    "scores are uncalibrated engineering evidence rankings",
+    "video does not confirm material or classify a firearm"
+  ]
+}

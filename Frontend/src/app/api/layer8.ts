@@ -32,6 +32,8 @@ export const LAYER8 = {
   systemMetrics: () => layer8Url('/api/system/metrics'),
   dashboardMetrics: () => layer8Url('/api/dashboard/metrics'),
   threatMetrics: () => layer8Url('/api/threat/metrics'),
+  frontCameraThreatMetrics: () => layer8Url('/api/front_camera/threat/metrics'),
+  backCameraThreatMetrics: () => layer8Url('/api/back_camera/threat/metrics'),
 
   config: () => layer8Url('/api/config'),
   thermalConfig: () => layer8Url('/api/thermal/config'),
@@ -50,8 +52,20 @@ export const LAYER8 = {
   restartAll: () => layer8Url('/api/restart_all'),
 
   previewWebcam: () => layer8Url('/api/ai_camera/preview/live'),
+  previewFrontCamera: () => layer8Url('/api/front_camera/preview/live'),
+  previewBackCamera: () => layer8Url('/api/back_camera/preview/live'),
   previewThermal: () => layer8Url('/api/thermal/preview/live'),
   previewMmwave: () => layer8Url('/api/mmwave/preview/live'),
+  mmwaveLiveStatus: () => layer8Url('/api/mmwave/live/status'),
+  mmwaveLiveMetrics: () => layer8Url('/api/mmwave/live_metrics'),
+  mmwaveLiveStart: () => layer8Url('/api/mmwave/live/start'),
+  mmwaveLiveStop: () => layer8Url('/api/mmwave/live/stop'),
+  mmwaveLiveRecalibrate: () => layer8Url('/api/mmwave/live/recalibrate'),
+  mmwaveWebSocket: () => layer8Url('/ws/mmwave').replace(/^http/, 'ws'),
+  runMultiCamera: () => layer8Url('/api/back_camera/run'),
+  stopMultiCamera: () => layer8Url('/api/back_camera/stop'),
+  restartMultiCamera: () => layer8Url('/api/back_camera/restart'),
+  multiCameraStatus: () => layer8Url('/api/back_camera/status'),
 
   profiles: () => layer8Url('/api/ai_camera/profiles'),
   applyProfileByName: () => layer8Url('/api/ai_camera/profiles/apply_by_name'),
@@ -76,6 +90,7 @@ export type Layer8SensorStatus = {
 export type Layer8AllStatus = {
   thermal: Layer8SensorStatus;
   webcam: Layer8SensorStatus;
+  multi_camera?: Layer8SensorStatus;
   mmwave: Layer8SensorStatus;
 };
 

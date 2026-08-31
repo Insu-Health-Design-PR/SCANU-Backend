@@ -1,0 +1,31 @@
+{
+  "schema_version": "scanu_lab_awr1843_human_perception_video_v1",
+  "experimental": true,
+  "material_confirmed": false,
+  "weapon_classification": false,
+  "source_perception": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/perception.jsonl",
+  "source_perception_sha256": "2fb36cd553cc7017c8140c6590dc8048d2870f21124c67834da6c00964faa14a",
+  "source_frames": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/frames.jsonl",
+  "source_frames_sha256": "a651fbde131802fbb6a45393477ace519770400a63d1441095f3ad38ec5e5af6",
+  "calibration_session_used": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_a/capture_20260825_140500",
+  "person_reference_session_used": null,
+  "person_reference_calibrated": false,
+  "output_video": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/radar_a_classic.mp4",
+  "output_video_sha256": "e26e645fb08ec082ab73bebb4f071b044b2af1e0e50de068b78df78b7456871c",
+  "windows": 119,
+  "fps": 2,
+  "duration_s": 59.5,
+  "resolution_px": [
+    1920,
+    1080
+  ],
+  "interpolated_heatmap": false,
+  "created_utc": "2026-08-25T18:07:39.912816+00:00",
+  "limitations": [
+    "body volume is an observed sparse-radar track, not anatomical reconstruction",
+    "scores are uncalibrated engineering evidence rankings",
+    "matched person-reference subtraction requires repeatable position and motion",
+    "range-azimuth panel bins measured point TLVs without Gaussian interpolation",
+    "video does not confirm material or classify a firearm"
+  ]
+}

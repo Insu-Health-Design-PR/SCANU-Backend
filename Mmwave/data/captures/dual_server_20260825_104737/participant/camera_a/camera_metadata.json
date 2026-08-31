@@ -1,0 +1,22 @@
+{
+  "schema_version": "scanu_lab_usb_camera_v1",
+  "experimental": true,
+  "device": "/dev/v4l/by-id/usb-USB_Cam_Manufacturer_HDMI_USB_Camera_510550000000100-video-index0",
+  "backend": "ffmpeg-copy",
+  "input_format": "h264",
+  "started_monotonic_ns": 338674409198454,
+  "finished_monotonic_ns": 338739264448609,
+  "duration_s_requested": 63.0,
+  "frames_written": 1892,
+  "resolution_px": [
+    3840,
+    2160
+  ],
+  "fps_requested": 30.0,
+  "fps_observed_estimate": 30.03174603174603,
+  "limitations": [
+    "camera timestamps are host-start plus nominal frame cadence, not hardware synchronization",
+    "camera imagery is visual context only and not a material or weapon classifier"
+  ],
+  "created_utc": "2026-08-25T14:49:16.962062+00:00"
+}

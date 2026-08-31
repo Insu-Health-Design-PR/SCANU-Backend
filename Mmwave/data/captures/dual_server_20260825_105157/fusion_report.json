@@ -1,0 +1,5648 @@
+{
+  "schema_version": "scanu_lab_dual_point_cloud_fusion_v1",
+  "experimental": true,
+  "not_a_ground_truth_accuracy_measurement": true,
+  "geometry": {
+    "sensor_distance_m": 3.6576,
+    "sensor_height_m": 1.016,
+    "transform_b_to_a": "x'=-x, y'=D-y, z'=z"
+  },
+  "clock_offset_b_minus_a_s_applied": 0.0,
+  "window_match_tolerance_s": 0.25,
+  "matched_window_pairs": 119,
+  "fused_person_present_fraction": 0.6218487394957983,
+  "a_person_present_fraction": 0.5882352941176471,
+  "b_person_present_fraction": 0.6218487394957983,
+  "either_person_present_fraction": 0.6218487394957983,
+  "fused_when_either_failed": 0,
+  "either_when_fused_failed": 0,
+  "median_fused_person_points": 90.0,
+  "median_best_single_person_points": 90.0,
+  "fusion_point_gain_median_ratio": 1.0,
+  "fused_denser_than_best_single_fraction": 0.3949579831932773,
+  "median_fused_extent_m": [
+    0.21360117197036743,
+    0.1528472900390625,
+    0.43921372294425964
+  ],
+  "median_centroid_m": [
+    0.13138894736766815,
+    1.7696086168289185,
+    -0.08975197374820709
+  ],
+  "track_continuity_median_jump_m": 0.21910362552427604,
+  "fused_track_present_fraction": 0.5462184873949579,
+  "a_perception_track_present_fraction": 0.5966386554621849,
+  "b_perception_track_present_fraction": 0.6050420168067226,
+  "fused_track_when_both_perception_failed": 0,
+  "both_perception_when_fused_track_failed": 7,
+  "median_fused_track_cluster_points": 13.0,
+  "median_fused_track_confidence": 0.7351197971459249,
+  "anomaly_windows_a": 38,
+  "anomaly_windows_b": 36,
+  "anomaly_windows_either": 46,
+  "anomaly_windows_both": 28,
+  "total_anomaly_detections_a": 95,
+  "total_anomaly_detections_b": 124,
+  "limitations": [
+    "descriptive point-cloud fusion of two post-CFAR single-radar pipelines; not raw-return coherent fusion",
+    "rigid transform uses measured sensor distance and equal height; residual yaw/height misalignment is not modeled",
+    "views are complementary (front/back), not redundant; fused counts are not an accuracy metric",
+    "fused_track_* reuses the single-sensor perception tracker (PerceptionSpec, DBSCAN + association) on the fused cloud, so it is directly comparable to each sensor's perception track",
+    "the fused tracker holds a single track and associates by gate; it can lock onto the strongest (e.g. far-wall) cluster and miss the person in windows where a single sensor's own tracker succeeds",
+    "per-window voxel presence (a/b/fused_person_present) is not the temporal track and is expected to be lower than the perception track presence",
+    "no controlled ground-truth label in this capture; fused person presence is a description, not detection accuracy",
+    "cross-host time alignment depends on the externally supplied clock_offset_b_minus_a_s"
+  ],
+  "windows": [
+    {
+      "window_index": 0,
+      "time_s": 0.0,
+      "fused_point_count": 82,
+      "fused_region_point_count": 11,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -1.0998703241348267,
+        0.6023122668266296,
+        -0.07799742370843887
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03561592102050781,
+        0.11403237283229828
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 11,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 1,
+      "time_s": 0.5,
+      "fused_point_count": 54,
+      "fused_region_point_count": 20,
+      "fused_person_present": false,
+      "fused_person_points": 12,
+      "fused_centroid_m": [
+        -1.0829490423202515,
+        0.5966655015945435,
+        -0.05399525165557861
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.0368955135345459,
+        0.25202423334121704
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.46311436177710563,
+      "fused_track_cluster_points": 12,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": true,
+      "a_person_points": 0,
+      "b_person_points": 12,
+      "a_region_points": 0,
+      "b_region_points": 20,
+      "a_screening_state": "background",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 2,
+      "time_s": 1.0,
+      "fused_point_count": 57,
+      "fused_region_point_count": 18,
+      "fused_person_present": false,
+      "fused_person_points": 9,
+      "fused_centroid_m": [
+        -1.0716683864593506,
+        0.5928691029548645,
+        -0.04679284989833832
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.0368955135345459,
+        0.25594562292099
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.3231143617771056,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 9,
+      "a_region_points": 1,
+      "b_region_points": 17,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 3,
+      "time_s": 1.5,
+      "fused_point_count": 57,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 8,
+      "fused_centroid_m": [
+        -1.1041004657745361,
+        0.6039113998413086,
+        -0.08194424211978912
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03522539138793945,
+        0.13922438025474548
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.1831143617771056,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 8,
+      "a_region_points": 1,
+      "b_region_points": 16,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 4,
+      "time_s": 2.0,
+      "fused_point_count": 59,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -1.0877838134765625,
+        0.5986031293869019,
+        -0.06010727211833
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03580927848815918,
+        0.2705504298210144
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.04311436177710559,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 17,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 5,
+      "time_s": 2.5,
+      "fused_point_count": 54,
+      "fused_region_point_count": 11,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        0.4948238730430603,
+        2.187608242034912,
+        0.17155241966247559
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.015296459197998047,
+        0.1235690712928772
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 11,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 6,
+      "time_s": 3.0,
+      "fused_point_count": 53,
+      "fused_region_point_count": 14,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        0.515731930732727,
+        2.203502893447876,
+        0.20060627162456512
+      ],
+      "fused_extent_m": [
+        0.14635637402534485,
+        0.12688302993774414,
+        0.3558887541294098
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 14,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 7,
+      "time_s": 3.5,
+      "fused_point_count": 53,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 8,
+      "fused_centroid_m": [
+        -0.9191771745681763,
+        2.3726775646209717,
+        0.4547274708747864
+      ],
+      "fused_extent_m": [
+        0.05142253637313843,
+        0.09513998031616211,
+        0.16268974542617798
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 8,
+      "a_region_points": 1,
+      "b_region_points": 16,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 8,
+      "time_s": 4.0,
+      "fused_point_count": 60,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -0.9170346260070801,
+        2.3638079166412354,
+        0.430882066488266
+      ],
+      "fused_extent_m": [
+        0.05142253637313843,
+        0.08587408065795898,
+        0.22577789425849915
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 1,
+      "b_region_points": 16,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 9,
+      "time_s": 4.5,
+      "fused_point_count": 61,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 8,
+      "fused_centroid_m": [
+        0.542738139629364,
+        2.213625192642212,
+        0.21016602218151093
+      ],
+      "fused_extent_m": [
+        0.14635637402534485,
+        0.12127184867858887,
+        0.3197537362575531
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 8,
+      "a_region_points": 0,
+      "b_region_points": 17,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 10,
+      "time_s": 5.0,
+      "fused_point_count": 52,
+      "fused_region_point_count": 14,
+      "fused_person_present": false,
+      "fused_person_points": 5,
+      "fused_centroid_m": [
+        -1.0761808156967163,
+        0.5951294302940369,
+        -0.08236242830753326
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.0359952449798584,
+        0.2725590467453003
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 5,
+      "a_region_points": 0,
+      "b_region_points": 14,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 11,
+      "time_s": 5.5,
+      "fused_point_count": 54,
+      "fused_region_point_count": 13,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -1.0587762594223022,
+        0.5895398259162903,
+        -0.07488171756267548
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03787517547607422,
+        0.28053832054138184
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 12,
+      "time_s": 6.0,
+      "fused_point_count": 53,
+      "fused_region_point_count": 12,
+      "fused_person_present": false,
+      "fused_person_points": 5,
+      "fused_centroid_m": [
+        -1.0761808156967163,
+        0.5956369638442993,
+        -0.09272745251655579
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03761911392211914,
+        0.26252901554107666
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 5,
+      "a_region_points": 0,
+      "b_region_points": 12,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 13,
+      "time_s": 6.5,
+      "fused_point_count": 50,
+      "fused_region_point_count": 13,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        0.5504844784736633,
+        2.22405743598938,
+        0.2929433584213257
+      ],
+      "fused_extent_m": [
+        0.18063804507255554,
+        0.14735698699951172,
+        0.42961931228637695
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 14,
+      "time_s": 7.0,
+      "fused_point_count": 54,
+      "fused_region_point_count": 18,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        0.5017932057380676,
+        2.1894326210021973,
+        0.1690967082977295
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.022938251495361328,
+        0.09055650234222412
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 18,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 15,
+      "time_s": 7.5,
+      "fused_point_count": 55,
+      "fused_region_point_count": 18,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -1.0491070747375488,
+        0.585784375667572,
+        -0.08134254068136215
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03466057777404785,
+        0.2754897177219391
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 18,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 16,
+      "time_s": 8.0,
+      "fused_point_count": 50,
+      "fused_region_point_count": 15,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        0.5017932057380676,
+        2.1893372535705566,
+        0.16823847591876984
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.02205944061279297,
+        0.09415733814239502
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 15,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 17,
+      "time_s": 8.5,
+      "fused_point_count": 47,
+      "fused_region_point_count": 11,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        0.5074440240859985,
+        2.1954715251922607,
+        0.268626868724823
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.05562162399291992,
+        0.41799020767211914
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 11,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 18,
+      "time_s": 9.0,
+      "fused_point_count": 49,
+      "fused_region_point_count": 10,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        0.5107089877128601,
+        2.1979269981384277,
+        0.2912651002407074
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.05562162399291992,
+        0.3856279253959656
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 10,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 19,
+      "time_s": 9.5,
+      "fused_point_count": 50,
+      "fused_region_point_count": 11,
+      "fused_person_present": false,
+      "fused_person_points": 0,
+      "fused_centroid_m": null,
+      "fused_extent_m": null,
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 0,
+      "a_region_points": 0,
+      "b_region_points": 11,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 20,
+      "time_s": 10.0,
+      "fused_point_count": 49,
+      "fused_region_point_count": 12,
+      "fused_person_present": false,
+      "fused_person_points": 0,
+      "fused_centroid_m": null,
+      "fused_extent_m": null,
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 0,
+      "a_region_points": 0,
+      "b_region_points": 12,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 21,
+      "time_s": 10.5,
+      "fused_point_count": 56,
+      "fused_region_point_count": 18,
+      "fused_person_present": false,
+      "fused_person_points": 8,
+      "fused_centroid_m": [
+        0.5000509023666382,
+        2.190491199493408,
+        0.18101198971271515
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.022073745727539062,
+        0.11885213851928711
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 8,
+      "a_region_points": 0,
+      "b_region_points": 18,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 22,
+      "time_s": 11.0,
+      "fused_point_count": 53,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 8,
+      "fused_centroid_m": [
+        0.5061490535736084,
+        2.1913297176361084,
+        0.17007453739643097
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.022938251495361328,
+        0.12870633602142334
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 8,
+      "a_region_points": 0,
+      "b_region_points": 17,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 23,
+      "time_s": 11.5,
+      "fused_point_count": 49,
+      "fused_region_point_count": 12,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        0.4959854185581207,
+        2.1855926513671875,
+        0.15277433395385742
+      ],
+      "fused_extent_m": [
+        0.04878547787666321,
+        0.018656492233276367,
+        0.06337973475456238
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 12,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 24,
+      "time_s": 12.0,
+      "fused_point_count": 64,
+      "fused_region_point_count": 19,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -1.0877838134765625,
+        0.5985682606697083,
+        -0.03307236731052399
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03689312934875488,
+        0.26912564039230347
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 1,
+      "b_region_points": 18,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 25,
+      "time_s": 12.5,
+      "fused_point_count": 58,
+      "fused_region_point_count": 18,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -0.9182589650154114,
+        2.357820749282837,
+        0.4089597165584564
+      ],
+      "fused_extent_m": [
+        0.05142253637313843,
+        0.12351250648498535,
+        0.27965372800827026
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 1,
+      "b_region_points": 17,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 26,
+      "time_s": 13.0,
+      "fused_point_count": 49,
+      "fused_region_point_count": 14,
+      "fused_person_present": false,
+      "fused_person_points": 5,
+      "fused_centroid_m": [
+        0.5366399884223938,
+        2.2050271034240723,
+        0.1831158697605133
+      ],
+      "fused_extent_m": [
+        0.09757092595100403,
+        0.05410337448120117,
+        0.1357187032699585
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 5,
+      "a_region_points": 1,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 27,
+      "time_s": 13.5,
+      "fused_point_count": 56,
+      "fused_region_point_count": 22,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -1.0877838134765625,
+        0.5985228419303894,
+        -0.09075293689966202
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03519845008850098,
+        0.1782030165195465
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 1,
+      "b_region_points": 21,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 28,
+      "time_s": 14.0,
+      "fused_point_count": 60,
+      "fused_region_point_count": 21,
+      "fused_person_present": false,
+      "fused_person_points": 8,
+      "fused_centroid_m": [
+        -1.091409683227539,
+        0.5997534990310669,
+        -0.058873500674963
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.036066293716430664,
+        0.2896934747695923
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 8,
+      "a_region_points": 0,
+      "b_region_points": 21,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 29,
+      "time_s": 14.5,
+      "fused_point_count": 59,
+      "fused_region_point_count": 12,
+      "fused_person_present": false,
+      "fused_person_points": 5,
+      "fused_centroid_m": [
+        -1.055875539779663,
+        0.5888081789016724,
+        -0.07929163426160812
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03524613380432129,
+        0.31607192754745483
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 5,
+      "a_region_points": 0,
+      "b_region_points": 12,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 30,
+      "time_s": 15.0,
+      "fused_point_count": 61,
+      "fused_region_point_count": 12,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -0.9256049990653992,
+        2.3606224060058594,
+        0.4089040756225586
+      ],
+      "fused_extent_m": [
+        0.0,
+        0.0386354923248291,
+        0.12006834149360657
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 12,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 31,
+      "time_s": 15.5,
+      "fused_point_count": 66,
+      "fused_region_point_count": 13,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -0.9256049990653992,
+        2.359074831008911,
+        0.40377482771873474
+      ],
+      "fused_extent_m": [
+        0.0,
+        0.0386354923248291,
+        0.12006834149360657
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 32,
+      "time_s": 16.0,
+      "fused_point_count": 63,
+      "fused_region_point_count": 12,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        0.5285090804100037,
+        2.2119104862213135,
+        0.23088012635707855
+      ],
+      "fused_extent_m": [
+        0.14635637402534485,
+        0.11608362197875977,
+        0.28677165508270264
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 1,
+      "b_region_points": 11,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 33,
+      "time_s": 16.5,
+      "fused_point_count": 68,
+      "fused_region_point_count": 11,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        0.5366399884223938,
+        2.2161827087402344,
+        0.24234725534915924
+      ],
+      "fused_extent_m": [
+        0.14635637402534485,
+        0.10688638687133789,
+        0.27904683351516724
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 1,
+      "b_region_points": 10,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 34,
+      "time_s": 17.0,
+      "fused_point_count": 67,
+      "fused_region_point_count": 13,
+      "fused_person_present": false,
+      "fused_person_points": 5,
+      "fused_centroid_m": [
+        -1.055875539779663,
+        0.5886343717575073,
+        -0.12605170905590057
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.03624868392944336,
+        0.15641039609909058
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 5,
+      "a_region_points": 0,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 35,
+      "time_s": 17.5,
+      "fused_point_count": 59,
+      "fused_region_point_count": 17,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -1.0660282373428345,
+        0.5915089249610901,
+        -0.10962822288274765
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.034677743911743164,
+        0.15641039609909058
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 17,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 36,
+      "time_s": 18.0,
+      "fused_point_count": 69,
+      "fused_region_point_count": 21,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -0.9109129309654236,
+        2.36332368850708,
+        0.4464292824268341
+      ],
+      "fused_extent_m": [
+        0.05142253637313843,
+        0.05755186080932617,
+        0.1579659879207611
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 21,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 37,
+      "time_s": 18.5,
+      "fused_point_count": 64,
+      "fused_region_point_count": 18,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -0.9182589650154114,
+        2.3688464164733887,
+        0.4481120705604553
+      ],
+      "fused_extent_m": [
+        0.05142253637313843,
+        0.04364919662475586,
+        0.14563867449760437
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 0,
+      "b_region_points": 18,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 38,
+      "time_s": 19.0,
+      "fused_point_count": 59,
+      "fused_region_point_count": 14,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -0.9427458643913269,
+        2.3597023487091064,
+        0.3593951165676117
+      ],
+      "fused_extent_m": [
+        0.05142247676849365,
+        0.032002925872802734,
+        0.1737527847290039
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 0,
+      "b_region_points": 14,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 39,
+      "time_s": 19.5,
+      "fused_point_count": 55,
+      "fused_region_point_count": 14,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -0.9329510927200317,
+        2.3599648475646973,
+        0.38277849555015564
+      ],
+      "fused_extent_m": [
+        0.10284501314163208,
+        0.03471875190734863,
+        0.18970173597335815
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 1,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 40,
+      "time_s": 20.0,
+      "fused_point_count": 46,
+      "fused_region_point_count": 13,
+      "fused_person_present": false,
+      "fused_person_points": 7,
+      "fused_centroid_m": [
+        -0.9182589650154114,
+        2.3614120483398438,
+        0.4275488257408142
+      ],
+      "fused_extent_m": [
+        0.05142253637313843,
+        0.03272366523742676,
+        0.10567352175712585
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 7,
+      "a_region_points": 2,
+      "b_region_points": 11,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 41,
+      "time_s": 20.5,
+      "fused_point_count": 53,
+      "fused_region_point_count": 15,
+      "fused_person_present": false,
+      "fused_person_points": 6,
+      "fused_centroid_m": [
+        -0.9256049990653992,
+        2.37473464012146,
+        0.4487358629703522
+      ],
+      "fused_extent_m": [
+        0.0,
+        0.06841254234313965,
+        0.19220972061157227
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 6,
+      "a_region_points": 2,
+      "b_region_points": 13,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 42,
+      "time_s": 21.0,
+      "fused_point_count": 104,
+      "fused_region_point_count": 20,
+      "fused_person_present": false,
+      "fused_person_points": 5,
+      "fused_centroid_m": [
+        -1.0761808156967163,
+        0.5939871072769165,
+        -0.03772313520312309
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.0353848934173584,
+        0.24428436160087585
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": false,
+      "a_person_points": 0,
+      "b_person_points": 5,
+      "a_region_points": 2,
+      "b_region_points": 18,
+      "a_screening_state": "background",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 43,
+      "time_s": 21.5,
+      "fused_point_count": 205,
+      "fused_region_point_count": 26,
+      "fused_person_present": false,
+      "fused_person_points": 10,
+      "fused_centroid_m": [
+        0.5171257853507996,
+        2.1966586112976074,
+        0.17765140533447266
+      ],
+      "fused_extent_m": [
+        0.09757092595100403,
+        0.05292248725891113,
+        0.12847211956977844
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.4542553933179709,
+      "fused_track_cluster_points": 11,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": true,
+      "a_person_points": 0,
+      "b_person_points": 10,
+      "a_region_points": 2,
+      "b_region_points": 24,
+      "a_screening_state": "background",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          2.4426000118255615,
+          -0.8984999656677246,
+          -0.6535999774932861
+        ],
+        [
+          2.1874001026153564,
+          -0.8118000030517578,
+          -0.4878999888896942
+        ],
+        [
+          1.6612999439239502,
+          -0.36619997024536133,
+          -0.5723000168800354
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 44,
+      "time_s": 22.0,
+      "fused_point_count": 257,
+      "fused_region_point_count": 30,
+      "fused_person_present": false,
+      "fused_person_points": 14,
+      "fused_centroid_m": [
+        -1.0581167936325073,
+        0.585815966129303,
+        -0.29646220803260803
+      ],
+      "fused_extent_m": [
+        0.10152649879455566,
+        0.05088400840759277,
+        0.6733881831169128
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.5743268412480572,
+      "fused_track_cluster_points": 14,
+      "a_person_present": false,
+      "b_person_present": false,
+      "either_person_present": false,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": true,
+      "a_person_points": 0,
+      "b_person_points": 14,
+      "a_region_points": 3,
+      "b_region_points": 27,
+      "a_screening_state": "background",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          1.4285999536514282,
+          -0.17840003967285156,
+          -0.7702000141143799
+        ],
+        [
+          1.7628999948501587,
+          -0.44210004806518555,
+          -0.7281000018119812
+        ],
+        [
+          1.6059999465942383,
+          -0.3008999824523926,
+          -0.357699990272522
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 45,
+      "time_s": 22.5,
+      "fused_point_count": 269,
+      "fused_region_point_count": 112,
+      "fused_person_present": true,
+      "fused_person_points": 74,
+      "fused_centroid_m": [
+        1.047194480895996,
+        0.4309939444065094,
+        -0.4482429623603821
+      ],
+      "fused_extent_m": [
+        0.8596788644790649,
+        0.44815969467163086,
+        1.530179500579834
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.6758787133634798,
+      "fused_track_cluster_points": 17,
+      "a_person_present": false,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": true,
+      "a_person_points": 0,
+      "b_person_points": 74,
+      "a_region_points": 4,
+      "b_region_points": 108,
+      "a_screening_state": "background",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          1.4213999509811401,
+          -0.17100000381469727,
+          -0.7570000290870667
+        ],
+        [
+          1.5901000499725342,
+          -0.26690006256103516,
+          -0.22259999811649323
+        ],
+        [
+          0.9731000065803528,
+          0.4703998565673828,
+          -0.3564999997615814
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 46,
+      "time_s": 23.0,
+      "fused_point_count": 295,
+      "fused_region_point_count": 222,
+      "fused_person_present": true,
+      "fused_person_points": 189,
+      "fused_centroid_m": [
+        0.811465322971344,
+        0.7052966952323914,
+        -0.4392925798892975
+      ],
+      "fused_extent_m": [
+        1.049546480178833,
+        1.2883663177490234,
+        1.598834753036499
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.5358787133634798,
+      "fused_track_cluster_points": 0,
+      "a_person_present": false,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": true,
+      "a_person_points": 0,
+      "b_person_points": 189,
+      "a_region_points": 4,
+      "b_region_points": 218,
+      "a_screening_state": "background",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.9731000065803528,
+          0.47259998321533203,
+          -0.3434999883174896
+        ],
+        [
+          0.7278000116348267,
+          0.8938999176025391,
+          -0.40220001339912415
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 47,
+      "time_s": 23.5,
+      "fused_point_count": 328,
+      "fused_region_point_count": 272,
+      "fused_person_present": true,
+      "fused_person_points": 249,
+      "fused_centroid_m": [
+        0.5413634777069092,
+        1.065854549407959,
+        -0.35069945454597473
+      ],
+      "fused_extent_m": [
+        1.0442724227905273,
+        1.3103476762771606,
+        1.410583257675171
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.3958787133634798,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 17,
+      "b_person_points": 232,
+      "a_region_points": 20,
+      "b_region_points": 252,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          0.9855999946594238,
+          0.9492999911308289,
+          0.08410000056028366
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.7278000116348267,
+          0.8938999176025391,
+          -0.4043000042438507
+        ],
+        [
+          0.2768999934196472,
+          1.3883998394012451,
+          -0.24400000274181366
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 48,
+      "time_s": 24.01,
+      "fused_point_count": 540,
+      "fused_region_point_count": 411,
+      "fused_person_present": true,
+      "fused_person_points": 367,
+      "fused_centroid_m": [
+        0.3674338757991791,
+        1.371824026107788,
+        -0.1654936969280243
+      ],
+      "fused_extent_m": [
+        1.2525994777679443,
+        1.3626878261566162,
+        1.5328819751739502
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.5540417661955972,
+      "fused_track_cluster_points": 17,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 115,
+      "b_person_points": 251,
+      "a_region_points": 118,
+      "b_region_points": 293,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          0.6764000058174133,
+          0.9490000009536743,
+          -0.1378999948501587
+        ],
+        [
+          0.9855999946594238,
+          0.9492999911308289,
+          0.08410000056028366
+        ],
+        [
+          0.6723999977111816,
+          1.2578999996185303,
+          0.15309999883174896
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.17800000309944153,
+          1.6912999153137207,
+          -0.2134999930858612
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 49,
+      "time_s": 24.51,
+      "fused_point_count": 732,
+      "fused_region_point_count": 564,
+      "fused_person_present": true,
+      "fused_person_points": 517,
+      "fused_centroid_m": [
+        0.18315266072750092,
+        1.653748869895935,
+        -0.09493356943130493
+      ],
+      "fused_extent_m": [
+        1.300066351890564,
+        1.6420376300811768,
+        1.5328819751739502
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.6896398912008408,
+      "fused_track_cluster_points": 29,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 214,
+      "b_person_points": 302,
+      "a_region_points": 218,
+      "b_region_points": 346,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.6764000058174133,
+          0.9491999745368958,
+          -0.125
+        ],
+        [
+          0.5076000094413757,
+          1.34660005569458,
+          0.1307000070810318
+        ],
+        [
+          0.4713999927043915,
+          1.2448999881744385,
+          -0.25870001316070557
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.17800000309944153,
+          1.7715998888015747,
+          -0.15880000591278076
+        ],
+        [
+          -0.29600000381469727,
+          2.2672998905181885,
+          -0.27000001072883606
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 50,
+      "time_s": 25.001,
+      "fused_point_count": 677,
+      "fused_region_point_count": 538,
+      "fused_person_present": true,
+      "fused_person_points": 517,
+      "fused_centroid_m": [
+        -0.003838174045085907,
+        1.867283821105957,
+        -0.10021049529314041
+      ],
+      "fused_extent_m": [
+        1.234140157699585,
+        1.306555986404419,
+        1.2027723789215088
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.7770163958308285,
+      "fused_track_cluster_points": 17,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 219,
+      "b_person_points": 298,
+      "a_region_points": 227,
+      "b_region_points": 311,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.5149000287055969,
+          1.371500015258789,
+          0.13130000233650208
+        ],
+        [
+          0.35530000925064087,
+          1.4671000242233276,
+          -0.15070000290870667
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.3691999912261963,
+          2.2772998809814453,
+          -0.17960000038146973
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 51,
+      "time_s": 25.5,
+      "fused_point_count": 719,
+      "fused_region_point_count": 589,
+      "fused_person_present": true,
+      "fused_person_points": 287,
+      "fused_centroid_m": [
+        -0.418271005153656,
+        2.2357871532440186,
+        -0.08664063364267349
+      ],
+      "fused_extent_m": [
+        0.5511437654495239,
+        0.5517834424972534,
+        1.1397249698638916
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8347194158378406,
+      "fused_track_cluster_points": 20,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 208,
+      "b_person_points": 287,
+      "a_region_points": 280,
+      "b_region_points": 309,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.20309999585151672,
+          1.5780999660491943,
+          -0.3269999921321869
+        ],
+        [
+          0.20569999516010284,
+          1.5830999612808228,
+          0.0015999999595806003
+        ],
+        [
+          0.09489999711513519,
+          1.0068999528884888,
+          0.04989999905228615
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.44830000400543213,
+          2.293299913406372,
+          -0.1242000013589859
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 52,
+      "time_s": 26.01,
+      "fused_point_count": 859,
+      "fused_region_point_count": 738,
+      "fused_person_present": true,
+      "fused_person_points": 504,
+      "fused_centroid_m": [
+        -0.18646648526191711,
+        1.9983576536178589,
+        -0.03080018423497677
+      ],
+      "fused_extent_m": [
+        0.933516263961792,
+        1.0444308519363403,
+        1.0822471380233765
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.881251876782163,
+      "fused_track_cluster_points": 26,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 224,
+      "b_person_points": 279,
+      "a_region_points": 424,
+      "b_region_points": 314,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.20569999516010284,
+          1.6274000406265259,
+          -0.3050999939441681
+        ],
+        [
+          0.1543000042438507,
+          1.6694999933242798,
+          0.20509999990463257
+        ],
+        [
+          0.09099999815225601,
+          0.9660000205039978,
+          0.03150000050663948
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.462799996137619,
+          2.310499906539917,
+          -0.08089999854564667
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 53,
+      "time_s": 26.51,
+      "fused_point_count": 876,
+      "fused_region_point_count": 753,
+      "fused_person_present": true,
+      "fused_person_points": 257,
+      "fused_centroid_m": [
+        -0.48383745551109314,
+        2.327004909515381,
+        -0.016708601266145706
+      ],
+      "fused_extent_m": [
+        0.21623823046684265,
+        0.46299266815185547,
+        1.0347671508789062
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9011801917666601,
+      "fused_track_cluster_points": 20,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 253,
+      "b_person_points": 257,
+      "a_region_points": 469,
+      "b_region_points": 284,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.20569999516010284,
+          1.6456999778747559,
+          -0.28139999508857727
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.47859999537467957,
+          2.3558998107910156,
+          -0.06669999659061432
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 54,
+      "time_s": 27.01,
+      "fused_point_count": 839,
+      "fused_region_point_count": 712,
+      "fused_person_present": true,
+      "fused_person_points": 681,
+      "fused_centroid_m": [
+        -0.15020717680454254,
+        1.7749396562576294,
+        -0.020525773987174034
+      ],
+      "fused_extent_m": [
+        1.0548205375671387,
+        1.670641303062439,
+        1.0860607624053955
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9071513598068526,
+      "fused_track_cluster_points": 17,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 384,
+      "b_person_points": 297,
+      "a_region_points": 393,
+      "b_region_points": 319,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.16220000386238098,
+          1.6526999473571777,
+          -0.2858999967575073
+        ],
+        [
+          0.06859999895095825,
+          1.0496000051498413,
+          0.10589999705553055
+        ],
+        [
+          0.055399999022483826,
+          1.7585999965667725,
+          0.14480000734329224
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.4641000032424927,
+          2.3516998291015625,
+          -0.12110000103712082
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 55,
+      "time_s": 27.505,
+      "fused_point_count": 790,
+      "fused_region_point_count": 655,
+      "fused_person_present": true,
+      "fused_person_points": 622,
+      "fused_centroid_m": [
+        -0.22443075478076935,
+        1.9117871522903442,
+        -0.0821584016084671
+      ],
+      "fused_extent_m": [
+        1.1866731643676758,
+        1.6202131509780884,
+        1.1712696552276611
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.934734322604066,
+      "fused_track_cluster_points": 21,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 297,
+      "b_person_points": 325,
+      "a_region_points": 306,
+      "b_region_points": 349,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.05009999871253967,
+          1.6097999811172485,
+          -0.1737000048160553
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.4417000114917755,
+          2.328199863433838,
+          -0.17730000615119934
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 56,
+      "time_s": 28.01,
+      "fused_point_count": 804,
+      "fused_region_point_count": 645,
+      "fused_person_present": true,
+      "fused_person_points": 339,
+      "fused_centroid_m": [
+        -0.5520497560501099,
+        2.3340611457824707,
+        -0.14242208003997803
+      ],
+      "fused_extent_m": [
+        0.9018715620040894,
+        0.8967685699462891,
+        1.18844473361969
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9380913698374811,
+      "fused_track_cluster_points": 18,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 266,
+      "b_person_points": 336,
+      "a_region_points": 277,
+      "b_region_points": 368,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.0,
+          1.6440999507904053,
+          -0.2662000060081482
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.44830000400543213,
+          2.309999942779541,
+          -0.2045000046491623
+        ],
+        [
+          -0.30000001192092896,
+          2.2119998931884766,
+          0.014399999752640724
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 57,
+      "time_s": 28.51,
+      "fused_point_count": 901,
+      "fused_region_point_count": 711,
+      "fused_person_present": true,
+      "fused_person_points": 676,
+      "fused_centroid_m": [
+        -0.3857493996620178,
+        2.1757683753967285,
+        -0.08529967069625854
+      ],
+      "fused_extent_m": [
+        1.226228952407837,
+        1.3610026836395264,
+        1.2786386013031006
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9129556446386884,
+      "fused_track_cluster_points": 10,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 282,
+      "b_person_points": 391,
+      "a_region_points": 294,
+      "b_region_points": 417,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          -0.05270000174641609,
+          1.6866999864578247,
+          -0.2515999972820282
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.569599986076355,
+          2.7897000312805176,
+          0.028300000354647636
+        ],
+        [
+          -0.5372999906539917,
+          2.248699903488159,
+          -0.18880000710487366
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 58,
+      "time_s": 29.01,
+      "fused_point_count": 917,
+      "fused_region_point_count": 721,
+      "fused_person_present": true,
+      "fused_person_points": 692,
+      "fused_centroid_m": [
+        -0.44744181632995605,
+        2.2503230571746826,
+        -0.049747031182050705
+      ],
+      "fused_extent_m": [
+        1.1233839988708496,
+        1.3395413160324097,
+        1.197718858718872
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.925357126308342,
+      "fused_track_cluster_points": 16,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 272,
+      "b_person_points": 420,
+      "a_region_points": 282,
+      "b_region_points": 439,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          -0.055399999022483826,
+          1.7187999486923218,
+          -0.20880000293254852
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.569599986076355,
+          2.7881999015808105,
+          0.024800000712275505
+        ],
+        [
+          -0.5583999752998352,
+          2.145699977874756,
+          -0.19850000739097595
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 59,
+      "time_s": 29.51,
+      "fused_point_count": 889,
+      "fused_region_point_count": 669,
+      "fused_person_present": true,
+      "fused_person_points": 632,
+      "fused_centroid_m": [
+        -0.41462263464927673,
+        2.2401657104492188,
+        -0.08975197374820709
+      ],
+      "fused_extent_m": [
+        1.0047166347503662,
+        1.3347218036651611,
+        1.1165201663970947
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9405406974666766,
+      "fused_track_cluster_points": 15,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 243,
+      "b_person_points": 389,
+      "a_region_points": 251,
+      "b_region_points": 418,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          -0.10809999704360962,
+          1.7170000076293945,
+          -0.27000001072883606
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.527400016784668,
+          2.785599946975708,
+          0.032999999821186066
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 60,
+      "time_s": 30.006,
+      "fused_point_count": 872,
+      "fused_region_point_count": 662,
+      "fused_person_present": true,
+      "fused_person_points": 630,
+      "fused_centroid_m": [
+        -0.20853208005428314,
+        2.1667206287384033,
+        -0.10515668243169785
+      ],
+      "fused_extent_m": [
+        1.1167913675308228,
+        1.468665361404419,
+        1.0923550128936768
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.929602792765905,
+      "fused_track_cluster_points": 10,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 236,
+      "b_person_points": 394,
+      "a_region_points": 246,
+      "b_region_points": 416,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          -0.05270000174641609,
+          1.65910005569458,
+          -0.33379998803138733
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.4706999957561493,
+          2.305299758911133,
+          -0.08030000329017639
+        ],
+        [
+          -0.263700008392334,
+          2.669600009918213,
+          0.01889999955892563
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 61,
+      "time_s": 30.501,
+      "fused_point_count": 856,
+      "fused_region_point_count": 684,
+      "fused_person_present": true,
+      "fused_person_points": 652,
+      "fused_centroid_m": [
+        0.07972423732280731,
+        2.105947971343994,
+        -0.09969619661569595
+      ],
+      "fused_extent_m": [
+        1.4398300647735596,
+        1.3536655902862549,
+        1.0418235063552856
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.789602792765905,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 244,
+      "b_person_points": 408,
+      "a_region_points": 260,
+      "b_region_points": 424,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.15029999613761902,
+          1.5329999923706055,
+          -0.4032999873161316
+        ],
+        [
+          0.47530001401901245,
+          1.5190000534057617,
+          -0.25049999356269836
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.034299999475479126,
+          2.584099769592285,
+          -0.014399999752640724
+        ],
+        [
+          -0.4706999957561493,
+          2.305299758911133,
+          -0.08030000329017639
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 62,
+      "time_s": 31.01,
+      "fused_point_count": 836,
+      "fused_region_point_count": 695,
+      "fused_person_present": true,
+      "fused_person_points": 623,
+      "fused_centroid_m": [
+        0.43138864636421204,
+        2.104581832885742,
+        -0.11902462691068649
+      ],
+      "fused_extent_m": [
+        1.420052170753479,
+        1.3699557781219482,
+        1.1828944683074951
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8399851098574711,
+      "fused_track_cluster_points": 22,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 238,
+      "b_person_points": 381,
+      "a_region_points": 261,
+      "b_region_points": 434,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.6453999876976013,
+          1.7581000328063965,
+          0.13410000503063202
+        ],
+        [
+          0.5655999779701233,
+          1.5220999717712402,
+          -0.2745000123977661
+        ],
+        [
+          0.9703999757766724,
+          1.6756000518798828,
+          -0.001500000013038516
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.3481000065803528,
+          2.5623998641967773,
+          -0.1096000000834465
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 63,
+      "time_s": 31.51,
+      "fused_point_count": 729,
+      "fused_region_point_count": 640,
+      "fused_person_present": true,
+      "fused_person_points": 572,
+      "fused_centroid_m": [
+        0.7490147948265076,
+        2.0982208251953125,
+        -0.13262443244457245
+      ],
+      "fused_extent_m": [
+        1.4596079587936401,
+        1.3330398797988892,
+        1.3353407382965088
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8671159484432428,
+      "fused_track_cluster_points": 13,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 225,
+      "b_person_points": 347,
+      "a_region_points": 239,
+      "b_region_points": 401,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.9599000215530396,
+          1.607100009918213,
+          -0.1670999974012375
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.5932999849319458,
+          2.568999767303467,
+          -0.25600001215934753
+        ],
+        [
+          0.6011999845504761,
+          2.1771998405456543,
+          -0.0020000000949949026
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 64,
+      "time_s": 32.005,
+      "fused_point_count": 574,
+      "fused_region_point_count": 505,
+      "fused_person_present": true,
+      "fused_person_points": 469,
+      "fused_centroid_m": [
+        0.9399285912513733,
+        2.06097149848938,
+        -0.13902032375335693
+      ],
+      "fused_extent_m": [
+        1.3211628198623657,
+        1.1486098766326904,
+        1.3353407382965088
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.7271159484432428,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 151,
+      "b_person_points": 318,
+      "a_region_points": 152,
+      "b_region_points": 353,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          1.3904000520706177,
+          1.8680000305175781,
+          0.24690000712871552
+        ],
+        [
+          1.1628999710083008,
+          1.715499997138977,
+          -0.1234000027179718
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.6855999827384949,
+          2.511899948120117,
+          -0.3174999952316284
+        ],
+        [
+          0.6171000003814697,
+          2.1735000610351562,
+          0.033399999141693115
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 65,
+      "time_s": 32.501,
+      "fused_point_count": 493,
+      "fused_region_point_count": 427,
+      "fused_person_present": true,
+      "fused_person_points": 389,
+      "fused_centroid_m": [
+        1.0835399627685547,
+        1.930375576019287,
+        -0.10033702105283737
+      ],
+      "fused_extent_m": [
+        1.1523915529251099,
+        1.0861459970474243,
+        1.34636390209198
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8152854244340924,
+      "fused_track_cluster_points": 22,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 94,
+      "b_person_points": 295,
+      "a_region_points": 95,
+      "b_region_points": 332,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          1.4503999948501587,
+          1.4528000354766846,
+          -0.3686000108718872
+        ],
+        [
+          1.5921000242233276,
+          1.530900001525879,
+          0.16120000183582306
+        ],
+        [
+          1.3779000043869019,
+          1.9164999723434448,
+          -0.33079999685287476
+        ],
+        [
+          1.4134999513626099,
+          1.7569999694824219,
+          0.05770000070333481
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          1.0087000131607056,
+          1.9577999114990234,
+          0.0005000000237487257
+        ]
+      ],
+      "a_anomaly_count": 4,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 66,
+      "time_s": 33.001,
+      "fused_point_count": 463,
+      "fused_region_point_count": 396,
+      "fused_person_present": true,
+      "fused_person_points": 341,
+      "fused_centroid_m": [
+        1.1454111337661743,
+        1.7697304487228394,
+        -0.08243846893310547
+      ],
+      "fused_extent_m": [
+        0.9954869747161865,
+        0.801019549369812,
+        1.3924083709716797
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8945074292331096,
+      "fused_track_cluster_points": 36,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 87,
+      "b_person_points": 252,
+      "a_region_points": 91,
+      "b_region_points": 305,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          1.5921000242233276,
+          1.530900001525879,
+          0.16120000183582306
+        ],
+        [
+          1.582200050354004,
+          1.3938000202178955,
+          -0.29910001158714294
+        ],
+        [
+          1.4503999948501587,
+          1.7445000410079956,
+          -0.007199999876320362
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.8859999775886536,
+          1.8711999654769897,
+          -0.3862000107765198
+        ],
+        [
+          1.0087000131607056,
+          1.9089999198913574,
+          0.04969999939203262
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 67,
+      "time_s": 33.501,
+      "fused_point_count": 477,
+      "fused_region_point_count": 414,
+      "fused_person_present": true,
+      "fused_person_points": 368,
+      "fused_centroid_m": [
+        1.044816255569458,
+        1.7444339990615845,
+        -0.15111015737056732
+      ],
+      "fused_extent_m": [
+        1.2024955749511719,
+        1.0342637300491333,
+        1.2995493412017822
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9467749696662102,
+      "fused_track_cluster_points": 30,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 119,
+      "b_person_points": 245,
+      "a_region_points": 125,
+      "b_region_points": 289,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          1.5506000518798828,
+          1.3597999811172485,
+          -0.10570000112056732
+        ],
+        [
+          1.2762999534606934,
+          1.3882999420166016,
+          -0.266400009393692
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.8445000052452087,
+          1.9825999736785889,
+          -0.2572000026702881
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 68,
+      "time_s": 34.005,
+      "fused_point_count": 577,
+      "fused_region_point_count": 498,
+      "fused_person_present": true,
+      "fused_person_points": 465,
+      "fused_centroid_m": [
+        0.8227744102478027,
+        1.7675772905349731,
+        -0.158416286110878
+      ],
+      "fused_extent_m": [
+        1.7193576097488403,
+        1.0943670272827148,
+        1.250023365020752
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9409059641924009,
+      "fused_track_cluster_points": 13,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 186,
+      "b_person_points": 276,
+      "a_region_points": 197,
+      "b_region_points": 301,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          1.5506000518798828,
+          1.3485000133514404,
+          -0.14959999918937683
+        ],
+        [
+          1.190600037574768,
+          1.3783999681472778,
+          -0.2556999921798706
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.7937999963760376,
+          2.0092997550964355,
+          -0.32030001282691956
+        ],
+        [
+          0.29269999265670776,
+          2.14169979095459,
+          -0.20600000023841858
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 69,
+      "time_s": 34.511,
+      "fused_point_count": 668,
+      "fused_region_point_count": 535,
+      "fused_person_present": true,
+      "fused_person_points": 504,
+      "fused_centroid_m": [
+        0.472094863653183,
+        1.7676715850830078,
+        -0.12451756745576859
+      ],
+      "fused_extent_m": [
+        1.6244237422943115,
+        1.1182937622070312,
+        1.1448974609375
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.8009059641924009,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 217,
+      "b_person_points": 286,
+      "a_region_points": 232,
+      "b_region_points": 303,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.8536999821662903,
+          1.2448999881744385,
+          -0.3790000081062317
+        ],
+        [
+          1.1339000463485718,
+          1.3978999853134155,
+          -0.2597000002861023
+        ],
+        [
+          0.649399995803833,
+          1.3452999591827393,
+          -0.3686999976634979
+        ],
+        [
+          0.569599986076355,
+          1.4227999448776245,
+          0.11540000140666962
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.4925000071525574,
+          2.0292000770568848,
+          -0.4115000069141388
+        ],
+        [
+          0.15029999613761902,
+          2.109499931335449,
+          -0.18639999628067017
+        ]
+      ],
+      "a_anomaly_count": 4,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 70,
+      "time_s": 35.01,
+      "fused_point_count": 745,
+      "fused_region_point_count": 587,
+      "fused_person_present": true,
+      "fused_person_points": 549,
+      "fused_centroid_m": [
+        0.047277405858039856,
+        1.7346587181091309,
+        -0.10625132918357849
+      ],
+      "fused_extent_m": [
+        1.8683509826660156,
+        1.1570980548858643,
+        1.1345384120941162
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.6609059641924009,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 255,
+      "b_person_points": 293,
+      "a_region_points": 270,
+      "b_region_points": 317,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.08699999749660492,
+          1.4270000457763672,
+          0.09600000083446503
+        ],
+        [
+          0.8536999821662903,
+          1.2448999881744385,
+          -0.3790000081062317
+        ],
+        [
+          0.49050000309944153,
+          1.4010000228881836,
+          -0.01640000008046627
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.0,
+          2.14139986038208,
+          -0.2076999992132187
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 71,
+      "time_s": 35.51,
+      "fused_point_count": 799,
+      "fused_region_point_count": 635,
+      "fused_person_present": true,
+      "fused_person_points": 585,
+      "fused_centroid_m": [
+        -0.3005381226539612,
+        1.6480940580368042,
+        -0.06999966502189636
+      ],
+      "fused_extent_m": [
+        1.902632713317871,
+        1.1840330362319946,
+        1.1153459548950195
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.5209059641924009,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 298,
+      "b_person_points": 286,
+      "a_region_points": 311,
+      "b_region_points": 324,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          0.40939998626708984,
+          1.3753000497817993,
+          -0.0551999993622303
+        ],
+        [
+          -0.13840000331401825,
+          1.3839000463485718,
+          0.10279999673366547
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.7383999824523926,
+          2.0439000129699707,
+          -0.03849999979138374
+        ],
+        [
+          -0.9045000076293945,
+          1.8707998991012573,
+          0.5080999732017517
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 72,
+      "time_s": 36.011,
+      "fused_point_count": 714,
+      "fused_region_point_count": 576,
+      "fused_person_present": true,
+      "fused_person_points": 532,
+      "fused_centroid_m": [
+        -0.5524429678916931,
+        1.4870377779006958,
+        -0.04643386974930763
+      ],
+      "fused_extent_m": [
+        1.5954161882400513,
+        1.4403916597366333,
+        1.3893979787826538
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.6356536144861388,
+      "fused_track_cluster_points": 14,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 292,
+      "b_person_points": 240,
+      "a_region_points": 298,
+      "b_region_points": 278,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          -0.26109999418258667,
+          1.2064000368118286,
+          0.005100000184029341
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.9045000076293945,
+          1.8707998991012573,
+          0.5080999732017517
+        ],
+        [
+          -0.8859999775886536,
+          1.9128999710083008,
+          -0.007799999788403511
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 73,
+      "time_s": 36.51,
+      "fused_point_count": 575,
+      "fused_region_point_count": 466,
+      "fused_person_present": true,
+      "fused_person_points": 425,
+      "fused_centroid_m": [
+        -0.705228328704834,
+        1.3297665119171143,
+        -0.010699299164116383
+      ],
+      "fused_extent_m": [
+        1.5004823207855225,
+        1.3009053468704224,
+        1.4591845273971558
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.7542818990496483,
+      "fused_track_cluster_points": 27,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 249,
+      "b_person_points": 174,
+      "a_region_points": 252,
+      "b_region_points": 214,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          -0.11270000040531158,
+          1.1723999977111816,
+          -0.24420000612735748
+        ],
+        [
+          -0.39160001277923584,
+          1.1069999933242798,
+          0.022099999710917473
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -1.048200011253357,
+          1.7257999181747437,
+          -0.40299999713897705
+        ],
+        [
+          -1.13919997215271,
+          1.7223999500274658,
+          0.09749999642372131
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 74,
+      "time_s": 37.01,
+      "fused_point_count": 508,
+      "fused_region_point_count": 400,
+      "fused_person_present": true,
+      "fused_person_points": 259,
+      "fused_centroid_m": [
+        -0.6117753982543945,
+        0.989917516708374,
+        -0.04137802869081497
+      ],
+      "fused_extent_m": [
+        0.7607892751693726,
+        0.8789205551147461,
+        1.283086895942688
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8564564876591434,
+      "fused_track_cluster_points": 259,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 242,
+      "b_person_points": 126,
+      "a_region_points": 245,
+      "b_region_points": 155,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          -0.39160001277923584,
+          1.1019999980926514,
+          0.125
+        ],
+        [
+          -0.5630000233650208,
+          1.0166000127792358,
+          -0.0034000000450760126
+        ],
+        [
+          -0.7646999955177307,
+          0.9200999736785889,
+          -0.03629999980330467
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -1.181399941444397,
+          1.5848000049591064,
+          0.20909999310970306
+        ],
+        [
+          -1.1497999429702759,
+          1.7834999561309814,
+          0.6730999946594238
+        ],
+        [
+          -1.2024999856948853,
+          1.5787999629974365,
+          -0.16380000114440918
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 75,
+      "time_s": 37.51,
+      "fused_point_count": 566,
+      "fused_region_point_count": 463,
+      "fused_person_present": true,
+      "fused_person_points": 303,
+      "fused_centroid_m": [
+        -0.6048028469085693,
+        1.0214983224868774,
+        -0.04437430948019028
+      ],
+      "fused_extent_m": [
+        0.8939604759216309,
+        1.0589954853057861,
+        1.3983526229858398
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.926049611900315,
+      "fused_track_cluster_points": 305,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 288,
+      "b_person_points": 144,
+      "a_region_points": 292,
+      "b_region_points": 171,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          -0.7646999955177307,
+          0.920799970626831,
+          -0.035599999129772186
+        ],
+        [
+          -0.51419997215271,
+          1.0769000053405762,
+          0.1695999950170517
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -1.1207000017166138,
+          1.8370999097824097,
+          -0.027000000700354576
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 76,
+      "time_s": 38.01,
+      "fused_point_count": 628,
+      "fused_region_point_count": 523,
+      "fused_person_present": true,
+      "fused_person_points": 488,
+      "fused_centroid_m": [
+        -0.6192344427108765,
+        1.4221664667129517,
+        -0.07162873446941376
+      ],
+      "fused_extent_m": [
+        1.644201636314392,
+        1.9080369472503662,
+        1.5704843997955322
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9518169837465842,
+      "fused_track_cluster_points": 490,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 272,
+      "b_person_points": 200,
+      "a_region_points": 280,
+      "b_region_points": 243,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          -0.18459999561309814,
+          1.1663000583648682,
+          -0.06379999965429306
+        ],
+        [
+          -0.5537999868392944,
+          1.0575000047683716,
+          0.05609999969601631
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.796999990940094,
+          1.9361999034881592,
+          -0.5005999803543091
+        ],
+        [
+          -0.9718000292778015,
+          1.9392999410629272,
+          -0.14270000159740448
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 77,
+      "time_s": 38.511,
+      "fused_point_count": 687,
+      "fused_region_point_count": 535,
+      "fused_person_present": true,
+      "fused_person_points": 484,
+      "fused_centroid_m": [
+        -0.2636968493461609,
+        1.5332247018814087,
+        -0.11826477199792862
+      ],
+      "fused_extent_m": [
+        1.7364983558654785,
+        1.316407322883606,
+        1.404425859451294
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9701350528303536,
+      "fused_track_cluster_points": 484,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 245,
+      "b_person_points": 239,
+      "a_region_points": 258,
+      "b_region_points": 277,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.0421999990940094,
+          1.3844000101089478,
+          0.12070000171661377
+        ],
+        [
+          -0.0348999984562397,
+          1.1176999807357788,
+          -0.17499999701976776
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.796999990940094,
+          1.9361999034881592,
+          -0.5005999803543091
+        ],
+        [
+          -0.4984000027179718,
+          1.9849998950958252,
+          -0.301800012588501
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 78,
+      "time_s": 39.01,
+      "fused_point_count": 728,
+      "fused_region_point_count": 562,
+      "fused_person_present": true,
+      "fused_person_points": 503,
+      "fused_centroid_m": [
+        0.15651920437812805,
+        1.4970757961273193,
+        -0.16978926956653595
+      ],
+      "fused_extent_m": [
+        1.6877129077911377,
+        1.2491137981414795,
+        1.1256910562515259
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9826702841364666,
+      "fused_track_cluster_points": 504,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 249,
+      "b_person_points": 254,
+      "a_region_points": 261,
+      "b_region_points": 301,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.11079999804496765,
+          1.1239999532699585,
+          -0.10849999636411667
+        ],
+        [
+          0.06459999829530716,
+          1.3645000457763672,
+          0.11829999834299088
+        ],
+        [
+          0.6328999996185303,
+          1.1167999505996704,
+          -0.13330000638961792
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.2768999934196472,
+          1.9840999841690063,
+          -0.3853999972343445
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 79,
+      "time_s": 39.51,
+      "fused_point_count": 674,
+      "fused_region_point_count": 574,
+      "fused_person_present": true,
+      "fused_person_points": 514,
+      "fused_centroid_m": [
+        0.5785965919494629,
+        1.4665449857711792,
+        -0.16713543236255646
+      ],
+      "fused_extent_m": [
+        1.474111795425415,
+        1.1924662590026855,
+        1.2244187593460083
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.995038902115464,
+      "fused_track_cluster_points": 514,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 256,
+      "b_person_points": 255,
+      "a_region_points": 268,
+      "b_region_points": 306,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          0.6539999842643738,
+          1.127500057220459,
+          0.07590000331401825
+        ],
+        [
+          0.51419997215271,
+          1.145799994468689,
+          -0.15610000491142273
+        ],
+        [
+          1.02839994430542,
+          1.201200008392334,
+          -0.4544000029563904
+        ],
+        [
+          0.9413999915122986,
+          1.1660000085830688,
+          -0.14100000262260437
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.5432000160217285,
+          1.699199914932251,
+          -0.13230000436306
+        ],
+        [
+          -0.10809999704360962,
+          1.9334999322891235,
+          -0.40959998965263367
+        ]
+      ],
+      "a_anomaly_count": 4,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 80,
+      "time_s": 40.01,
+      "fused_point_count": 628,
+      "fused_region_point_count": 560,
+      "fused_person_present": true,
+      "fused_person_points": 527,
+      "fused_centroid_m": [
+        0.802401602268219,
+        1.5393755435943604,
+        -0.1597532033920288
+      ],
+      "fused_extent_m": [
+        1.276332974433899,
+        1.3953752517700195,
+        1.2762829065322876
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 528,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 249,
+      "b_person_points": 278,
+      "a_region_points": 257,
+      "b_region_points": 303,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          1.02839994430542,
+          1.201200008392334,
+          -0.4544000029563904
+        ],
+        [
+          0.9718000292778015,
+          1.2120000123977661,
+          -0.1437000036239624
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.4246000051498413,
+          1.8030998706817627,
+          -0.37630000710487366
+        ],
+        [
+          0.6092000007629395,
+          1.733799934387207,
+          -0.11500000208616257
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 81,
+      "time_s": 40.506,
+      "fused_point_count": 626,
+      "fused_region_point_count": 554,
+      "fused_person_present": true,
+      "fused_person_points": 533,
+      "fused_centroid_m": [
+        0.8167715668678284,
+        1.7696086168289185,
+        -0.19975098967552185
+      ],
+      "fused_extent_m": [
+        1.1866732835769653,
+        1.7317311763763428,
+        1.369178295135498
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 533,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 217,
+      "b_person_points": 305,
+      "a_region_points": 218,
+      "b_region_points": 336,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          1.1233999729156494,
+          1.2689000368118286,
+          -0.2287999987602234
+        ],
+        [
+          1.1642999649047852,
+          1.7769999504089355,
+          0.15160000324249268
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.613099992275238,
+          2.136399984359741,
+          -0.1835000067949295
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 82,
+      "time_s": 41.01,
+      "fused_point_count": 721,
+      "fused_region_point_count": 604,
+      "fused_person_present": true,
+      "fused_person_points": 582,
+      "fused_centroid_m": [
+        0.7156837582588196,
+        2.1291844844818115,
+        -0.16428658366203308
+      ],
+      "fused_extent_m": [
+        1.6191495656967163,
+        2.5399057865142822,
+        1.3617686033248901
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 578,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 190,
+      "b_person_points": 364,
+      "a_region_points": 194,
+      "b_region_points": 410,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          1.13919997215271,
+          1.965000033378601,
+          0.14180000126361847
+        ],
+        [
+          0.9876000285148621,
+          2.0028998851776123,
+          -0.3603000044822693
+        ],
+        [
+          1.0758999586105347,
+          1.5299999713897705,
+          -0.3156999945640564
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.5353000164031982,
+          2.4826998710632324,
+          -0.12870000302791595
+        ],
+        [
+          0.1891999989748001,
+          2.8187999725341797,
+          0.06199999898672104
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 83,
+      "time_s": 41.505,
+      "fused_point_count": 789,
+      "fused_region_point_count": 635,
+      "fused_person_present": true,
+      "fused_person_points": 586,
+      "fused_centroid_m": [
+        0.5037180185317993,
+        2.5305559635162354,
+        -0.1274072676897049
+      ],
+      "fused_extent_m": [
+        1.534764051437378,
+        2.4051074981689453,
+        1.281329870223999
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 593,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 131,
+      "b_person_points": 442,
+      "a_region_points": 136,
+      "b_region_points": 499,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.9513000249862671,
+          2.033799886703491,
+          -0.39660000801086426
+        ],
+        [
+          1.1181000471115112,
+          2.0434999465942383,
+          0.14180000126361847
+        ],
+        [
+          0.949999988079071,
+          1.648900032043457,
+          -0.5145000219345093
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.3797000050544739,
+          2.8825998306274414,
+          -0.11829999834299088
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 84,
+      "time_s": 42.001,
+      "fused_point_count": 685,
+      "fused_region_point_count": 593,
+      "fused_person_present": true,
+      "fused_person_points": 544,
+      "fused_centroid_m": [
+        0.2530430555343628,
+        2.766974449157715,
+        -0.1097957044839859
+      ],
+      "fused_extent_m": [
+        1.3448963165283203,
+        1.3856388330459595,
+        1.1860370635986328
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 544,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 85,
+      "b_person_points": 459,
+      "a_region_points": 92,
+      "b_region_points": 501,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.5814999938011169,
+          2.6296000480651855,
+          0.1728000044822693
+        ],
+        [
+          0.4799000024795532,
+          2.488600015640259,
+          -0.2937999963760376
+        ],
+        [
+          0.925599992275238,
+          2.075200080871582,
+          -0.37779998779296875
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.07519999891519547,
+          2.860599994659424,
+          -0.07760000228881836
+        ],
+        [
+          0.2492000013589859,
+          2.835599899291992,
+          0.21629999577999115
+        ],
+        [
+          0.2808000147342682,
+          2.958400011062622,
+          -0.12870000302791595
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 85,
+      "time_s": 42.501,
+      "fused_point_count": 493,
+      "fused_region_point_count": 465,
+      "fused_person_present": true,
+      "fused_person_points": 434,
+      "fused_centroid_m": [
+        0.13478735089302063,
+        2.862995147705078,
+        -0.07091960310935974
+      ],
+      "fused_extent_m": [
+        1.2671031951904297,
+        1.078235149383545,
+        1.0298051834106445
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 434,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 76,
+      "b_person_points": 358,
+      "a_region_points": 84,
+      "b_region_points": 381,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.4219000041484833,
+          2.572700023651123,
+          -0.3052000105381012
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.12200000137090683,
+          2.9351999759674072,
+          0.12150000035762787
+        ],
+        [
+          -0.23729999363422394,
+          3.0844998359680176,
+          -0.1257999986410141
+        ],
+        [
+          0.1054999977350235,
+          3.083400011062622,
+          -0.06620000302791595
+        ],
+        [
+          -0.3257000148296356,
+          3.2311999797821045,
+          0.10480000078678131
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 4
+    },
+    {
+      "window_index": 86,
+      "time_s": 43.0,
+      "fused_point_count": 389,
+      "fused_region_point_count": 329,
+      "fused_person_present": true,
+      "fused_person_points": 303,
+      "fused_centroid_m": [
+        0.1117657721042633,
+        2.942798376083374,
+        -0.06781642138957977
+      ],
+      "fused_extent_m": [
+        1.2671031951904297,
+        0.7214460372924805,
+        0.93092942237854
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 304,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 65,
+      "b_person_points": 238,
+      "a_region_points": 73,
+      "b_region_points": 256,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.4284999966621399,
+          2.632699966430664,
+          -0.31470000743865967
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.28349998593330383,
+          3.168599843978882,
+          0.04740000143647194
+        ],
+        [
+          -0.4595000147819519,
+          2.8838000297546387,
+          -0.013100000098347664
+        ],
+        [
+          0.4706999957561493,
+          2.9113998413085938,
+          0.08150000125169754
+        ],
+        [
+          0.12919999659061432,
+          3.0911998748779297,
+          -0.05869999900460243
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 4
+    },
+    {
+      "window_index": 87,
+      "time_s": 43.5,
+      "fused_point_count": 353,
+      "fused_region_point_count": 242,
+      "fused_person_present": true,
+      "fused_person_points": 211,
+      "fused_centroid_m": [
+        0.070762999355793,
+        2.97741436958313,
+        -0.0447131022810936
+      ],
+      "fused_extent_m": [
+        1.0785540342330933,
+        0.5277342796325684,
+        0.9070589542388916
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 211,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 27,
+      "b_person_points": 184,
+      "a_region_points": 36,
+      "b_region_points": 206,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.4417000114917755,
+          2.773900032043457,
+          -0.2669999897480011
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.017100000753998756,
+          2.98799991607666,
+          -0.13590000569820404
+        ],
+        [
+          0.20569999516010284,
+          3.1768999099731445,
+          0.1656000018119812
+        ],
+        [
+          0.42590001225471497,
+          3.007200002670288,
+          0.19089999794960022
+        ],
+        [
+          -0.45089998841285706,
+          2.9948999881744385,
+          -0.012400000356137753
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 4
+    },
+    {
+      "window_index": 88,
+      "time_s": 44.0,
+      "fused_point_count": 361,
+      "fused_region_point_count": 204,
+      "fused_person_present": true,
+      "fused_person_points": 165,
+      "fused_centroid_m": [
+        0.010540238581597805,
+        3.017383575439453,
+        0.00979949813336134
+      ],
+      "fused_extent_m": [
+        1.0785540342330933,
+        0.38657474517822266,
+        0.8734511137008667
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 165,
+      "a_person_present": false,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": false,
+      "a_perception_track_present": false,
+      "b_perception_track_present": true,
+      "a_person_points": 7,
+      "b_person_points": 162,
+      "a_region_points": 10,
+      "b_region_points": 194,
+      "a_screening_state": "background",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.20569999516010284,
+          3.150899887084961,
+          0.17880000174045563
+        ],
+        [
+          -0.017100000753998756,
+          3.0401999950408936,
+          -0.1436000019311905
+        ],
+        [
+          -0.42719998955726624,
+          3.0384998321533203,
+          0.1623000055551529
+        ],
+        [
+          0.4007999897003174,
+          3.0035998821258545,
+          0.21119999885559082
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 4
+    },
+    {
+      "window_index": 89,
+      "time_s": 44.5,
+      "fused_point_count": 411,
+      "fused_region_point_count": 222,
+      "fused_person_present": true,
+      "fused_person_points": 169,
+      "fused_centroid_m": [
+        -0.043363042175769806,
+        3.043657064437866,
+        0.01000188011676073
+      ],
+      "fused_extent_m": [
+        0.9546126127243042,
+        0.46515607833862305,
+        0.48883411288261414
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 181,
+      "a_person_present": false,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": false,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 11,
+      "b_person_points": 169,
+      "a_region_points": 17,
+      "b_region_points": 205,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.5874000191688538,
+          2.7897000312805176,
+          -0.4729999899864197
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.17800000309944153,
+          3.080899953842163,
+          0.19059999287128448
+        ],
+        [
+          -0.38760000467300415,
+          3.228299856185913,
+          0.032099999487400055
+        ],
+        [
+          -0.17139999568462372,
+          3.0992000102996826,
+          -0.09520000219345093
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 90,
+      "time_s": 45.0,
+      "fused_point_count": 362,
+      "fused_region_point_count": 252,
+      "fused_person_present": true,
+      "fused_person_points": 198,
+      "fused_centroid_m": [
+        0.018572626635432243,
+        2.9860830307006836,
+        -0.1063893735408783
+      ],
+      "fused_extent_m": [
+        1.1827175617218018,
+        0.7441389560699463,
+        1.0806183815002441
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 198,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 35,
+      "b_person_points": 163,
+      "a_region_points": 44,
+      "b_region_points": 208,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.35600000619888306,
+          2.723900079727173,
+          -0.5658000111579895
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.13840000331401825,
+          3.115299940109253,
+          -0.1290999948978424
+        ],
+        [
+          0.2669999897480011,
+          3.1720998287200928,
+          -0.03539999946951866
+        ],
+        [
+          -0.37380000948905945,
+          3.232599973678589,
+          -0.01769999973475933
+        ]
+      ],
+      "a_anomaly_count": 1,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 91,
+      "time_s": 45.501,
+      "fused_point_count": 446,
+      "fused_region_point_count": 398,
+      "fused_person_present": true,
+      "fused_person_points": 291,
+      "fused_centroid_m": [
+        0.2071308195590973,
+        2.880624532699585,
+        -0.14149506390094757
+      ],
+      "fused_extent_m": [
+        1.3409407138824463,
+        0.8495481014251709,
+        1.351179599761963
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 291,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 75,
+      "b_person_points": 216,
+      "a_region_points": 86,
+      "b_region_points": 312,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [
+        [
+          0.35600000619888306,
+          2.591200113296509,
+          -0.5943999886512756
+        ],
+        [
+          0.5999000072479248,
+          2.6749000549316406,
+          -0.07159999758005142
+        ],
+        [
+          0.45489999651908875,
+          2.873199939727783,
+          -0.09939999878406525
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          -0.11079999804496765,
+          3.091599941253662,
+          -0.13040000200271606
+        ],
+        [
+          0.257099986076355,
+          3.1359000205993652,
+          -0.033399999141693115
+        ],
+        [
+          0.1265999972820282,
+          2.780900001525879,
+          -0.15809999406337738
+        ]
+      ],
+      "a_anomaly_count": 3,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 92,
+      "time_s": 46.0,
+      "fused_point_count": 773,
+      "fused_region_point_count": 622,
+      "fused_person_present": true,
+      "fused_person_points": 463,
+      "fused_centroid_m": [
+        0.4189954102039337,
+        2.784076690673828,
+        -0.141343891620636
+      ],
+      "fused_extent_m": [
+        0.9862572550773621,
+        1.2101459503173828,
+        1.4360040426254272
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 463,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 124,
+      "b_person_points": 339,
+      "a_region_points": 131,
+      "b_region_points": 491,
+      "a_screening_state": "suspicious_metal",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [
+        [
+          0.40869998931884766,
+          2.5074000358581543,
+          -0.59579998254776
+        ],
+        [
+          0.8122000098228455,
+          2.1903998851776123,
+          -0.39719998836517334
+        ]
+      ],
+      "b_anomaly_centers": [
+        [
+          0.4034999907016754,
+          2.8592000007629395,
+          -0.020600000396370888
+        ]
+      ],
+      "a_anomaly_count": 2,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 93,
+      "time_s": 46.51,
+      "fused_point_count": 927,
+      "fused_region_point_count": 675,
+      "fused_person_present": true,
+      "fused_person_points": 492,
+      "fused_centroid_m": [
+        0.7552903294563293,
+        2.4213733673095703,
+        -0.07809436321258545
+      ],
+      "fused_extent_m": [
+        1.4253263473510742,
+        2.1003434658050537,
+        1.4317760467529297
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 479,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 117,
+      "b_person_points": 347,
+      "a_region_points": 196,
+      "b_region_points": 479,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.5379999876022339,
+          2.7639999389648438,
+          -0.020600000396370888
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 94,
+      "time_s": 47.01,
+      "fused_point_count": 880,
+      "fused_region_point_count": 647,
+      "fused_person_present": true,
+      "fused_person_points": 460,
+      "fused_centroid_m": [
+        1.0694763660430908,
+        2.0176444053649902,
+        -0.09933061897754669
+      ],
+      "fused_extent_m": [
+        1.2591919898986816,
+        1.5378507375717163,
+        1.3518116474151611
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 461,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 185,
+      "b_person_points": 275,
+      "a_region_points": 274,
+      "b_region_points": 373,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.9394000172615051,
+          2.401599884033203,
+          -0.05389999970793724
+        ],
+        [
+          1.3528000116348267,
+          1.8412998914718628,
+          -0.2159000039100647
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 2
+    },
+    {
+      "window_index": 95,
+      "time_s": 47.51,
+      "fused_point_count": 752,
+      "fused_region_point_count": 558,
+      "fused_person_present": true,
+      "fused_person_points": 367,
+      "fused_centroid_m": [
+        1.3075175285339355,
+        1.6385183334350586,
+        -0.11562834680080414
+      ],
+      "fused_extent_m": [
+        1.288199782371521,
+        1.2343107461929321,
+        1.590234637260437
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 367,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 132,
+      "b_person_points": 234,
+      "a_region_points": 224,
+      "b_region_points": 334,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          1.3402999639511108,
+          1.8540998697280884,
+          -0.21539999544620514
+        ],
+        [
+          1.4780999422073364,
+          1.657099962234497,
+          -0.30169999599456787
+        ],
+        [
+          1.0204999446868896,
+          2.1280999183654785,
+          -0.026200000196695328
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 96,
+      "time_s": 48.001,
+      "fused_point_count": 593,
+      "fused_region_point_count": 399,
+      "fused_person_present": true,
+      "fused_person_points": 200,
+      "fused_centroid_m": [
+        1.6209361553192139,
+        1.2695561647415161,
+        -0.16499115526676178
+      ],
+      "fused_extent_m": [
+        1.0231760740280151,
+        1.3133132457733154,
+        1.5215941667556763
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 205,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 179,
+      "a_region_points": 113,
+      "b_region_points": 286,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          1.6698999404907227,
+          0.994499921798706,
+          -0.010999999940395355
+        ],
+        [
+          1.6138999462127686,
+          1.337399959564209,
+          -0.32330000400543213
+        ],
+        [
+          1.8393000364303589,
+          0.9754998683929443,
+          -0.32910001277923584
+        ],
+        [
+          1.4780999422073364,
+          1.657099962234497,
+          -0.30169999599456787
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 4
+    },
+    {
+      "window_index": 97,
+      "time_s": 48.501,
+      "fused_point_count": 531,
+      "fused_region_point_count": 330,
+      "fused_person_present": true,
+      "fused_person_points": 132,
+      "fused_centroid_m": [
+        1.997666835784912,
+        0.7908506989479065,
+        -0.27853381633758545
+      ],
+      "fused_extent_m": [
+        1.2077693939208984,
+        1.041952133178711,
+        1.513098120689392
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 136,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 132,
+      "a_region_points": 90,
+      "b_region_points": 240,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          1.8393000364303589,
+          0.9754998683929443,
+          -0.32910001277923584
+        ],
+        [
+          1.6850999593734741,
+          1.2253999710083008,
+          -0.478300005197525
+        ],
+        [
+          1.6586999893188477,
+          1.0130000114440918,
+          -0.01600000075995922
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 98,
+      "time_s": 49.001,
+      "fused_point_count": 513,
+      "fused_region_point_count": 272,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.12923021614551544,
+        0.34333929419517517,
+        -0.6114386320114136
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15565252304077148,
+        0.4409145414829254
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 107,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 182,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          2.6429998874664307,
+          0.11979985237121582,
+          -0.5590000152587891
+        ],
+        [
+          2.207200050354004,
+          0.5034999847412109,
+          -0.4025000035762787
+        ],
+        [
+          2.1240999698638916,
+          0.6902999877929688,
+          -0.9711999893188477
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 3
+    },
+    {
+      "window_index": 99,
+      "time_s": 49.501,
+      "fused_point_count": 490,
+      "fused_region_point_count": 208,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.13514891266822815,
+        0.34407487511634827,
+        -0.6139239072799683
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15555834770202637,
+        0.4409145414829254
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 47,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 118,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          2.6554999351501465,
+          0.13409996032714844,
+          -0.5796999931335449
+        ],
+        [
+          3.032599925994873,
+          -0.12619996070861816,
+          -0.17180000245571136
+        ],
+        [
+          2.48009991645813,
+          0.01549983024597168,
+          -0.15199999511241913
+        ],
+        [
+          2.75570011138916,
+          -0.06620001792907715,
+          -0.12999999523162842
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 4
+    },
+    {
+      "window_index": 100,
+      "time_s": 50.001,
+      "fused_point_count": 442,
+      "fused_region_point_count": 194,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.1351635754108429,
+        0.3438211977481842,
+        -0.6125367283821106
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.14951181411743164,
+        0.42973771691322327
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.86,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 104,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          3.045799970626831,
+          -0.1435999870300293,
+          -0.17180000245571136
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 101,
+      "time_s": 50.501,
+      "fused_point_count": 394,
+      "fused_region_point_count": 189,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.13400620222091675,
+        0.3435411751270294,
+        -0.6108995079994202
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15163350105285645,
+        0.43921372294425964
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.72,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": false,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 99,
+      "a_screening_state": "person",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 102,
+      "time_s": 51.001,
+      "fused_point_count": 382,
+      "fused_region_point_count": 180,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.1328195184469223,
+        0.3436479866504669,
+        -0.6121257543563843
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15154123306274414,
+        0.4309069514274597
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.58,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": false,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 90,
+      "a_screening_state": "person",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 103,
+      "time_s": 51.501,
+      "fused_point_count": 399,
+      "fused_region_point_count": 190,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.1328195184469223,
+        0.34349122643470764,
+        -0.6115004420280457
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15287280082702637,
+        0.4341863691806793
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.43999999999999995,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": false,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 100,
+      "a_screening_state": "person",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 104,
+      "time_s": 52.001,
+      "fused_point_count": 408,
+      "fused_region_point_count": 197,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.13169144093990326,
+        0.3430705666542053,
+        -0.6092672348022461
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15287280082702637,
+        0.4341863691806793
+      ],
+      "fused_track_present": false,
+      "fused_track_confidence": 0.0,
+      "fused_track_cluster_points": 0,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": false,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 107,
+      "a_screening_state": "person",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 105,
+      "time_s": 52.501,
+      "fused_point_count": 403,
+      "fused_region_point_count": 190,
+      "fused_person_present": true,
+      "fused_person_points": 92,
+      "fused_centroid_m": [
+        0.12543196976184845,
+        0.3442921042442322,
+        -0.6060260534286499
+      ],
+      "fused_extent_m": [
+        0.3164461851119995,
+        0.14939212799072266,
+        0.4209043085575104
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.6040369611152034,
+      "fused_track_cluster_points": 92,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": false,
+      "a_person_points": 90,
+      "b_person_points": 92,
+      "a_region_points": 90,
+      "b_region_points": 100,
+      "a_screening_state": "person",
+      "b_screening_state": "background",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 106,
+      "time_s": 53.001,
+      "fused_point_count": 405,
+      "fused_region_point_count": 195,
+      "fused_person_present": true,
+      "fused_person_points": 92,
+      "fused_centroid_m": [
+        0.12432839721441269,
+        0.34396877884864807,
+        -0.6041799187660217
+      ],
+      "fused_extent_m": [
+        0.3164461851119995,
+        0.14939212799072266,
+        0.4209043085575104
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.7351197971459249,
+      "fused_track_cluster_points": 92,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 92,
+      "a_region_points": 90,
+      "b_region_points": 105,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 107,
+      "time_s": 53.501,
+      "fused_point_count": 399,
+      "fused_region_point_count": 196,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.12940599024295807,
+        0.34267574548721313,
+        -0.607087254524231
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15121889114379883,
+        0.42428916692733765
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8294588851392662,
+      "fused_track_cluster_points": 90,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 106,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 108,
+      "time_s": 54.001,
+      "fused_point_count": 397,
+      "fused_region_point_count": 186,
+      "fused_person_present": true,
+      "fused_person_points": 91,
+      "fused_centroid_m": [
+        0.13030223548412323,
+        0.34459152817726135,
+        -0.6119329929351807
+      ],
+      "fused_extent_m": [
+        0.3164461851119995,
+        0.1528472900390625,
+        0.4240950644016266
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.8974270945279734,
+      "fused_track_cluster_points": 91,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 91,
+      "a_region_points": 90,
+      "b_region_points": 96,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 109,
+      "time_s": 54.501,
+      "fused_point_count": 408,
+      "fused_region_point_count": 192,
+      "fused_person_present": true,
+      "fused_person_points": 91,
+      "fused_centroid_m": [
+        0.13375070691108704,
+        0.34456291794776917,
+        -0.6116063594818115
+      ],
+      "fused_extent_m": [
+        0.3164461851119995,
+        0.1528029441833496,
+        0.4096877872943878
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9463225726521709,
+      "fused_track_cluster_points": 91,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 91,
+      "a_region_points": 90,
+      "b_region_points": 102,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 110,
+      "time_s": 55.001,
+      "fused_point_count": 404,
+      "fused_region_point_count": 196,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.13989561796188354,
+        0.3433435261249542,
+        -0.6088098287582397
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.1486821174621582,
+        0.4241752028465271
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 0.9815365772787723,
+      "fused_track_cluster_points": 90,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 106,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 111,
+      "time_s": 55.501,
+      "fused_point_count": 391,
+      "fused_region_point_count": 191,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.13992491364479065,
+        0.3436037003993988,
+        -0.6095989346504211
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.1486821174621582,
+        0.4241752028465271
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 90,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 101,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 112,
+      "time_s": 56.001,
+      "fused_point_count": 391,
+      "fused_region_point_count": 198,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.14223966002464294,
+        0.3440234065055847,
+        -0.6119303703308105
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.14926528930664062,
+        0.4163133203983307
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 90,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 108,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 113,
+      "time_s": 56.501,
+      "fused_point_count": 390,
+      "fused_region_point_count": 195,
+      "fused_person_present": true,
+      "fused_person_points": 91,
+      "fused_centroid_m": [
+        0.13832931220531464,
+        0.34478387236595154,
+        -0.6120097041130066
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.14926528930664062,
+        0.4197123646736145
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 91,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 91,
+      "a_region_points": 90,
+      "b_region_points": 105,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 114,
+      "time_s": 57.001,
+      "fused_point_count": 382,
+      "fused_region_point_count": 185,
+      "fused_person_present": true,
+      "fused_person_points": 91,
+      "fused_centroid_m": [
+        0.13138894736766815,
+        0.34425088763237,
+        -0.6103417873382568
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.14822888374328613,
+        0.420547753572464
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 91,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 91,
+      "a_region_points": 90,
+      "b_region_points": 95,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 0
+    },
+    {
+      "window_index": 115,
+      "time_s": 57.501,
+      "fused_point_count": 395,
+      "fused_region_point_count": 197,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.1363648921251297,
+        0.34304797649383545,
+        -0.6077108383178711
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15083956718444824,
+        0.42759087681770325
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 90,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 107,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.210999995470047,
+          0.31369996070861816,
+          -0.4088999927043915
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 116,
+      "time_s": 58.001,
+      "fused_point_count": 396,
+      "fused_region_point_count": 204,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.1375076174736023,
+        0.34321802854537964,
+        -0.6086861491203308
+      ],
+      "fused_extent_m": [
+        0.21360117197036743,
+        0.15320873260498047,
+        0.4367659389972687
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 90,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 90,
+      "a_region_points": 90,
+      "b_region_points": 114,
+      "a_screening_state": "person",
+      "b_screening_state": "person",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.210999995470047,
+          0.31369996070861816,
+          -0.4088999927043915
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 117,
+      "time_s": 58.501,
+      "fused_point_count": 389,
+      "fused_region_point_count": 192,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.5018013715744019,
+        3.2617883682250977,
+        -0.695501983165741
+      ],
+      "fused_extent_m": [
+        0.11734876036643982,
+        0.09073233604431152,
+        0.48765769600868225
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 86,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 86,
+      "a_region_points": 95,
+      "b_region_points": 97,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.210999995470047,
+          0.31509995460510254,
+          -0.41999998688697815
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 1
+    },
+    {
+      "window_index": 118,
+      "time_s": 59.001,
+      "fused_point_count": 402,
+      "fused_region_point_count": 197,
+      "fused_person_present": true,
+      "fused_person_points": 90,
+      "fused_centroid_m": [
+        0.5029588341712952,
+        3.2620935440063477,
+        -0.6933401823043823
+      ],
+      "fused_extent_m": [
+        0.11734876036643982,
+        0.0879201889038086,
+        0.47805050015449524
+      ],
+      "fused_track_present": true,
+      "fused_track_confidence": 1.0,
+      "fused_track_cluster_points": 83,
+      "a_person_present": true,
+      "b_person_present": true,
+      "either_person_present": true,
+      "both_person_present": true,
+      "a_perception_track_present": true,
+      "b_perception_track_present": true,
+      "a_person_points": 90,
+      "b_person_points": 83,
+      "a_region_points": 109,
+      "b_region_points": 88,
+      "a_screening_state": "person",
+      "b_screening_state": "suspicious_metal",
+      "a_anomaly_centers": [],
+      "b_anomaly_centers": [
+        [
+          0.210999995470047,
+          0.3149998188018799,
+          -0.4196999967098236
+        ]
+      ],
+      "a_anomaly_count": 0,
+      "b_anomaly_count": 1
+    }
+  ]
+}

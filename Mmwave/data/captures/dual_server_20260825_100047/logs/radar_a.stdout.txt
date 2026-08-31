@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059",
+  "schema_version": "scanu_lab_mmwave77_usb_v1",
+  "bytes_read": 98816,
+  "sha256": "011e2faec3909fbc6f4f5f466ec1f2016b101ca48f1e598fba72abbccd81ea68",
+  "read_calls": 1083,
+  "elapsed_s": 6.127975579991471,
+  "average_bytes_per_s": 16125.390630250771,
+  "tlv_frames": 60,
+  "tlv_parse_errors": 0,
+  "tlv_invalid_headers": 0,
+  "tlv_discarded_bytes": 351,
+  "finished_utc": "2026-08-25T14:01:08.886624+00:00",
+  "limitations": [
+    "experimental lab capture; not a canonical SCAN-U training artifact",
+    "USB arrival time is not a hardware acquisition timestamp",
+    "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+  ],
+  "signal_artifacts": {
+    "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/range_profiles.npz",
+    "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/noise_profiles.npz",
+    "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/capture_quality.json"
+  }
+}

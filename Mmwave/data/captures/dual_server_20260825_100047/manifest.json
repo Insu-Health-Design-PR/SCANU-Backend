@@ -1,0 +1,191 @@
+{
+  "schema_version": "scanu_lab_dual_server_77ghz_v1",
+  "experimental": true,
+  "canonical_training_compatible": false,
+  "material_confirmed": false,
+  "weapon_classification": false,
+  "run_root": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047",
+  "preflight": {
+    "ok": true,
+    "schema_version": "scanu_lab_dual_server_77ghz_v1",
+    "host": "insu-TRX50-AERO-D",
+    "radar_a": {
+      "serial_number": "R2091049",
+      "usb_location": "1-1",
+      "cli_port": "/dev/ttyACM0",
+      "data_port": "/dev/ttyACM1",
+      "assignment": "xds110_device_order_fallback"
+    },
+    "radar_b": {
+      "serial_number": "R2091049",
+      "usb_location": "7-2.4.1.1",
+      "cli_port": "/dev/ttyACM2",
+      "data_port": "/dev/ttyACM3",
+      "assignment": "xds110_device_order_fallback"
+    },
+    "camera_a": {
+      "device": "/dev/v4l/by-id/usb-USB_Cam_Manufacturer_HDMI_USB_Camera_510550000000100-video-index0",
+      "width": 3840,
+      "height": 2160,
+      "fps": 30.0,
+      "backend": "ffmpeg-copy",
+      "input_format": "h264"
+    },
+    "camera_b": null,
+    "single_host_clock": true,
+    "hardware_synchronized": false
+  },
+  "calibration": {
+    "radar_a": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_a/capture_20260825_100047",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 99040,
+      "sha256": "d48bbc67e5bb8f004a32e6048e6437f6d902abe6a54e75848a882f05f5d1a5b2",
+      "read_calls": 1024,
+      "elapsed_s": 6.12958579295082,
+      "average_bytes_per_s": 16157.69863502009,
+      "tlv_frames": 60,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 255,
+      "finished_utc": "2026-08-25T14:00:56.598588+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_a/capture_20260825_100047/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_a/capture_20260825_100047/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_a/capture_20260825_100047/capture_quality.json"
+      }
+    },
+    "radar_b": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_b/capture_20260825_100047",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 126400,
+      "sha256": "8b5c2373a38564a6aa2902dd13a8e4d7cceb73c7d034df3143d1f6da12b40726",
+      "read_calls": 1691,
+      "elapsed_s": 6.13218987500295,
+      "average_bytes_per_s": 20612.538518295503,
+      "tlv_frames": 60,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 1023,
+      "finished_utc": "2026-08-25T14:00:56.809191+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_b/capture_20260825_100047/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_b/capture_20260825_100047/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/calibration/radar_b/capture_20260825_100047/capture_quality.json"
+      }
+    }
+  },
+  "participant": {
+    "radar_a": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 98816,
+      "sha256": "011e2faec3909fbc6f4f5f466ec1f2016b101ca48f1e598fba72abbccd81ea68",
+      "read_calls": 1083,
+      "elapsed_s": 6.127975579991471,
+      "average_bytes_per_s": 16125.390630250771,
+      "tlv_frames": 60,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 351,
+      "finished_utc": "2026-08-25T14:01:08.886624+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/capture_quality.json"
+      }
+    },
+    "radar_b": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_b/capture_20260825_100059",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 125984,
+      "sha256": "3244dcdb873fe67a4b2c6892123b325cdbf129b12412e5fe5d3ae32dc23ad511",
+      "read_calls": 1809,
+      "elapsed_s": 6.134300838981289,
+      "average_bytes_per_s": 20537.629846814278,
+      "tlv_frames": 60,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 1023,
+      "finished_utc": "2026-08-25T14:01:09.087890+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_b/capture_20260825_100059/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_b/capture_20260825_100059/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_b/capture_20260825_100059/capture_quality.json"
+      }
+    },
+    "camera_a": {
+      "video": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/camera_a/camera.mp4",
+      "frames": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/camera_a/camera_frames.jsonl",
+      "metadata": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/camera_a/camera_metadata.json",
+      "schema_version": "scanu_lab_usb_camera_v1",
+      "experimental": true,
+      "device": "/dev/v4l/by-id/usb-USB_Cam_Manufacturer_HDMI_USB_Camera_510550000000100-video-index0",
+      "backend": "ffmpeg-copy",
+      "input_format": "h264",
+      "started_monotonic_ns": 335840412624004,
+      "finished_monotonic_ns": 335851216683460,
+      "duration_s_requested": 9.0,
+      "frames_written": 272,
+      "resolution_px": [
+        3840,
+        2160
+      ],
+      "fps_requested": 30.0,
+      "fps_observed_estimate": 30.22222222222222,
+      "limitations": [
+        "camera timestamps are host-start plus nominal frame cadence, not hardware synchronization",
+        "camera imagery is visual context only and not a material or weapon classifier"
+      ],
+      "created_utc": "2026-08-25T14:01:08.914296+00:00"
+    },
+    "camera_b": null
+  },
+  "fusion_report": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/fusion_report.json",
+  "global_tracks": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/global_tracks.json",
+  "triptych_video": null,
+  "artifacts": [
+    {
+      "path": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/fusion_report.json",
+      "sha256": "a1db153bef11d68257f615220b02920920c57bb17df02c31d0645ba8c2a6756e"
+    },
+    {
+      "path": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/global_tracks.json",
+      "sha256": "131d9bdbb90b14beb4a9b08d014246c0ae364c9ddc6346415c20d98bb7ce0754"
+    },
+    {
+      "path": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/camera_a/camera.mp4",
+      "sha256": "d3ba601906f625c50d3cc08cc1e789f51139caf3f9cb7f4a122828d612a4a6af"
+    }
+  ],
+  "created_utc": "2026-08-25T14:01:09.450833+00:00",
+  "limitations": [
+    "single-host USB timestamps are not hardware chirp/exposure synchronization",
+    "fusion is geometric post-CFAR fusion, not coherent ADC/IQ fusion",
+    "reflectivity does not confirm material and does not classify a weapon"
+  ]
+}

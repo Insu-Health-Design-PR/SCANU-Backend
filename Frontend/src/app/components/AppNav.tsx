@@ -30,8 +30,8 @@ export function AppNav({ active, onChange }: AppNavProps) {
           <Shield className="w-4 h-4 text-white" />
         </div>
         <div>
-          <div className="text-sm font-semibold text-white leading-tight">SCAN-U</div>
-          <div className="text-[10px] text-white/40 uppercase tracking-wider">Monitor</div>
+          <div className="text-sm font-semibold text-white leading-tight">Threat Monitor</div>
+          <div className="text-[10px] text-white/40 uppercase tracking-wider">Live</div>
         </div>
       </div>
 

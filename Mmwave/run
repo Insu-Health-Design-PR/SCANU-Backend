@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG="${MMWAVE_CONFIG:-$ROOT/configs/server_local.json}"
+
+choose_python() {
+  local candidate
+  for candidate in \
+    "$ROOT/.venv/bin/python3" \
+    "$ROOT/../Backend/.venv/bin/python3" \
+    "$ROOT/../Backend/.venv/bin/python" \
+    "$(command -v python3 || true)"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  echo "error: Python 3 was not found" >&2
+  return 1
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" || "${1:-}" == "help" ]]; then
+  cat <<'EOF'
+Usage:
+  ./run live [CALIBRATION_SECONDS]
+  ./run preflight
+  ./run capture [CAPTURE_SECONDS] [CALIBRATION_SECONDS]
+  ./run [CAPTURE_SECONDS] [CALIBRATION_SECONDS]   # legacy capture form
+
+Examples:
+  ./run live 20
+  ./run capture 60 20
+
+The live workflow calibrates an empty room, performs an automatic participant
+entry countdown, and publishes one fused classic dashboard until Ctrl+C or the
+Backend Stop endpoint terminates it. Capture retains the established finite
+offline workflow. Neither mode opens cameras. Reflective evidence does not
+confirm material or classify a firearm.
+EOF
+  exit 0
+fi
+
+python_bin="$(choose_python)"
+export PYTHONPATH="$ROOT/software${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONDONTWRITEBYTECODE=1
+
+command_name="${1:-capture}"
+if [[ "$command_name" == "live" ]]; then
+  calibration_s="${2:-20}"
+  [[ $# -le 2 ]] || { echo "error: live accepts only CALIBRATION_SECONDS" >&2; exit 2; }
+  exec "$python_bin" -m lab.dual_server_77ghz.live_runtime \
+    --config "$CONFIG" \
+    --calibration-seconds "$calibration_s"
+fi
+
+if [[ "$command_name" == "preflight" ]]; then
+  [[ $# -eq 1 ]] || { echo "error: preflight accepts no additional arguments" >&2; exit 2; }
+  exec "$python_bin" -m lab.dual_server_77ghz.live_runtime \
+    --config "$CONFIG" \
+    --preflight-only
+fi
+
+if [[ "$command_name" == "capture" ]]; then
+  duration_s="${2:-60}"
+  calibration_s="${3:-20}"
+  [[ $# -le 3 ]] || { echo "error: capture accepts CAPTURE_SECONDS and CALIBRATION_SECONDS" >&2; exit 2; }
+else
+  duration_s="${1:-60}"
+  calibration_s="${2:-20}"
+  [[ $# -le 2 ]] || { echo "error: expected CAPTURE_SECONDS and CALIBRATION_SECONDS" >&2; exit 2; }
+fi
+
+exec "$python_bin" -m lab.dual_server_77ghz.radar_only \
+  --config "$CONFIG" \
+  --duration-s "$duration_s" \
+  --calibration-s "$calibration_s"

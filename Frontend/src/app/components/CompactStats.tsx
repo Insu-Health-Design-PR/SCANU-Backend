@@ -13,6 +13,12 @@ function fmtCount(value: number | null): string {
   return value != null ? String(value) : '—';
 }
 
+function cameraLabel(sensor: Alert['sensor']): string {
+  if (sensor === 'multi_camera') return 'Back Camera';
+  if (sensor === 'webcam') return 'Front Camera';
+  return sensor;
+}
+
 function predictionClass(prediction: string | null): string {
   if (!prediction) return 'text-white/50 bg-white/5 border-white/10';
   const p = prediction.toLowerCase();
@@ -160,7 +166,7 @@ export function CompactStats({ metrics, alerts, operatorMode, slabId = 'slab' }:
                       <div className="font-medium">{a.message}</div>
                     )}
                     <div className="text-[10px] opacity-60 mt-0.5">
-                      {new Date(a.timestamp).toLocaleTimeString()} · {a.sensor}
+                      {new Date(a.timestamp).toLocaleTimeString()} · {cameraLabel(a.sensor)}
                       {a.confidence > 0 && ` · ${(a.confidence * 100).toFixed(0)}%`}
                     </div>
                     {a.screenshotDataUrl && (

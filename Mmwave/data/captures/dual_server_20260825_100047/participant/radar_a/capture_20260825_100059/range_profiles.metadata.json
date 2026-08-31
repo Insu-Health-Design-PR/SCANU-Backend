@@ -1,0 +1,21 @@
+{
+  "schema_version": "scanu_lab_awr1843_signal_artifacts_v1",
+  "experimental": true,
+  "canonical_training_compatible": false,
+  "source": "live_usb_capture",
+  "source_raw_uart": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/raw_uart.bin",
+  "source_raw_uart_sha256": "011e2faec3909fbc6f4f5f466ec1f2016b101ca48f1e598fba72abbccd81ea68",
+  "profile_kind": "range",
+  "representation": "xwr18xx_demo_tlv_uint16_converted_to_float32",
+  "output": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_server_20260825_100047/participant/radar_a/capture_20260825_100059/range_profiles.npz",
+  "output_sha256": "42a6477ec0c5c65d10d386bcc96e4a16d561dcf33189daa6e6563522def2d96b",
+  "frame_count": 60,
+  "frames_with_profile": 59,
+  "profile_bins_min": 256,
+  "profile_bins_max": 256,
+  "created_utc": "2026-08-25T14:01:08.899863+00:00",
+  "limitations": [
+    "profile is processed xWR18xx demo output, not complex raw ADC",
+    "host timestamps describe UART receipt, not hardware acquisition"
+  ]
+}

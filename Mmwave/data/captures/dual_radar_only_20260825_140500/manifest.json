@@ -1,0 +1,119 @@
+{
+  "schema_version": "scanu_mmwave_radar_only_interactive_v1",
+  "experimental": true,
+  "cameras_opened": false,
+  "material_confirmed": false,
+  "weapon_classification": false,
+  "run_root": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500",
+  "calibration": {
+    "radar_a": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_a/capture_20260825_140500",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 326656,
+      "sha256": "b58b4c47c14c5e00502a95b6968d5021794dbb9b6144fd49714e191c519f4d6b",
+      "read_calls": 4832,
+      "elapsed_s": 20.128732782963198,
+      "average_bytes_per_s": 16228.34400566334,
+      "tlv_frames": 200,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 255,
+      "finished_utc": "2026-08-25T18:05:23.516870+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_a/capture_20260825_140500/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_a/capture_20260825_140500/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_a/capture_20260825_140500/capture_quality.json"
+      }
+    },
+    "radar_b": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_b/capture_20260825_140500",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 380704,
+      "sha256": "93159c4d28d97f9c29af6bbdf0f86fea1453211e80053f0b36d75c21ea76ee06",
+      "read_calls": 5993,
+      "elapsed_s": 20.133425873995293,
+      "average_bytes_per_s": 18909.052159460072,
+      "tlv_frames": 200,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 1023,
+      "finished_utc": "2026-08-25T18:05:23.715891+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_b/capture_20260825_140500/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_b/capture_20260825_140500/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/calibration/radar_b/capture_20260825_140500/capture_quality.json"
+      }
+    }
+  },
+  "participant": {
+    "radar_a": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 1118752,
+      "sha256": "5057725642f1249c221f2536c000d86b80e6866b98391a684b4d99c7c2627847",
+      "read_calls": 16132,
+      "elapsed_s": 60.129469828971196,
+      "average_bytes_per_s": 18605.71867974412,
+      "tlv_frames": 600,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 255,
+      "finished_utc": "2026-08-25T18:07:13.331794+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_a/capture_20260825_140610/capture_quality.json"
+      }
+    },
+    "radar_b": {
+      "ok": true,
+      "session": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610",
+      "schema_version": "scanu_lab_mmwave77_usb_v1",
+      "bytes_read": 1277504,
+      "sha256": "232ef6cb40abc79f01af28caba81679670f43e73b6394fbc03081762fb8b8682",
+      "read_calls": 19054,
+      "elapsed_s": 60.135083630972076,
+      "average_bytes_per_s": 21243.90493641938,
+      "tlv_frames": 599,
+      "tlv_parse_errors": 0,
+      "tlv_invalid_headers": 0,
+      "tlv_discarded_bytes": 3551,
+      "finished_utc": "2026-08-25T18:07:13.538141+00:00",
+      "limitations": [
+        "experimental lab capture; not a canonical SCAN-U training artifact",
+        "USB arrival time is not a hardware acquisition timestamp",
+        "USB provides processed xWR18xx demo TLVs, not raw ADC samples"
+      ],
+      "signal_artifacts": {
+        "range_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610/range_profiles.npz",
+        "noise_profiles": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610/noise_profiles.npz",
+        "capture_quality": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/participant/radar_b/capture_20260825_140610/capture_quality.json"
+      }
+    }
+  },
+  "fusion_report": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/fusion_report.json",
+  "global_tracks": "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/global_tracks.json",
+  "radar_videos": [
+    "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/radar_a_classic.mp4",
+    "/home/insu/Desktop/New_Backend/Mmwave/data/captures/dual_radar_only_20260825_140500/radar_b_classic.mp4"
+  ],
+  "created_utc": "2026-08-25T18:08:03.254562+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "radar_a": {
+    "serial_number": "R2091049",
+    "usb_location": "1-1",
+    "cli_port": "/dev/ttyACM0",
+    "data_port": "/dev/ttyACM1",
+    "assignment": "xds110_device_order_fallback"
+  },
+  "radar_b": {
+    "serial_number": "R2091049",
+    "usb_location": "7-2.4.1.1",
+    "cli_port": "/dev/ttyACM2",
+    "data_port": "/dev/ttyACM3",
+    "assignment": "xds110_device_order_fallback"
+  },
+  "camera_a": null,
+  "camera_b": null,
+  "hardware_synchronized": false
+}

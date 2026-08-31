@@ -21,9 +21,9 @@ import { SensorConfigureDrawer, ConfigureSensor } from './SensorConfigureDrawer'
 export type PreviewLayout = 'single' | 'dual' | 'triple';
 
 const PREVIEW_LAYOUT_OPTIONS: { id: PreviewLayout; label: string; hint: string }[] = [
-  { id: 'single', label: 'Single preview', hint: 'One sensor — use tabs' },
-  { id: 'dual', label: '2 preview', hint: 'RGB + Thermal side by side' },
-  { id: 'triple', label: 'Triple view', hint: 'RGB + Thermal + mmWave' },
+  { id: 'single', label: 'Single preview', hint: 'One camera — use tabs' },
+  { id: 'dual', label: '2 preview', hint: 'Front + Back side by side' },
+  { id: 'triple', label: 'Triple view', hint: 'Front + Back + Thermal' },
 ];
 
 interface MainCameraProps {
@@ -31,14 +31,14 @@ interface MainCameraProps {
   detections: Detection[];
   metrics: DashboardMetrics;
   alertsCount: number;
-  activeView: 'rgb' | 'thermal' | 'mmwave';
+  activeView: 'rgb' | 'back' | 'thermal' | 'mmwave';
   previewLayout: PreviewLayout;
   showBoxes: boolean;
   showTrails: boolean;
   showIds: boolean;
   backendOnline?: boolean;
-  sensorRunning: { webcam: boolean; thermal: boolean; mmwave: boolean };
-  onViewChange: (view: 'rgb' | 'thermal' | 'mmwave') => void;
+  sensorRunning: { webcam: boolean; thermal: boolean; mmwave: boolean; multi_camera: boolean };
+  onViewChange: (view: 'rgb' | 'back' | 'thermal' | 'mmwave') => void;
   onPreviewLayoutChange: (layout: PreviewLayout) => void;
   onToggleBoxes: () => void;
   onToggleTrails: () => void;
@@ -46,16 +46,25 @@ interface MainCameraProps {
   onScreenshot?: () => void;
 }
 
-function streamUrl(viewType: 'rgb' | 'thermal' | 'mmwave'): string {
+function streamUrl(viewType: 'rgb' | 'back' | 'thermal' | 'mmwave'): string {
   if (viewType === 'thermal') return previewUrls.thermal;
   if (viewType === 'mmwave') return previewUrls.mmwave;
-  return previewUrls.rgb;
+  if (viewType === 'back') return previewUrls.back;
+  return previewUrls.front;
 }
 
-function sensorKey(viewType: 'rgb' | 'thermal' | 'mmwave'): 'webcam' | 'thermal' | 'mmwave' {
-  if (viewType === 'rgb') return 'webcam';
+function sensorKey(viewType: 'rgb' | 'back' | 'thermal' | 'mmwave'): 'webcam' | 'multi_camera' | 'thermal' | 'mmwave' {
+  if (viewType === 'back') return 'multi_camera';
   if (viewType === 'thermal') return 'thermal';
-  return 'mmwave';
+  if (viewType === 'mmwave') return 'mmwave';
+  return 'webcam';
+}
+
+function viewLabel(viewType: 'rgb' | 'back' | 'thermal' | 'mmwave'): string {
+  if (viewType === 'back') return 'Back Camera';
+  if (viewType === 'thermal') return 'Thermal';
+  if (viewType === 'mmwave') return 'mmWave';
+  return 'Front Camera';
 }
 
 function NoStreamPanel({
@@ -103,12 +112,14 @@ export function MainCamera({
   const singlePreview = previewLayout === 'single';
   const layoutLabel = PREVIEW_LAYOUT_OPTIONS.find((o) => o.id === previewLayout)?.label ?? 'View';
 
-  const configureSensor: ConfigureSensor = sensorKey(activeView);
+  const configureSensor: ConfigureSensor =
+    activeView === 'thermal' ? 'thermal' : activeView === 'mmwave' ? 'mmwave' : 'webcam';
 
-  const renderCameraView = (viewType: 'rgb' | 'thermal' | 'mmwave') => {
+  const renderCameraView = (viewType: 'rgb' | 'back' | 'thermal' | 'mmwave') => {
     const sk = sensorKey(viewType);
     const running = sensorRunning[sk];
     const showStream = backendOnline && running;
+    const label = viewLabel(viewType);
 
     return (
       <div className="relative w-full h-full bg-black rounded-lg border border-white/10 overflow-hidden min-h-[280px]">
@@ -121,14 +132,14 @@ export function MainCamera({
           )}
           {backendOnline && !running && (
             <NoStreamPanel
-              title={`${viewType.toUpperCase()} runner stopped`}
-              detail={`POST /api/run/${sk} from Admin panel to start live preview`}
+              title={`${label} runner stopped`}
+              detail={`POST /api/${sk === 'multi_camera' ? 'back_camera' : sk}/run to start live preview`}
             />
           )}
           {showStream && (
             <img
               src={streamUrl(viewType)}
-              alt={`${viewType} live`}
+              alt={`${label} live`}
               className="w-full h-full object-contain bg-black"
             />
           )}
@@ -159,7 +170,7 @@ export function MainCamera({
         )}
 
         <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm px-2 py-1 rounded">
-          <span className="text-xs text-white/80">{device?.name || 'Layer 8'}</span>
+          <span className="text-xs text-white/80">{label}</span>
         </div>
 
         {backendOnline && metrics.inferActive && (
@@ -188,7 +199,8 @@ export function MainCamera({
       <div className="shrink-0 flex items-end gap-0 px-4 pt-2 bg-[#1c2028] border-b border-white/10">
         {(
           [
-            { id: 'rgb' as const, label: 'RGB', icon: Camera },
+            { id: 'rgb' as const, label: 'Front', icon: Camera },
+            { id: 'back' as const, label: 'Back', icon: Camera },
             { id: 'thermal' as const, label: 'Thermal', icon: Thermometer },
             { id: 'mmwave' as const, label: 'mmWave', icon: Radio },
           ] as const
@@ -350,14 +362,14 @@ export function MainCamera({
         {previewLayout === 'dual' && (
           <div className="grid grid-cols-2 gap-4 h-full">
             {renderCameraView('rgb')}
-            {renderCameraView('thermal')}
+            {renderCameraView('back')}
           </div>
         )}
         {previewLayout === 'triple' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
             {renderCameraView('rgb')}
+            {renderCameraView('back')}
             {renderCameraView('thermal')}
-            {renderCameraView('mmwave')}
           </div>
         )}
         {previewLayout === 'single' && renderCameraView(activeView)}

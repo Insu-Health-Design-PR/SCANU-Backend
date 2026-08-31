@@ -13,14 +13,14 @@ interface SlabDetailViewProps {
   alerts: Alert[];
   operatorMode: OperatorMode;
   backendOnline: boolean;
-  sensorRunning: { webcam: boolean; thermal: boolean; mmwave: boolean };
-  activeView: 'rgb' | 'thermal' | 'mmwave';
+  sensorRunning: { webcam: boolean; thermal: boolean; mmwave: boolean; multi_camera: boolean };
+  activeView: 'rgb' | 'back' | 'thermal' | 'mmwave';
   previewLayout: PreviewLayout;
   showBoxes: boolean;
   showIds: boolean;
   showTrails: boolean;
   onBack: () => void;
-  onViewChange: (view: 'rgb' | 'thermal' | 'mmwave') => void;
+  onViewChange: (view: 'rgb' | 'back' | 'thermal' | 'mmwave') => void;
   onPreviewLayoutChange: (layout: PreviewLayout) => void;
   onToggleBoxes: () => void;
   onToggleIds: () => void;

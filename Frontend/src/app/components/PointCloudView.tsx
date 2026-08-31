@@ -1,239 +1,98 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { LAYER8 } from '../api/layer8';
 
-interface Point3D {
-  x: number;
-  y: number;
-  z: number;
-  color: string;
+interface LiveSummary {
+  state: string;
+  persons: number;
+  points: number;
+  alignmentMs: number | null;
+  calibrationId: string;
 }
 
+const EMPTY: LiveSummary = {
+  state: 'STOPPED',
+  persons: 0,
+  points: 0,
+  alignmentMs: null,
+  calibrationId: '',
+};
+
 export function PointCloudView() {
-  const topCanvasRef = useRef<HTMLCanvasElement>(null);
-  const sideCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [points, setPoints] = useState<Point3D[]>([]);
-  const [rowNow, setRowNow] = useState(10);
-  const [trailRaw, setTrailRaw] = useState(239);
+  const [summary, setSummary] = useState<LiveSummary>(EMPTY);
 
-  // Generate random point cloud similar to the image
   useEffect(() => {
-    const generatePoints = () => {
-      const newPoints: Point3D[] = [];
-      const colors = ['#FFFF00', '#00FFFF', '#FFD700', '#ADFF2F'];
-
-      // Create central cluster (similar to image)
-      const centerX = 150;
-      const centerY = 150;
-      const centerZ = 60;
-
-      const numPoints = 8 + Math.floor(Math.random() * 5);
-      for (let i = 0; i < numPoints; i++) {
-        newPoints.push({
-          x: centerX + (Math.random() - 0.5) * 25,
-          y: centerY + (Math.random() - 0.5) * 35,
-          z: centerZ + (Math.random() - 0.5) * 15,
-          color: colors[Math.floor(Math.random() * colors.length)],
-        });
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const [statusResponse, metricsResponse] = await Promise.all([
+          fetch(LAYER8.mmwaveLiveStatus(), { cache: 'no-store' }),
+          fetch(LAYER8.mmwaveLiveMetrics(), { cache: 'no-store' }),
+        ]);
+        const status = statusResponse.ok ? await statusResponse.json() : {};
+        const metricsEnvelope = metricsResponse.ok ? await metricsResponse.json() : {};
+        const metrics = metricsEnvelope?.metrics ?? {};
+        if (!cancelled) {
+          setSummary({
+            state: String(status?.live?.state ?? metrics?.state ?? 'STOPPED'),
+            persons: Number(metrics?.fused?.global_person_count ?? 0),
+            points: Number(metrics?.fused?.point_count ?? metrics?.fused_points?.length ?? 0),
+            alignmentMs:
+              metrics?.quality?.alignment_error_ms === null || metrics?.quality?.alignment_error_ms === undefined
+                ? null
+                : Number(metrics.quality.alignment_error_ms),
+            calibrationId: String(metrics?.calibration_id ?? status?.live?.calibration_id ?? ''),
+          });
+        }
+      } catch {
+        if (!cancelled) setSummary(EMPTY);
       }
-
-      // Add some scattered points
-      for (let i = 0; i < 3; i++) {
-        newPoints.push({
-          x: 50 + Math.random() * 250,
-          y: 50 + Math.random() * 250,
-          z: 20 + Math.random() * 80,
-          color: colors[Math.floor(Math.random() * colors.length)],
-        });
-      }
-
-      setPoints(newPoints);
-      setRowNow(10 + Math.floor(Math.random() * 3));
-      setTrailRaw(238 + Math.floor(Math.random() * 4));
     };
-
-    generatePoints();
-    const interval = setInterval(generatePoints, 180);
-    return () => clearInterval(interval);
+    void poll();
+    const timer = window.setInterval(poll, 1000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
-  // Render Top XY view
-  useEffect(() => {
-    const canvas = topCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    // Dark purple/gray background like the image
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#1a0f2e');
-    gradient.addColorStop(1, '#2a1a3e');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw grid - denser like in the image
-    ctx.strokeStyle = 'rgba(200, 200, 200, 0.25)';
-    ctx.lineWidth = 0.8;
-    const gridSize = 35;
-
-    for (let x = 0; x <= canvas.width; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= canvas.height; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-
-    // Axes labels
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText('Top XY', 20, 30);
-
-    ctx.font = '14px monospace';
-    ctx.fillText('X', canvas.width - 30, canvas.height - 15);
-    ctx.fillText('Y', 15, 20);
-
-    // Draw center axis lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 1.5;
-    // Vertical center line
-    ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0);
-    ctx.lineTo(canvas.width / 2, canvas.height);
-    ctx.stroke();
-    // Horizontal center line
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height / 2);
-    ctx.lineTo(canvas.width, canvas.height / 2);
-    ctx.stroke();
-
-    // Draw points with glow effect
-    points.forEach((point) => {
-      const x = (point.x / 300) * canvas.width;
-      const y = (point.y / 300) * canvas.height;
-
-      // Glow effect
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = point.color;
-
-      ctx.fillStyle = point.color;
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-    });
-  }, [points]);
-
-  // Render Side YZ view
-  useEffect(() => {
-    const canvas = sideCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    // Dark purple/gray background
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#1a0f2e');
-    gradient.addColorStop(1, '#2a1a3e');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw grid
-    ctx.strokeStyle = 'rgba(200, 200, 200, 0.25)';
-    ctx.lineWidth = 0.8;
-    const gridSize = 35;
-
-    for (let x = 0; x <= canvas.width; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= canvas.height; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-
-    // Axes labels
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText('Side YZ', 20, 30);
-
-    ctx.font = '14px monospace';
-    ctx.fillText('Y', canvas.width - 30, canvas.height - 15);
-    ctx.fillText('Z', 15, 20);
-
-    // Draw center axis lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 1.5;
-    // Vertical center line
-    ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0);
-    ctx.lineTo(canvas.width / 2, canvas.height);
-    ctx.stroke();
-    // Horizontal center line
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height / 2);
-    ctx.lineTo(canvas.width, canvas.height / 2);
-    ctx.stroke();
-
-    // Draw points with glow effect
-    points.forEach((point) => {
-      const y = (point.y / 300) * canvas.width;
-      const z = (point.z / 120) * canvas.height;
-
-      // Glow effect
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = point.color;
-
-      ctx.fillStyle = point.color;
-      ctx.beginPath();
-      ctx.arc(y, z, 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-    });
-  }, [points]);
-
   return (
-    <div className="relative w-full h-full flex flex-col bg-[#0a0514]">
-      {/* Title */}
-      <div className="px-6 py-3 bg-gradient-to-r from-purple-900/30 to-transparent">
-        <h2 className="text-white text-lg font-medium tracking-wide">mmWave Point Cloud (Top + Side)</h2>
+    <div className="relative flex h-full w-full flex-col bg-[#030b16]">
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+        <div>
+          <h2 className="text-lg font-medium tracking-wide text-white">Calibrated Dual-mmWave Fusion</h2>
+          <p className="text-xs text-white/45">Measured A+B post-CFAR returns in one world frame</p>
+        </div>
+        <span className="rounded bg-cyan-400/10 px-2 py-1 font-mono text-xs text-cyan-300">
+          {summary.state}
+        </span>
       </div>
 
-      {/* Top View - 2/3 height */}
-      <div className="flex-[2] relative border-b border-white/10">
-        <canvas ref={topCanvasRef} className="w-full h-full" />
+      <div className="min-h-0 flex-1 bg-black">
+        <img
+          src={`${LAYER8.previewMmwave()}?side=fused`}
+          alt="Live calibrated dual-mmWave fused dashboard"
+          className="h-full w-full object-contain"
+        />
       </div>
 
-      {/* Side View - 1/3 height */}
-      <div className="flex-1 relative border-b border-white/10">
-        <canvas ref={sideCanvasRef} className="w-full h-full" />
+      <div className="grid grid-cols-4 gap-3 border-t border-white/10 bg-black/50 px-5 py-2 text-xs">
+        <Metric label="Global persons" value={String(summary.persons)} />
+        <Metric label="Fused points" value={String(summary.points)} />
+        <Metric label="Alignment" value={summary.alignmentMs === null ? '—' : `${summary.alignmentMs.toFixed(1)} ms`} />
+        <Metric label="Calibration" value={summary.calibrationId || '—'} />
       </div>
+      <p className="px-5 py-1 text-[10px] text-amber-300/70">
+        Experimental reflectivity evidence does not confirm material or classify a weapon.
+      </p>
+    </div>
+  );
+}
 
-      {/* Bottom Stats */}
-      <div className="px-6 py-2 bg-black/40 border-t border-white/20">
-        <p className="text-white/90 text-sm font-mono tracking-wider">
-          row_now: {rowNow} | trail_raw: {trailRaw} | cloud_used: {points.length}
-        </p>
-      </div>
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="truncate">
+      <span className="text-white/45">{label} </span>
+      <span className="font-mono text-white/90">{value}</span>
     </div>
   );
 }

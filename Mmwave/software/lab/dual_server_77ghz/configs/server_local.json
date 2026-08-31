@@ -1,0 +1,37 @@
+{
+  "schema_version": "scanu_lab_dual_server_77ghz_config_v1",
+  "experimental": true,
+  "output_root": "/home/insu/Desktop/New_Backend/Mmwave/data/captures",
+  "sensor_distance_m": 5.0,
+  "radar_profile": "software/lab/mmwave77_usb/configs/awr1843boost_sdk_3_4_profile_3d.cfg",
+  "radar_a_usb_location": "",
+  "radar_b_usb_location": "",
+  "radar_start_stagger_ms": 50.0,
+  "camera_lead_s": 1.5,
+  "camera_a": {
+    "device": "auto",
+    "width": 3840,
+    "height": 2160,
+    "fps": 30.0,
+    "backend": "auto",
+    "input_format": "auto"
+  },
+  "camera_b": {
+    "enabled": false,
+    "device": "auto",
+    "width": 3840,
+    "height": 2160,
+    "fps": 30.0,
+    "backend": "auto",
+    "input_format": "auto"
+  },
+  "calibration_seconds": 20.0,
+  "entry_delay_seconds": 10.0,
+  "capture_seconds": 20.0,
+  "window_tolerance_s": 0.25,
+  "render_fps": 2,
+  "render_dpi": 100,
+  "classic_human_centric_dashboard": true,
+  "human_focus_temporal_history_windows": 2,
+  "human_focus_temporal_voxel_m": 0.08
+}
