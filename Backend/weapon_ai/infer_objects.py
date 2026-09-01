@@ -40,7 +40,7 @@ from collections.abc import Mapping
 from typing import Any
 import urllib.request
 from pathlib import Path
-from time import sleep, time
+from time import monotonic_ns, sleep, time
 
 import cv2
 import numpy as np
@@ -137,7 +137,14 @@ from weapon_ai.overlay.mmwave_fusion import (
     draw_mmwave_fusion_overlay,
     fusion_config_from_args,
     load_mmwave_metrics,
+    mmwave_age_ms,
+    mmwave_fresh_for_threat,
 )
+from weapon_ai.latency.tracker import FrameTiming, LatencyTracker
+from weapon_ai.pipeline.latest_slot import LatestJob
+from weapon_ai.pipeline.tracked_roi import TrackedRoiConfig, box_shift_frac, should_refresh_person
+from weapon_ai.pipeline.shared_infer import load_shared_infer_config
+from weapon_ai.detection.gun_batch import prioritize_crop_indices, tensorrt_batch_range
 from weapon_ai.live_preprocess import (
     downscale_to_max_width,
     resize_bgr_max_width,
@@ -441,7 +448,44 @@ def main() -> None:
         metavar="N",
         help="Live webcam/thermal: run YOLO+gun infer every N captured frames (1=every frame). "
         "Overlay/IPC still updates every frame; with ByteTrack on, gap frames use MOT prediction "
-        "(use N=2 at 30fps capture for ~15 infer/s and smoother 30fps MJPEG).",
+        "(use N=2 at 30fps capture for ~15 infer/s and smoother 30fps MJPEG). "
+        "infer_fps in live metrics is loop throughput (deprecated alias of loop_fps).",
+    )
+    p.add_argument(
+        "--mmwave_max_age_ms",
+        type=float,
+        default=300.0,
+        help="Reject mmWave evidence from threat fusion when older than this (still drawn if stale).",
+    )
+    add_bool_optional_arg(
+        p,
+        "--tracked_roi",
+        default=True,
+        help_text="Reuse ByteTrack person boxes between person-YOLO passes; always re-run gun on current pixels.",
+    )
+    p.add_argument(
+        "--person_interval_frames",
+        type=int,
+        default=3,
+        help="When --tracked_roi: run person YOLO at least every N processed infer cycles.",
+    )
+    p.add_argument(
+        "--max_person_age_ms",
+        type=float,
+        default=100.0,
+        help="Force person YOLO when last person detection is older than this.",
+    )
+    p.add_argument(
+        "--gun_imgsz_mode",
+        type=str,
+        default="fixed",
+        help="Gun crop imgsz: 'fixed' (use --gun_imgsz) or 'adaptive' (512/640/960 buckets).",
+    )
+    add_bool_optional_arg(
+        p,
+        "--shared_infer_service",
+        default=False,
+        help_text="Experimental shared dual-camera infer (default off; see docs/shared_dual_camera_inference.md).",
     )
     p.add_argument(
         "--live_infer_max_width",
@@ -1408,6 +1452,27 @@ def main() -> None:
             YOLO(str(gpath), task="detect") if str(gpath).endswith(".engine") else YOLO(str(gpath))
         )
         print(f"Firearm detector: {gpath}", flush=True)
+        gmin, gmax = tensorrt_batch_range(gun_detector)
+        args._gun_max_batch = int(gmax)
+        print(
+            f"Firearm YOLO TensorRT/batch: supported 1..{gmax}; "
+            f"split micro-batches if person count exceeds max. "
+            f"imgsz_mode={getattr(args, 'gun_imgsz_mode', 'fixed')}",
+            flush=True,
+        )
+        try:
+            dummy = np.zeros((64, 64, 3), dtype=np.uint8)
+            for bsz in (1, min(2, gmax), min(4, gmax)):
+                gun_detector.predict(
+                    source=[dummy] * bsz if bsz > 1 else dummy,
+                    conf=0.25,
+                    imgsz=int(args.gun_imgsz),
+                    verbose=False,
+                    device=det_device,
+                )
+            print(f"Firearm YOLO warmup: batch sizes {sorted({1, min(2, gmax), min(4, gmax)})} at imgsz={args.gun_imgsz}", flush=True)
+        except Exception as exc:
+            print(f"Warning: firearm YOLO warmup skipped: {exc}", flush=True)
 
     gun_binary_class_sets: tuple[set[int], set[int]] | None = None
     gun_model_names: dict = {}
@@ -1584,6 +1649,7 @@ def main() -> None:
                         f"→ {ff_try.width}x{ff_try.height} preview via {ff_try.decoder_name}{extra}",
                         flush=True,
                     )
+                    print(ff_try.path_log(), flush=True)
                 except Exception as exc:
                     print(
                         f"Warning: FFmpeg CUDA capture failed ({exc}); falling back.",
@@ -1888,6 +1954,8 @@ def main() -> None:
     def _infer_annotations(
         thermal_frame: np.ndarray,
         gun_source: np.ndarray | None = None,
+        person_rows_override: list | None = None,
+        timing: FrameTiming | None = None,
     ) -> tuple[
         list[tuple[int, int, int, int, float, int | None, str, float]],
         list[tuple[int, int, int, int, str, str, float]],
@@ -1896,7 +1964,12 @@ def main() -> None:
     ]:
         h, w = thermal_frame.shape[:2]
         rows: list[tuple[int, int, int, int, float, int | None, str, float]] = []
-        if not args.gun_only and detector is not None:
+        if person_rows_override is not None:
+            rows = list(person_rows_override)
+            if timing is not None:
+                timing.person_ran = False
+                timing.person_done_ns = monotonic_ns()
+        elif not args.gun_only and detector is not None:
             _person_pred_conf = float(args.conf)
             _pc_floor = float(getattr(args, "person_conf", 0.0) or 0.0)
             if _pc_floor > _person_pred_conf:
@@ -1927,6 +2000,10 @@ def main() -> None:
                     yolo_tag = id_to_name.get(cid, str(cid)) if cid is not None else "obj"
                     det_c = float(conf_np[i]) if conf_np is not None and i < len(conf_np) else float(args.conf)
                     rows.append((x1, y1, x2, y2, 0.0, cid, yolo_tag, det_c))
+
+        if timing is not None and timing.person_done_ns is None:
+            timing.person_ran = person_rows_override is None and detector is not None and not args.gun_only
+            timing.person_done_ns = monotonic_ns()
 
         if bool(args.yolo_non_person_inside_person) and rows:
             person_boxes = [(int(r[0]), int(r[1]), int(r[2]), int(r[3])) for r in rows if r[5] == 0]
@@ -2367,6 +2444,14 @@ def main() -> None:
                     pad_px=crop_pad_px,
                     min_box_px=max(1, int(round(float(args.min_box_px) * gsx))),
                 )
+                if timing is not None:
+                    timing.gun_crop_done_ns = monotonic_ns()
+                if crops:
+                    order = prioritize_crop_indices(
+                        crops,
+                        new_ridx=set() if person_rows_override is not None else {c.ridx for c in crops},
+                    )
+                    crops = [crops[i] for i in order]
                 gres_list = predict_gun_on_crops(
                     gun_detector,
                     crops,
@@ -2374,7 +2459,12 @@ def main() -> None:
                     imgsz=int(args.gun_imgsz),
                     device=det_device,
                     batched=bool(getattr(args, "gun_batch", True)),
+                    max_batch=int(getattr(args, "_gun_max_batch", 8) or 8),
+                    imgsz_mode=str(getattr(args, "gun_imgsz_mode", "fixed") or "fixed"),
                 )
+                if timing is not None:
+                    timing.gun_ran = True
+                    timing.gun_done_ns = monotonic_ns()
                 for crop, gres in zip(crops, gres_list):
                     if gres is not None and hasattr(gres, "names") and gres.names:
                         gnames = dict(gres.names)
@@ -2444,6 +2534,11 @@ def main() -> None:
                 for ridx, (x1, y1, x2, y2, _prob, cid, ytag, det_c) in enumerate(rows)
             ]
         probs = [r[4] for r in rows] if rows else []
+        if timing is not None:
+            now_ns = monotonic_ns()
+            timing.person_done_ns = timing.person_done_ns or now_ns
+            timing.gun_crop_done_ns = timing.gun_crop_done_ns or now_ns
+            timing.gun_done_ns = timing.gun_done_ns or now_ns
         return rows, gun_boxes, int(gun_count), probs, person_poses, person_hands, person_grip_state
 
     is_batch_file = live_frame_poll_path is None and _is_batch_video_file_source(src)
@@ -2453,6 +2548,8 @@ def main() -> None:
     def _infer_annotations_for_frame(
         frame: np.ndarray,
         gun_source: np.ndarray | None = None,
+        person_rows_override: list | None = None,
+        timing: FrameTiming | None = None,
     ) -> tuple[
         list[tuple[int, int, int, int, float, int | None, str, float]],
         list[tuple[int, int, int, int, str, str, float, int, str]],
@@ -2465,16 +2562,25 @@ def main() -> None:
         if not _frame_valid_for_infer(frame):
             return [], [], 0, [], {}, {}, {}
         infer_mw = int(getattr(args, "live_infer_max_width", 0) or 0)
+        override = person_rows_override
+        work = frame
+        sx = sy = 1.0
         if is_live_capture and infer_mw > 0:
-            small, sx, sy = downscale_to_max_width(frame, infer_mw, use_gpu=use_gpu_preprocess)
-            rows, guns, gc, probs, poses, hands, grips = _infer_annotations(small, gun_source=gun_source)
-            if sx != 1.0 or sy != 1.0:
-                rows = scale_person_rows(rows, sx, sy)
-                guns = scale_gun_boxes(guns, sx, sy)
-                poses = scale_person_poses(poses, sx, sy)
-                hands = scale_person_hands(hands, sx, sy)
-            return rows, guns, gc, probs, poses, hands, grips
-        return _infer_annotations(frame, gun_source=gun_source)
+            work, sx, sy = downscale_to_max_width(frame, infer_mw, use_gpu=use_gpu_preprocess)
+            if override is not None and (sx != 1.0 or sy != 1.0):
+                override = scale_person_rows(override, 1.0 / sx, 1.0 / sy)
+        rows, guns, gc, probs, poses, hands, grips = _infer_annotations(
+            work,
+            gun_source=gun_source,
+            person_rows_override=override,
+            timing=timing,
+        )
+        if sx != 1.0 or sy != 1.0:
+            rows = scale_person_rows(rows, sx, sy)
+            guns = scale_gun_boxes(guns, sx, sy)
+            poses = scale_person_poses(poses, sx, sy)
+            hands = scale_person_hands(hands, sx, sy)
+        return rows, guns, gc, probs, poses, hands, grips
 
     if is_batch_file and int(args.batch_warmup_passes) > 0:
         wp = max(0, int(args.batch_warmup_passes))
@@ -2584,23 +2690,32 @@ def main() -> None:
     infer_pool: concurrent.futures.ThreadPoolExecutor | None = None
     if use_infer_pool:
         infer_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-
-    use_pipeline_publish = is_live_capture and bool(getattr(args, "live_pipeline_publish", True))
-    publish_pool: concurrent.futures.ThreadPoolExecutor | None = None
-    if use_pipeline_publish and (
-        args.live_jpg is not None or live_ipc_writer is not None or live_ipc_bgr_writer is not None
-    ):
-        publish_workers = 1  # IPC mmap writers must not be updated concurrently
-        if int(getattr(args, "live_publish_workers", 1) or 1) > 1:
-            print(
-                "Note: live_publish_workers capped to 1 for shared-memory IPC preview.",
-                flush=True,
-            )
-        publish_pool = concurrent.futures.ThreadPoolExecutor(max_workers=publish_workers)
+    shared_cfg = load_shared_infer_config(
+        cli_flag=bool(getattr(args, "shared_infer_service", False))
+    )
+    if shared_cfg.enabled:
         print(
-            f"Live IPC publish: background thread pool ({publish_workers} workers).",
+            "Shared dual-camera infer is experimental and not attached to this process; "
+            "keeping independent per-camera pool. See docs/shared_dual_camera_inference.md",
             flush=True,
         )
+
+    latency = LatencyTracker()
+    tracked_roi_cfg = TrackedRoiConfig(
+        enabled=bool(getattr(args, "tracked_roi", True)),
+        person_interval_frames=max(1, int(getattr(args, "person_interval_frames", 3) or 3)),
+        max_person_age_ms=float(getattr(args, "max_person_age_ms", 100.0) or 100.0),
+        fallback_fixed_stride=not bool(getattr(args, "tracked_roi", True)),
+    )
+    if tracked_roi_cfg.enabled and not tracked_roi_cfg.fallback_fixed_stride:
+        print(
+            f"Tracked ROI reuse: person YOLO every {tracked_roi_cfg.person_interval_frames} "
+            f"infer cycle(s) or ≤{tracked_roi_cfg.max_person_age_ms:.0f}ms; gun always on current pixels.",
+            flush=True,
+        )
+
+    use_pipeline_publish = is_live_capture and bool(getattr(args, "live_pipeline_publish", True))
+    publish_job: LatestJob | None = None
 
     _full_publish_pending = False
     _last_full_publish_ts = 0.0
@@ -2656,6 +2771,17 @@ def main() -> None:
 
     def _publish_live_outputs_owned(vis_bgr: np.ndarray) -> None:
         _publish_live_outputs(vis_bgr.copy())
+
+    if use_pipeline_publish and (
+        args.live_jpg is not None or live_ipc_writer is not None or live_ipc_bgr_writer is not None
+    ):
+        if int(getattr(args, "live_publish_workers", 1) or 1) > 1:
+            print(
+                "Note: live_publish_workers capped to 1 latest-frame slot (no unbounded IPC queue).",
+                flush=True,
+            )
+        publish_job = LatestJob(_publish_live_outputs_owned, name="live-ipc-publish")
+        print("Live IPC publish: latest-frame slot (never queues stale overlays).", flush=True)
 
     print("Summary prints when the video ends or you press q.")
     all_probs: list[float] = []
@@ -2719,6 +2845,15 @@ def main() -> None:
     last_frame_ts: float | None = None
     fps_ema: float | None = None
     infer_future: concurrent.futures.Future | None = None
+    infer_timing: FrameTiming | None = None
+    last_person_infer_ns: int | None = None
+    last_person_boxes: list[tuple[int, int, int, int]] = []
+    frames_since_person = 10**9
+    last_track_ids: set[int] = set()
+    frame_capture_ns = 0
+    force_metrics_write = False
+    force_person_next = False
+    pending_record_timing: FrameTiming | None = None
     live_metrics_every_n = max(1, int(getattr(args, "live_metrics_every_n", 0) or 0))
     if int(getattr(args, "live_metrics_every_n", 0) or 0) <= 0:
         live_metrics_every_n = 15 if (live_frame_poll_path is None and not is_batch_file) else 1
@@ -2952,6 +3087,8 @@ def main() -> None:
                     last_capture_seq = cap_seq
                     bgr_full = live_frame_buf
                     ok = True
+                    cap_ns = getattr(live_capture, "last_capture_ns", 0)
+                    frame_capture_ns = int(cap_ns) if cap_ns else monotonic_ns()
                 elif v4l2_cap is not None:
                     bgr_full = v4l2_cap.read()
                     ok = bgr_full is not None
@@ -3028,6 +3165,7 @@ def main() -> None:
                         vis_buf = np.empty_like(thermal)
                     np.copyto(vis_buf, thermal)
                     vis = vis_buf
+                latency.note_loop()
                 h, w = vis.shape[:2]
                 if infer_pool is not None:
                     if infer_future is not None and infer_future.done():
@@ -3043,17 +3181,86 @@ def main() -> None:
                                 all_probs.extend(probs)
                                 frame_max_probs.append(max(probs))
                             last_infer_frame = frame_count
+                            latency.note_detection()
+                            if infer_timing is not None:
+                                infer_timing.gun_done_ns = infer_timing.gun_done_ns or monotonic_ns()
+                                pending_record_timing = infer_timing
+                                if infer_timing.person_ran:
+                                    last_person_infer_ns = infer_timing.person_done_ns
+                                    last_person_boxes = [
+                                        (int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+                                        for r in cached_rows
+                                        if r[5] in (None, 0)
+                                    ]
+                                    frames_since_person = 0
+                                force_metrics_write = True
                         except Exception as exc:
                             print(f"Warning: async inference failed on frame {frame_count}: {exc}", flush=True)
                         infer_future = None
+                        infer_timing = None
 
                     if infer_future is None and (frame_count - last_infer_frame) >= infer_every_n:
-                        # Use oriented preview pixels — raw snapshot skips capture_rotate.
                         infer_frame = thermal.copy()
                         gun_src = _gun_src_for_infer()
+                        mm_score = None
+                        if bool(getattr(args, "mmwave_overlay", False)):
+                            mm_score = compute_mmwave_torso_score(
+                                getattr(args, "_mmwave_metrics_cache", None),
+                                max_age_ms=float(getattr(args, "mmwave_max_age_ms", 300.0) or 300.0),
+                            )
+                        person_age = None
+                        if last_person_infer_ns is not None:
+                            person_age = (monotonic_ns() - last_person_infer_ns) / 1e6
+                        box_shifted = False
+                        if last_person_boxes and cached_rows:
+                            cur = [
+                                (int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+                                for r in cached_rows
+                                if r[5] in (None, 0)
+                            ]
+                            if len(cur) != len(last_person_boxes):
+                                box_shifted = True
+                            else:
+                                box_shifted = any(
+                                    box_shift_frac(a, b) > tracked_roi_cfg.max_box_shift_frac
+                                    for a, b in zip(last_person_boxes, cur)
+                                )
+                        low_score = any(
+                            float(r[7]) < tracked_roi_cfg.min_track_score
+                            for r in cached_rows
+                            if r[5] in (None, 0)
+                        )
+                        run_person = should_refresh_person(
+                            cfg=tracked_roi_cfg,
+                            frames_since_person=frames_since_person + 1,
+                            person_age_ms=person_age,
+                            unmatched_or_new=bool(cached_rows) and not last_track_ids,
+                            track_lost=force_person_next,
+                            low_track_score=low_score,
+                            box_shifted=box_shifted,
+                            mmwave_high_risk=(mm_score or 0.0) >= tracked_roi_cfg.mmwave_high_risk,
+                            force=force_person_next,
+                        )
+                        force_person_next = False
+                        override = None if run_person else [
+                            r for r in cached_rows if r[5] in (None, 0)
+                        ]
+                        if override is not None and not override:
+                            override = None
+                            run_person = True
+                        infer_timing = FrameTiming(
+                            capture_ns=int(frame_capture_ns) or monotonic_ns(),
+                            accepted_ns=monotonic_ns(),
+                        )
+                        infer_timing.infer_submit_ns = monotonic_ns()
                         if _frame_valid_for_infer(infer_frame):
+                            frames_since_person += 1
                             infer_future = infer_pool.submit(
-                                _infer_annotations_for_frame, infer_frame, gun_src
+                                _infer_annotations_for_frame,
+                                infer_frame,
+                                gun_src,
+                                override,
+                                infer_timing,
                             )
                 else:
                     if (frame_count - last_infer_frame) >= infer_every_n:
@@ -3079,7 +3286,17 @@ def main() -> None:
                 gun_count = int(cached_gun_count)
                 row_track: dict[int, int] = {}
                 if byte_tracker is not None:
+                    prev_ids = last_track_ids
                     row_track = byte_tracker.update(rows, (h, w), thermal)
+                    new_ids = {int(v) for v in row_track.values() if int(v) > 0}
+                    if prev_ids:
+                        if not new_ids or (prev_ids - new_ids):
+                            force_person_next = True
+                        if new_ids - prev_ids:
+                            force_person_next = True
+                    last_track_ids = new_ids
+                if pending_record_timing is not None:
+                    pending_record_timing.tracking_done_ns = monotonic_ns()
 
                 # Consistency gate: a gun box is only kept if its owner person is a
                 # confirmed track this frame. Person boxes are only *drawn* when tracked
@@ -3583,14 +3800,22 @@ def main() -> None:
                     if not hasattr(args, "_mmwave_metrics_cache"):
                         args._mmwave_metrics_cache = None
                     if args._mmwave_metrics_cache is None or frame_count % 2 == 0:
-                        args._mmwave_metrics_cache = load_mmwave_metrics(
+                        loaded = load_mmwave_metrics(
                             str(getattr(args, "mmwave_metrics_path", "") or ""),
                             sensor_distance_m=float(
                                 getattr(args, "mmwave_sensor_distance_m", 5.0) or 5.0
                             ),
                         )
+                        max_age = float(getattr(args, "mmwave_max_age_ms", 300.0) or 300.0)
+                        draw_ttl = max(max_age, 1000.0)
+                        if loaded is None or not mmwave_fresh_for_threat(loaded, max_age_ms=draw_ttl):
+                            args._mmwave_metrics_cache = None
+                        else:
+                            args._mmwave_metrics_cache = loaded
                     mmwave_metrics_cached = args._mmwave_metrics_cache
                     if mmwave_metrics_cached:
+                        age = mmwave_age_ms(mmwave_metrics_cached)
+                        latency.note_mmwave_age_ms(age)
                         bt_for_fusion = []
                         for ridx in range(len(rows)):
                             if rows[ridx][5] not in (None, 0):
@@ -3677,18 +3902,10 @@ def main() -> None:
                             cv2.resize(vis, (panel_w, panel_h), dst=panel_out_buf, interpolation=cv2.INTER_LINEAR)
                             vis_out = panel_out_buf
 
-                if (
-                    args.live_jpg is not None
-                    or live_ipc_writer is not None
-                    or live_ipc_bgr_writer is not None
-                ):
-                    if publish_pool is not None:
-                        publish_pool.submit(_publish_live_outputs_owned, vis_out)
-                    else:
-                        _publish_live_outputs(vis_out)
-
                 if args.live_metrics_json is not None and (
-                    frame_count % live_metrics_every_n == 0 or frame_count == 1
+                    force_metrics_write
+                    or frame_count % live_metrics_every_n == 0
+                    or frame_count == 1
                 ):
                     person_rows = [r for r in rows if r[5] in (None, 0)]
                     persons_total = int(len(person_rows))
@@ -3720,12 +3937,30 @@ def main() -> None:
                         prediction = _threat_bucket(risk_score, unsafe_thr)
                     object_gun_peak = max(person_object_peak.values(), default=0.0)
                     weapon_gun_peak = max(visible_weapon_peak.values(), default=0.0)
+                    det_age = latency.detection_age_ms()
+                    mm_age = None
+                    mm_cache = getattr(args, "_mmwave_metrics_cache", None)
+                    if bool(getattr(args, "mmwave_overlay", False)) and mm_cache:
+                        mm_age = mmwave_age_ms(mm_cache)
+                    loop_fps = latency.loop_fps_ema if latency.loop_fps_ema is not None else fps_ema
+                    if pending_record_timing is not None:
+                        pending_record_timing.alert_published_ns = monotonic_ns()
+                        latency.record_stages(pending_record_timing)
+                        pending_record_timing = None
                     payload = {
                         "ts": time(),
                         "frame": int(frame_count),
                         "frame_w": int(vis.shape[1]),
                         "frame_h": int(vis.shape[0]),
-                        "infer_fps": round(float(fps_ema), 2) if fps_ema is not None else None,
+                        "infer_fps": round(float(loop_fps), 2) if loop_fps is not None else None,
+                        "loop_fps": round(float(loop_fps), 2) if loop_fps is not None else None,
+                        "detection_fps": (
+                            round(float(latency.detection_fps_ema), 2)
+                            if latency.detection_fps_ema is not None
+                            else None
+                        ),
+                        "detection_age_ms": None if det_age is None else round(float(det_age), 2),
+                        "mmwave_age_ms": None if mm_age is None else round(float(mm_age), 2),
                         "unsafe_score": round(float(risk_score), 4),
                         "unsafe_pct": unsafe_pct,
                         "unsafe_threshold": unsafe_thr,
@@ -3736,10 +3971,15 @@ def main() -> None:
                         "persons_total": persons_total,
                         "prediction": prediction,
                         "mmwave_torso_score": (
-                            compute_mmwave_torso_score(args._mmwave_metrics_cache)
-                            if bool(getattr(args, "mmwave_overlay", False))
-                            and getattr(args, "_mmwave_metrics_cache", None)
+                            compute_mmwave_torso_score(
+                                mm_cache,
+                                max_age_ms=float(getattr(args, "mmwave_max_age_ms", 300.0) or 300.0),
+                            )
+                            if bool(getattr(args, "mmwave_overlay", False)) and mm_cache
                             else None
+                        ),
+                        "latency": latency.metrics_payload(
+                            detection_age_ms=None if det_age is None else round(float(det_age), 2)
                         ),
                         "camera_id": camera_id or None,
                         "byte_tracks": [
@@ -3818,6 +4058,21 @@ def main() -> None:
                     }
                     write_live_metrics_json(args.live_metrics_json, payload)
                     _schedule_full_bgr_publish()
+                    force_metrics_write = False
+
+                if (
+                    args.live_jpg is not None
+                    or live_ipc_writer is not None
+                    or live_ipc_bgr_writer is not None
+                ):
+                    vis_pub = vis_out.copy()
+                    if frame_capture_ns:
+                        latency.note_ipc_publish(int(frame_capture_ns))
+                    if publish_job is not None:
+                        publish_job.submit(vis_pub)
+                        latency.display_frames_replaced = int(publish_job.replaced)
+                    else:
+                        _publish_live_outputs(vis_pub)
 
                 pg_jpg = getattr(args, "playground_jpg", None)
                 pg_json = getattr(args, "playground_json", None)
@@ -3916,8 +4171,8 @@ def main() -> None:
                 pass
         if infer_pool is not None:
             infer_pool.shutdown(wait=False)
-        if publish_pool is not None:
-            publish_pool.shutdown(wait=True)
+        if publish_job is not None:
+            publish_job.shutdown(wait=False)
         if full_publish_pool is not None:
             full_publish_pool.shutdown(wait=True)
         if live_ipc_writer is not None:

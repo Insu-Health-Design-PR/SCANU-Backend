@@ -57,7 +57,7 @@ def build_mmwave_lab_command(settings: dict[str, Any], layer8_dir: Path) -> list
         "--metrics-json",
         str(metrics_json),
         "--fps",
-        str(float(m.get("plot_fps") or 2.0)),
+        str(float(m.get("plot_fps") or 10.0)),
     ]
     mmwave_root = str(mr.get("path") or mr.get("mmwave_root") or os.environ.get("MMWAVE_ROOT") or "").strip()
     if mmwave_root:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import time
 from typing import Any
 
 import cv2
@@ -18,6 +19,7 @@ class LiveWebcamCapture:
         self._lock = threading.Lock()
         self._frame: np.ndarray | None = None
         self._seq = 0
+        self._capture_ns = 0
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
@@ -51,6 +53,7 @@ class LiveWebcamCapture:
                     self._frame = np.empty_like(frame)
                 np.copyto(self._frame, frame)
                 self._seq += 1
+                self._capture_ns = time.monotonic_ns()
 
     def copy_latest_into(self, dst: np.ndarray) -> int:
         with self._lock:
@@ -60,6 +63,11 @@ class LiveWebcamCapture:
                 raise ValueError(f"dst shape {dst.shape} != capture {self._frame.shape}")
             np.copyto(dst, self._frame)
             return int(self._seq)
+
+    @property
+    def last_capture_ns(self) -> int:
+        with self._lock:
+            return int(self._capture_ns)
 
     def snapshot(self) -> np.ndarray | None:
         with self._lock:

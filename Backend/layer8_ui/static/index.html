@@ -1729,12 +1729,20 @@
 
     let liveLayoutMode = localStorage.getItem("scanu_live_layout") || "binary"; // ops | binary | alignment
     if (!["ops", "binary", "alignment"].includes(liveLayoutMode)) liveLayoutMode = "binary";
+    let layoutBeforeAlignment = liveLayoutMode === "alignment" ? "binary" : liveLayoutMode;
     let alignPollTimer = null;
     let liveEnlarge = localStorage.getItem(LIVE_ENLARGE_KEY) === "1";
 
+    function camerasForLayout(layout) {
+      if (layout === "ops") return ["thermal", "webcam", "multi_camera", "mmwave"];
+      return ["webcam", "multi_camera"];
+    }
+
     function mainPreviewMode() {
+      const allowed = camerasForLayout(liveLayoutMode);
       const mode = localStorage.getItem(PREVIEW_KEY) || "webcam";
-      return LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "webcam";
+      if (allowed.includes(mode)) return mode;
+      return allowed.includes("webcam") ? "webcam" : allowed[0];
     }
 
     function setLiveEnlarge(on) {
@@ -1745,14 +1753,23 @@
 
     function syncLiveFocusControls() {
       const sel = el("live-focus-camera");
-      if (sel) sel.value = mainPreviewMode();
+      const allowed = camerasForLayout(liveLayoutMode);
+      const mode = mainPreviewMode();
+      if (sel) {
+        [...sel.options].forEach((opt) => {
+          const ok = allowed.includes(opt.value);
+          opt.hidden = !ok;
+          opt.disabled = !ok;
+        });
+        if (sel.value !== mode) sel.value = mode;
+      }
       const btnEn = el("btn-live-enlarge");
       const btnGrid = el("btn-live-grid");
       if (btnEn) btnEn.hidden = liveEnlarge;
       if (btnGrid) btnGrid.hidden = !liveEnlarge;
       document.querySelectorAll(".live-cell[data-live-sensor]").forEach((cell) => {
         const s = cell.getAttribute("data-live-sensor") || "";
-        cell.classList.toggle("is-focused", !!s && s === mainPreviewMode());
+        cell.classList.toggle("is-focused", !!s && s === mode);
       });
     }
 
@@ -1856,16 +1873,27 @@
     }
 
     function setLiveLayout(mode) {
-      liveLayoutMode = ["binary", "alignment"].includes(mode) ? mode : "ops";
+      const next = ["binary", "alignment"].includes(mode) ? mode : "ops";
+      if (liveLayoutMode !== "alignment" && next === "alignment") {
+        layoutBeforeAlignment = liveLayoutMode;
+      }
+      liveLayoutMode = next;
       localStorage.setItem("scanu_live_layout", liveLayoutMode);
-      // Switching layout exits enlarge so the grid is visible.
+      const allowed = camerasForLayout(liveLayoutMode);
+      if (!allowed.includes(mainPreviewMode())) {
+        setPreviewSource(allowed.includes("webcam") ? "webcam" : allowed[0]);
+      }
       liveEnlarge = false;
       localStorage.setItem(LIVE_ENLARGE_KEY, "0");
       applyLiveViewMode();
     }
 
     function setPreviewSource(mode) {
-      const next = LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "webcam";
+      const allowed = camerasForLayout(liveLayoutMode);
+      let next = LIVE_FOCUS_OPTIONS.includes(mode) ? mode : "webcam";
+      if (!allowed.includes(next)) {
+        next = allowed.includes("webcam") ? "webcam" : allowed[0];
+      }
       localStorage.setItem(PREVIEW_KEY, next);
       syncLiveFocusControls();
     }
@@ -2958,7 +2986,11 @@
       });
       const scroll = document.querySelector(".panel-b-scroll");
       if (scroll) scroll.scrollTop = 0;
-      if (tabId === "alignment") setLiveLayout("alignment");
+      if (tabId === "alignment") {
+        setLiveLayout("alignment");
+      } else if (liveLayoutMode === "alignment") {
+        setLiveLayout(layoutBeforeAlignment || "binary");
+      }
     }
 
     function openAlignmentView() {
@@ -4995,9 +5027,14 @@
     });
     el("live-focus-camera")?.addEventListener("change", (ev) => {
       const mode = ev.target.value;
+      if (mode === "thermal" || mode === "mmwave") {
+        if (liveLayoutMode !== "ops") {
+          liveLayoutMode = "ops";
+          localStorage.setItem("scanu_live_layout", "ops");
+        }
+      }
       setPreviewSource(mode);
-      if (liveEnlarge) applyLiveViewMode();
-      else syncLiveFocusControls();
+      applyLiveViewMode();
     });
     el("btn-live-enlarge")?.addEventListener("click", () => setLiveEnlarge(true));
     el("btn-live-grid")?.addEventListener("click", () => setLiveEnlarge(false));
@@ -5005,8 +5042,14 @@
       cell.addEventListener("click", () => {
         const sensor = cell.getAttribute("data-live-sensor") || "";
         if (!sensor) return;
+        if (sensor === "thermal" || sensor === "mmwave") {
+          liveLayoutMode = "ops";
+          localStorage.setItem("scanu_live_layout", "ops");
+        }
         if (sensor === "webcam") switchConfigTab("ai-camera");
         else if (sensor === "multi_camera") switchConfigTab("multi-camera");
+        else if (sensor === "thermal") switchConfigTab("thermal");
+        else if (sensor === "mmwave") switchConfigTab("mmwave");
         setPreviewSource(sensor);
         setLiveEnlarge(true);
       });

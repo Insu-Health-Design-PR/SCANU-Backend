@@ -11,7 +11,37 @@ from weapon_ai.overlay.mmwave_fusion import compute_mmwave_torso_score
 
 LIVE_METRICS_SCHEMA = "scanu_mmwave_live_v1"
 DEFAULT_METRICS_REL = "layer8_ui/artifacts/live_mmwave_metrics.json"
-DEFAULT_SHM = Path("/dev/shm/scanu_mmwave_live_metrics.json")
+def write_stopped_metrics(*, layer8_dir: Path, software_root: Path | None = None) -> None:
+    """Replace leftover live metrics so camera overlay stops drawing dots."""
+    import json
+
+    payload = {
+        "schema_version": LIVE_METRICS_SCHEMA,
+        "publisher": "stopped",
+        "ts_monotonic_ns": time.monotonic_ns(),
+        "front": {
+            "screening_state": "idle",
+            "track": None,
+            "points": [],
+            "anomalies": [],
+        },
+        "back": {
+            "screening_state": "idle",
+            "track": None,
+            "points": [],
+            "anomalies": [],
+        },
+    }
+    text = json.dumps(payload)
+    paths = [DEFAULT_SHM, layer8_dir / "artifacts" / "live_mmwave_metrics.json"]
+    if software_root is not None:
+        paths.append(software_root / "layer8_ui" / "artifacts" / "live_mmwave_metrics.json")
+    for path in paths:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        except OSError:
+            continue
 
 
 def _side_block(data: dict[str, Any], side: str) -> dict[str, Any]:

@@ -55,6 +55,19 @@ class SensorManager:
         out = sensor_runner.stop(sensor_type, self.layer8_dir)  # type: ignore[arg-type]
         if sensor_type == "thermal":
             self._thermal_stream.resume_after_thermal_subprocess_attempt()
+        if sensor_type == "mmwave":
+            try:
+                from layer8_ui.settings_store import load
+                from layer8_ui.artifact_paths import software_root_from_settings
+                from services.mmwave_metrics_service import write_stopped_metrics
+
+                settings = load(self.layer8_dir)
+                write_stopped_metrics(
+                    layer8_dir=self.layer8_dir,
+                    software_root=software_root_from_settings(settings),
+                )
+            except Exception:
+                logger.exception("Failed to clear mmWave live metrics after stop")
         return out
 
     def _pause_preview_stream(self, sensor_type: str) -> None:

@@ -180,6 +180,7 @@ class RadarSideReader:
     lock: threading.Lock = field(default_factory=threading.Lock)
     error: str = ""
     running: bool = False
+    seq: int = 0
 
     def start(self) -> None:
         t = threading.Thread(target=self._run, name=f"mmwave-{self.title}", daemon=True)
@@ -225,6 +226,7 @@ class RadarSideReader:
                         if row.get("parse_ok"):
                             with self.lock:
                                 self.frames.append(row)
+                                self.seq += 1
         except Exception as exc:
             self.error = f"{type(exc).__name__}: {exc}"
             self.running = False
@@ -350,6 +352,7 @@ def run_dual_replay(args: argparse.Namespace) -> int:
 
     idx = 0
     period = 1.0 / max(0.5, float(args.fps))
+    next_deadline = time.monotonic()
     while True:
         front_side = {"screening_state": "insufficient_signal", "track": None, "points": [], "anomalies": []}
         back_side = dict(front_side)
@@ -383,7 +386,13 @@ def run_dual_replay(args: argparse.Namespace) -> int:
             sensor_distance_m=sensor_distance_m,
         )
         idx += 1
-        time.sleep(period)
+        next_deadline += period
+        delay = next_deadline - time.monotonic()
+        if delay < -period:
+            next_deadline = time.monotonic()
+            delay = 0.0
+        if delay > 0:
+            time.sleep(delay)
 
 
 def run_dual_live(args: argparse.Namespace) -> int:
@@ -438,19 +447,32 @@ def run_dual_live(args: argparse.Namespace) -> int:
 
     period = 1.0 / max(0.5, float(args.fps))
     sensor_distance_m = float(args.sensor_distance_m or pf.get("sensor_distance_m") or 3.6576)
+    next_deadline = time.monotonic()
+    last_seq = (-1, -1)
     while True:
-        front_side = _side_payload(front_reader, None)
-        back_side = _side_payload(back_reader, None)
-        publish_cycle(
-            live_front=live,
-            live_back=live_back,
-            metrics_path=metrics_path,
-            metrics_shm=metrics_shm,
-            front_side=front_side,
-            back_side=back_side,
-            sensor_distance_m=sensor_distance_m,
-        )
-        time.sleep(period)
+        front_seq = int(front_reader.seq) if front_reader is not None else -1
+        back_seq = int(back_reader.seq) if back_reader is not None else -1
+        new_radar = (front_seq, back_seq) != last_seq
+        now = time.monotonic()
+        if new_radar or now >= next_deadline:
+            front_side = _side_payload(front_reader, None)
+            back_side = _side_payload(back_reader, None)
+            publish_cycle(
+                live_front=live,
+                live_back=live_back,
+                metrics_path=metrics_path,
+                metrics_shm=metrics_shm,
+                front_side=front_side,
+                back_side=back_side,
+                sensor_distance_m=sensor_distance_m,
+            )
+            last_seq = (front_seq, back_seq)
+            while next_deadline <= now:
+                next_deadline += period
+            if next_deadline - now > 2 * period:
+                next_deadline = now + period
+        else:
+            time.sleep(min(0.01, max(0.001, next_deadline - now)))
 
 
 def run_status(args: argparse.Namespace) -> int:
@@ -472,7 +494,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--live-frame-back", default="")
     p.add_argument("--metrics-json", default="layer8_ui/artifacts/live_mmwave_metrics.json")
     p.add_argument("--metrics-shm", default="/dev/shm/scanu_mmwave_live_metrics.json")
-    p.add_argument("--fps", type=float, default=2.0)
+    p.add_argument("--fps", type=float, default=10.0)
     p.add_argument("--session", default="")
     p.add_argument("--session-back", default="")
     p.add_argument("--perception", default="")

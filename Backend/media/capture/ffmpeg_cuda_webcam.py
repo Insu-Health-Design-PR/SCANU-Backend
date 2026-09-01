@@ -211,6 +211,8 @@ class FFmpegCudaWebcamCapture:
         self._full_frame: np.ndarray | None = None
         self._seq = 0
         self._full_seq = 0
+        self._capture_ns = 0
+        self._full_capture_ns = 0
         self._thread: threading.Thread | None = None
         self._full_thread: threading.Thread | None = None
         self._proc: subprocess.Popen[bytes] | None = None
@@ -316,6 +318,7 @@ class FFmpegCudaWebcamCapture:
                         self._frame = np.empty_like(scratch)
                     np.copyto(self._frame, scratch)
                     self._seq += 1
+                    self._capture_ns = time.monotonic_ns()
                     frames_ok = self._seq
         finally:
             if frames_ok == 0 and self._proc is not None:
@@ -347,6 +350,7 @@ class FFmpegCudaWebcamCapture:
                         self._full_frame = np.empty_like(scratch)
                     np.copyto(self._full_frame, scratch)
                     self._full_seq += 1
+                    self._full_capture_ns = time.monotonic_ns()
         finally:
             try:
                 os.close(fd)
@@ -388,6 +392,24 @@ class FFmpegCudaWebcamCapture:
                 raise ValueError(f"dst shape {dst.shape} != capture {self._frame.shape}")
             np.copyto(dst, self._frame)
             return int(self._seq)
+
+    @property
+    def last_capture_ns(self) -> int:
+        with self._lock:
+            return int(self._capture_ns)
+
+    def path_log(self) -> str:
+        gpu_scale = f"scale_cuda={self.width}x{self.height}"
+        full = (
+            f"full_download={self.full_width}x{self.full_height}@{self.full_fps:.0f}fps"
+            if self.keep_full_res
+            else "full_download=off"
+        )
+        return (
+            f"FFmpeg CUDA path: decoder={self._decoder} {gpu_scale} "
+            f"hwdownload=BGR preview={self.width}x{self.height} {full} "
+            f"(CPU fallback is OpenCV LiveWebcamCapture)"
+        )
 
     def snapshot(self) -> np.ndarray | None:
         with self._lock:

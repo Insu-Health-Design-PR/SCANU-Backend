@@ -55,6 +55,43 @@ def collect_person_gun_crops(
     return out
 
 
+def _predict_sources(
+    gun_detector: Any,
+    sources: list[Any],
+    *,
+    conf: float,
+    imgsz: int,
+    device: str,
+    batched: bool,
+    max_batch: int,
+) -> list[Any]:
+    """Predict preserving source order. Split when TensorRT max batch is smaller than N."""
+    if not sources:
+        return []
+    pred_kw = dict(conf=float(conf), imgsz=int(imgsz), verbose=False, device=device)
+    mb = max(1, int(max_batch))
+    if not batched or len(sources) == 1:
+        out: list[Any] = []
+        for crop in sources:
+            gres = gun_detector.predict(source=crop, **pred_kw)
+            out.append(gres[0] if gres else None)
+        return out
+    out = [None] * len(sources)
+    from weapon_ai.detection.gun_batch import split_batch_indices
+
+    for a, b in split_batch_indices(len(sources), mb):
+        chunk = sources[a:b]
+        results = gun_detector.predict(source=chunk, **pred_kw)
+        if results is None:
+            continue
+        if not isinstance(results, (list, tuple)):
+            results = [results]
+        for i, res in enumerate(results):
+            if a + i < len(out):
+                out[a + i] = res
+    return out
+
+
 def predict_gun_on_crops(
     gun_detector: Any,
     crops: list[PersonGunCrop],
@@ -63,26 +100,62 @@ def predict_gun_on_crops(
     imgsz: int,
     device: str,
     batched: bool = True,
+    max_batch: int | None = None,
+    imgsz_mode: str = "fixed",
+    near_min_side: int = 220,
+    far_max_side: int = 96,
+    allowed_imgsz: tuple[int, ...] = (512, 640, 960),
 ) -> list[Any]:
-    """Return one Ultralytics ``Results`` (or ``None``) per crop, same order as ``crops``."""
+    """Return one Ultralytics ``Results`` (or ``None``) per crop, same order as ``crops``.
+
+    ``imgsz_mode='adaptive'`` buckets crops into 512/640/960 without changing TRT
+    shapes every frame. ``fixed`` keeps a single ``imgsz`` (default 640).
+    """
     if not crops:
         return []
-    sources = [c.crop for c in crops]
-    pred_kw = dict(conf=float(conf), imgsz=int(imgsz), verbose=False, device=device)
-    if batched and len(sources) > 1:
-        results = gun_detector.predict(source=sources, **pred_kw)
-        if results is None:
-            return [None] * len(sources)
-        if not isinstance(results, (list, tuple)):
-            results = [results]
-        out = list(results)
-        if len(out) < len(sources):
-            out.extend([None] * (len(sources) - len(out)))
-        return out[: len(sources)]
-    out: list[Any] = []
-    for crop in sources:
-        gres = gun_detector.predict(source=crop, **pred_kw)
-        out.append(gres[0] if gres else None)
+    if max_batch is None:
+        from weapon_ai.detection.gun_batch import tensorrt_batch_range
+
+        _min_b, max_batch = tensorrt_batch_range(gun_detector)
+    mb = max(1, int(max_batch))
+    mode = str(imgsz_mode or "fixed").lower()
+    if mode in {"fixed", "640", "off", "none"}:
+        return _predict_sources(
+            gun_detector,
+            [c.crop for c in crops],
+            conf=conf,
+            imgsz=int(imgsz),
+            device=device,
+            batched=batched,
+            max_batch=mb,
+        )
+    from weapon_ai.detection.gun_batch import bucket_gun_imgsz
+
+    buckets: dict[int, list[int]] = {}
+    for i, crop in enumerate(crops):
+        sz = bucket_gun_imgsz(
+            (crop.crop.shape[0], crop.crop.shape[1]),
+            mode="adaptive",
+            default=int(imgsz),
+            near_min_side=int(near_min_side),
+            far_max_side=int(far_max_side),
+            allowed=allowed_imgsz,
+        )
+        buckets.setdefault(sz, []).append(i)
+    out: list[Any] = [None] * len(crops)
+    for sz, idxs in buckets.items():
+        sources = [crops[i].crop for i in idxs]
+        part = _predict_sources(
+            gun_detector,
+            sources,
+            conf=conf,
+            imgsz=int(sz),
+            device=device,
+            batched=batched,
+            max_batch=mb,
+        )
+        for j, res in zip(idxs, part):
+            out[j] = res
     return out
 
 

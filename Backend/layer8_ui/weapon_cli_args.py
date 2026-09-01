@@ -181,6 +181,19 @@ def build_structured_weapon_args(
     _f("--live_ipc_max_width", "weapon_live_ipc_max_width", int)
     _f("--live_metrics_every_n", "weapon_live_metrics_every_n", int)
     _f("--live_publish_workers", "weapon_live_publish_workers", int)
+    if w.get("weapon_tracked_roi") is not None and str(w.get("weapon_tracked_roi")).strip() != "":
+        try:
+            if int(w.get("weapon_tracked_roi", 1)):
+                parts.append("--tracked_roi")
+            else:
+                parts.append("--no-tracked_roi")
+        except (TypeError, ValueError):
+            pass
+    _f("--person_interval_frames", "weapon_person_interval_frames", int)
+    _f("--max_person_age_ms", "weapon_max_person_age_ms", float)
+    mode = str(w.get("weapon_gun_imgsz_mode") or "").strip()
+    if mode:
+        parts.extend(["--gun_imgsz_mode", mode])
     if int(w.get("weapon_live_gpu_preprocess", 1)):
         parts.append("--live_gpu_preprocess")
     else:
@@ -341,6 +354,12 @@ def build_structured_weapon_args(
         # Fallback baseline when fusion block omits it (mmwave_root / default 5 m corridor).
         if "--mmwave_sensor_distance_m" not in parts:
             parts.extend(["--mmwave_sensor_distance_m", "5.0"])
+        age_raw = fusion.get("max_age_ms")
+        if age_raw is not None and str(age_raw).strip() != "":
+            try:
+                parts.extend(["--mmwave_max_age_ms", str(float(age_raw))])
+            except (TypeError, ValueError):
+                pass
 
     rot = w.get("capture_rotate")
     if rot is not None and str(rot).strip() != "":

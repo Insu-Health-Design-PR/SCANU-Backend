@@ -39,6 +39,7 @@ include = ["api*", "apps*", "services*", "runtime*", "media*", "weapon_ai*", "ut
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+addopts = "--import-mode=importlib"
 
 [tool.ruff]
 line-length = 100

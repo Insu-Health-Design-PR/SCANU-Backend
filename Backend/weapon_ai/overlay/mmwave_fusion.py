@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,9 +28,73 @@ COLOR_AGREEMENT = (80, 220, 80)
 _DEFAULT_SENSOR_DISTANCE_M = 5.0
 
 
-def compute_mmwave_torso_score(metrics: dict[str, Any] | None) -> float | None:
-    """Engineering evidence score from track confidence / anomalies (not weapon classification)."""
+def mmwave_age_ms(
+    metrics: dict[str, Any] | None,
+    *,
+    now_ns: int | None = None,
+) -> float | None:
+    """Age of a radar metrics blob.
+
+    Lab publishers may store wall-clock ``timestamp_ns`` while Layer 8 uses
+    ``ts_monotonic_ns``. Mixing those clocks used to yield age 0 (always
+    fresh) and kept dots on camera video after mmWave was stopped.
+    """
     if not isinstance(metrics, dict):
+        return None
+    if str(metrics.get("publisher") or "") == "stopped":
+        return None
+    raw = metrics.get("ts_monotonic_ns")
+    if raw is None:
+        raw = metrics.get("timestamp_ns")
+    try:
+        ts = int(raw)
+    except (TypeError, ValueError):
+        ts = None
+    now_mono = int(now_ns if now_ns is not None else time.monotonic_ns())
+    now_wall = time.time_ns()
+    ages: list[float] = []
+    if ts is not None:
+        age_mono = (now_mono - ts) / 1_000_000.0
+        age_wall = (now_wall - ts) / 1_000_000.0
+        # Accept the clock that produces a plausible non-negative age (< 1 day).
+        if 0.0 <= age_mono < 86_400_000.0:
+            ages.append(age_mono)
+        if 0.0 <= age_wall < 86_400_000.0:
+            ages.append(age_wall)
+    mtime = metrics.get("_source_mtime_ns")
+    try:
+        mt = int(mtime) if mtime is not None else None
+    except (TypeError, ValueError):
+        mt = None
+    if mt is not None:
+        ages.append(max(0.0, (now_wall - mt) / 1_000_000.0))
+    if not ages:
+        return None
+    return min(ages)
+
+
+def mmwave_fresh_for_threat(
+    metrics: dict[str, Any] | None,
+    *,
+    max_age_ms: float = 300.0,
+    now_ns: int | None = None,
+) -> bool:
+    age = mmwave_age_ms(metrics, now_ns=now_ns)
+    if age is None:
+        return False
+    return float(age) <= float(max_age_ms)
+
+
+def compute_mmwave_torso_score(
+    metrics: dict[str, Any] | None,
+    *,
+    max_age_ms: float = 300.0,
+    now_ns: int | None = None,
+) -> float | None:
+    """Engineering evidence score. Stale radar must not raise threat."""
+    if not isinstance(metrics, dict):
+        return None
+    if not mmwave_fresh_for_threat(metrics, max_age_ms=max_age_ms, now_ns=now_ns):
         return None
     scores: list[float] = []
     for side_key in ("front", "back"):
@@ -69,6 +134,7 @@ class MmwaveFusionConfig:
     draw_agreement_halo: bool = True
     draw_anomaly_links: bool = True
     sensor_distance_m: float = _DEFAULT_SENSOR_DISTANCE_M
+    max_age_ms: float = 300.0
 
 
 def transform_a_frame_to_b_local(
@@ -372,6 +438,9 @@ def draw_mmwave_fusion_overlay(
     )
     if not metrics:
         return vis
+    draw_ttl_ms = max(float(cfg.max_age_ms), 1000.0)
+    if not mmwave_fresh_for_threat(metrics, max_age_ms=draw_ttl_ms):
+        return vis
 
     side = _side_metrics(metrics, cfg.side)
     if not side:
@@ -485,6 +554,10 @@ def load_mmwave_metrics(
         except (OSError, json.JSONDecodeError):
             continue
         if isinstance(data, dict):
+            try:
+                data["_source_mtime_ns"] = int(p.stat().st_mtime_ns)
+            except OSError:
+                pass
             return normalize_mmwave_metrics_for_overlay(
                 data, sensor_distance_m=sensor_distance_m
             )
@@ -505,4 +578,5 @@ def fusion_config_from_args(args: Any) -> MmwaveFusionConfig:
             getattr(args, "mmwave_sensor_distance_m", _DEFAULT_SENSOR_DISTANCE_M)
             or _DEFAULT_SENSOR_DISTANCE_M
         ),
+        max_age_ms=float(getattr(args, "mmwave_max_age_ms", 300.0) or 300.0),
     )
