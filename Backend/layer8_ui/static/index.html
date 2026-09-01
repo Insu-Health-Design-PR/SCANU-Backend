@@ -3255,7 +3255,7 @@
       inUrl.id = sensor + "-jetson_stream_url";
       inUrl.dataset.sensor = sensor;
       inUrl.dataset.key = "jetson_stream_url";
-      inUrl.placeholder = sensor === "webcam" ? "rtsp://192.168.1.50:8554/front" : "rtsp://100.92.1.128:8554/cam";
+      inUrl.placeholder = sensor === "webcam" ? "rtsp://192.168.1.50:8554/front" : "rtsp://100.72.154.31:8554/cam";
       inUrl.value = String(sec.jetson_stream_url || "").trim();
       const jetProbe = document.createElement("div");
       jetProbe.id = sensor + "-probe-status-jetson";

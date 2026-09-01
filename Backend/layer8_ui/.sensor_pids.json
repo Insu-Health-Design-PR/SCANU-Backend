@@ -1,6 +1,10 @@
 {
   "webcam": {
-    "pid": 43917,
+    "pid": 152374,
     "log_file": "/home/insu/Desktop/New_Backend/Backend/layer8_ui/logs/webcam.log"
+  },
+  "multi_camera": {
+    "pid": 152780,
+    "log_file": "/home/insu/Desktop/New_Backend/Backend/layer8_ui/logs/multi_camera.log"
   }
 }
