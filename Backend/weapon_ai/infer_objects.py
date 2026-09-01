@@ -117,6 +117,7 @@ from weapon_ai.overlay import (
     COLOR_GUN_OBJECT_BGR as _COLOR_GUN_OBJECT_BGR,
     COLOR_GUN_WEAPON_BGR as _COLOR_GUN_WEAPON_BGR,
     COLOR_PERSON_ARMED_BGR as _COLOR_PERSON_ARMED_BGR,
+    COLOR_PERSON_ARMED_PROVISIONAL_BGR as _COLOR_PERSON_ARMED_PROVISIONAL_BGR,
     COLOR_PERSON_ARMED_CONCEALED_BGR as _COLOR_PERSON_ARMED_CONCEALED_BGR,
     COLOR_PERSON_OBJECT_BGR as _COLOR_PERSON_OBJECT_BGR,
     FIREARM_GHOST_CONF as _FIREARM_GHOST_CONF,
@@ -2821,13 +2822,14 @@ def main() -> None:
     gun_stable = GunStableIdTracker(iou_threshold=0.15, max_missed_frames=int(_stable_miss))
     person_tid_display = DisplayTrackIds()
     person_armed = PersonArmedLatch(
-        confirm_weapon_seconds=0.0,
-        confirm_weapon_frames=1,
-        confirm_break_grace_seconds=0.15,
+        confirm_weapon_seconds=0.45,
+        confirm_weapon_frames=8,
+        confirm_break_grace_seconds=0.35,
         unlatch_object_frames=18,
     )
     print(
-        "Armed latch: immediate (no multi-second confirm) — first visible weapon + hand/track arms person.",
+        "Armed latch: vivid orange while warming up (≥8 hits and ≥0.45s); "
+        "then red. Brief glitches stay orange / clear — not an instant red.",
         flush=True,
     )
     # Short solid-box hold only (anti-flicker). ByteTrack ghost_frames stay separate for faint hold.
@@ -3410,6 +3412,7 @@ def main() -> None:
 
                 unsafe_thr = float(args.unsafe_threshold)
                 armed_visible_list: list[tuple[int, int, int, int, float, str]] = []
+                armed_provisional_list: list[tuple[int, int, int, int, float, str]] = []
                 armed_concealed_list: list[tuple[int, int, int, int, float, str]] = []
                 safe_list: list[tuple[int, int, int, int, float, str]] = []
                 for ridx, (x1, y1, x2, y2, prob, cid, ytag, _det_c) in enumerate(rows):
@@ -3419,6 +3422,7 @@ def main() -> None:
                     _pnum = person_tid_display.display_num(row_track[ridx])
                     eff_prob = person_armed.effective_gun_conf(_pk, float(prob))
                     armed = person_armed.is_armed(_pk)
+                    provisional = person_armed.is_provisional(_pk)
                     vis_w = visible_weapon_peak.get(_pk, 0.0) > 0.0
                     prefix = f"{ytag} " if args.show_yolo_name else ""
                     dist_m = None
@@ -3447,6 +3451,7 @@ def main() -> None:
                         global_weapon_active = bool(ginfo.get("weapon_detected"))
                         if global_weapon_active:
                             armed = True
+                            provisional = False
                     label_txt = prefix + _person_overlay_label(
                         _pnum,
                         distance_m=dist_m,
@@ -3457,6 +3462,8 @@ def main() -> None:
                         armed_visible_list.append(item)
                     elif armed:
                         armed_concealed_list.append(item)
+                    elif provisional:
+                        armed_provisional_list.append(item)
                     else:
                         safe_list.append(item)
 
@@ -3513,6 +3520,21 @@ def main() -> None:
                 for x1, y1, x2, y2, _prob, label_txt in safe_list:
                     c = _COLOR_PERSON_OBJECT_BGR
                     cv2.rectangle(vis, (x1, y1), (x2, y2), c, _ov_person)
+                    _draw_label_above_box(
+                        vis,
+                        x1,
+                        y1,
+                        label_txt,
+                        c,
+                        scale=_ov_scale,
+                        thickness=_ov_label_thick,
+                    )
+
+                for x1, y1, x2, y2, _prob, label_txt in armed_provisional_list:
+                    c = _COLOR_PERSON_ARMED_PROVISIONAL_BGR
+                    # Thicker than green so the orange warm-up stage is obvious on 2K preview.
+                    thick = max(_ov_person + 2, _ov_unsafe_border + 1, 6)
+                    cv2.rectangle(vis, (x1, y1), (x2, y2), c, thick)
                     _draw_label_above_box(
                         vis,
                         x1,
@@ -3585,9 +3607,9 @@ def main() -> None:
                             )
                         vis = draw_mmwave_fusion_overlay(
                             vis,
-                            bt_for_fusion,
                             mmwave_metrics_cached,
                             cfg=fusion_config_from_args(args),
+                            byte_tracks=bt_for_fusion,
                             person_height_m=float(getattr(args, "person_height_m", 1.7) or 1.7),
                         )
 

@@ -398,21 +398,24 @@ class GunStableIdTracker:
 
 class PersonArmedLatch:
     """
-    Per-person latched armed state: once armed, stay armed when the gun is concealed.
+    Per-person latched armed state with a short provisional (orange) stage.
 
-    With ``confirm_weapon_seconds=0`` and ``confirm_weapon_frames=1``, a visible weapon
-    (plus track confirm) arms on the first qualifying frame — no multi-second delay.
+    First qualifying weapon frames mark the person *provisional* (glitch-tolerant).
+    After ``confirm_weapon_frames`` qualifies within the grace window, promote to
+    confirmed armed (red when weapon visible; yellow when concealed).
+    Single-frame flashes expire when the grace window elapses without more hits.
     """
 
     def __init__(
         self,
         *,
-        confirm_weapon_frames: int = 1,
+        confirm_weapon_frames: int = 4,
         confirm_weapon_seconds: float = 0.0,
-        confirm_break_grace_seconds: float = 0.15,
+        confirm_break_grace_seconds: float = 0.25,
         unlatch_object_frames: int = 18,
     ) -> None:
         self._armed: set[str] = set()
+        self._provisional: set[str] = set()
         self._peak_conf: dict[str, float] = {}
         self._weapon_streak: dict[str, int] = {}
         self._object_only_frames: dict[str, int] = {}
@@ -443,6 +446,21 @@ class PersonArmedLatch:
         self._confirm_started_mono.pop(pk, None)
         self._last_qualify_mono.pop(pk, None)
         self._weapon_streak[pk] = 0
+        self._provisional.discard(pk)
+
+    def _clear_person(self, pk: str) -> None:
+        self._armed.discard(pk)
+        self._provisional.discard(pk)
+        self._peak_conf.pop(pk, None)
+        self._weapon_streak.pop(pk, None)
+        self._object_only_frames.pop(pk, None)
+        self._weapon_bracket.pop(pk, None)
+        self._reset_confirm(pk)
+
+    def _promote(self, pk: str) -> None:
+        self._armed.add(pk)
+        self._provisional.discard(pk)
+        self._object_only_frames[pk] = 0
 
     def update(
         self,
@@ -468,6 +486,7 @@ class PersonArmedLatch:
         qualifies = vwc >= min_wc and float(vwc) > 0.0
 
         if qualifies:
+            # Cumulative qualifies inside the grace window (brief misses don't wipe progress).
             self._weapon_streak[pk] = self._weapon_streak.get(pk, 0) + 1
             self._peak_conf[pk] = max(self._peak_conf.get(pk, 0.0), vwc)
             self._object_only_frames[pk] = 0
@@ -475,10 +494,10 @@ class PersonArmedLatch:
             if pk not in self._confirm_started_mono:
                 self._confirm_started_mono[pk] = now
         else:
-            self._weapon_streak[pk] = 0
             last_q = self._last_qualify_mono.get(pk)
             if last_q is None or (now - last_q) > self._confirm_break_grace_seconds:
-                self._reset_confirm(pk)
+                if pk not in self._armed:
+                    self._reset_confirm(pk)
 
         if pk in self._armed:
             if ever_had_weapon:
@@ -490,45 +509,53 @@ class PersonArmedLatch:
                 n = self._object_only_frames.get(pk, 0) + 1
                 self._object_only_frames[pk] = n
                 if n >= self._unlatch_object_frames:
-                    self._armed.discard(pk)
-                    self._peak_conf.pop(pk, None)
-                    self._weapon_streak.pop(pk, None)
-                    self._object_only_frames.pop(pk, None)
-                    self._weapon_bracket.pop(pk, None)
-                    self._reset_confirm(pk)
+                    self._clear_person(pk)
             return
 
-        if not track_confirmed_weapon:
+        if not track_confirmed_weapon and not qualifies:
             return
 
-        # Already earned a sustained weapon id earlier (e.g. returning from concealed).
+        # Returning from a previously confirmed weapon track → skip orange stage.
         if ever_had_weapon and qualifies:
-            self._armed.add(pk)
+            self._promote(pk)
             return
 
+        if not qualifies:
+            return
+
+        # First hits: provisional (orange) until confirm threshold.
+        self._provisional.add(pk)
         started = self._confirm_started_mono.get(pk)
         if started is None:
             return
         elapsed = now - started
         streak = self._weapon_streak.get(pk, 0)
-        if self._confirm_weapon_seconds > 0.0:
-            if elapsed >= self._confirm_weapon_seconds and qualifies:
-                self._armed.add(pk)
-        elif streak >= self._confirm_weapon_frames:
-            self._armed.add(pk)
+        # Need enough hits; optional min wall-clock so orange stays readable (stride ≠ 1).
+        if streak < self._confirm_weapon_frames:
+            return
+        if self._confirm_weapon_seconds > 0.0 and elapsed < self._confirm_weapon_seconds:
+            return
+        self._promote(pk)
 
     def person_visual_state(self, person_key: str, *, visible_weapon: bool = False) -> str:
-        """``clear`` | ``armed_gun`` | ``armed_concealed`` (no ambiguous / smartphone tags)."""
-        if not self.is_armed(person_key):
-            return "clear"
-        return "armed_gun" if visible_weapon else "armed_concealed"
+        """``clear`` | ``armed_provisional`` | ``armed_gun`` | ``armed_concealed``."""
+        pk = str(person_key or "").strip()
+        if pk in self._armed:
+            return "armed_gun" if visible_weapon else "armed_concealed"
+        if pk in self._provisional:
+            return "armed_provisional"
+        return "clear"
 
     def is_armed(self, person_key: str) -> bool:
         return str(person_key or "").strip() in self._armed
 
+    def is_provisional(self, person_key: str) -> bool:
+        pk = str(person_key or "").strip()
+        return pk in self._provisional and pk not in self._armed
+
     def effective_gun_conf(self, person_key: str, frame_conf: float) -> float:
         pk = str(person_key or "").strip()
-        if pk in self._armed:
+        if pk in self._armed or pk in self._provisional:
             return max(float(frame_conf), self._peak_conf.get(pk, 0.0))
         return float(frame_conf)
 

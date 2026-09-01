@@ -97,7 +97,7 @@ def main() -> int:
                 "anomalies": row.get("anomalies") or [],
             },
         }
-        vis = draw_mmwave_fusion_overlay(bgr, [], metrics, cfg=cfg)
+        vis = draw_mmwave_fusion_overlay(bgr, metrics, cfg=cfg, byte_tracks=[])
         if args.output:
             if writer is None:
                 h, w = vis.shape[:2]

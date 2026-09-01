@@ -1,14 +1,6 @@
 {
-  "mmwave": {
-    "pid": 131766,
-    "log_file": "/home/insu/Desktop/New_Backend/Backend/layer8_ui/logs/mmwave.log"
-  },
   "webcam": {
-    "pid": 147632,
+    "pid": 18031,
     "log_file": "/home/insu/Desktop/New_Backend/Backend/layer8_ui/logs/webcam.log"
-  },
-  "multi_camera": {
-    "pid": 147963,
-    "log_file": "/home/insu/Desktop/New_Backend/Backend/layer8_ui/logs/multi_camera.log"
   }
 }
